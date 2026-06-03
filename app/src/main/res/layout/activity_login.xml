@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#FFFFFF"> <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="32dp">
+
+    <View
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="24dp"
+        android:background="@android:drawable/presence_online"
+        android:backgroundTint="#FF6B00"
+        />
+
+    <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="آموزشگاه زبان بیان برتر"
+    android:textSize="26sp"
+    android:textStyle="bold"
+    android:textColor="#1E3A8A" /> <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="سیستم یکپارچه مدیریت آموزشی"
+    android:textSize="13sp"
+    android:textStyle="bold"
+    android:textColor="#FF6B00"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="48dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="نام کاربری"
+        android:textColor="#1E3A8A"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp"
+        android:textDirection="rtl" />
+
+    <EditText
+        android:id="@+id/etUsername"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:hint="کد ملی، ایمیل یا شماره زبان‌آموزی"
+        android:inputType="text"
+        android:paddingHorizontal="16dp"
+        android:background="@android:drawable/editbox_background"
+        android:textDirection="rtl"
+        android:textSize="15sp"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="رمز عبور"
+        android:textColor="#1E3A8A"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp"
+        android:textDirection="rtl" />
+
+    <EditText
+        android:id="@+id/etPassword"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:hint="••••••••"
+        android:inputType="textPassword"
+        android:paddingHorizontal="16dp"
+        android:background="@android:drawable/editbox_background"
+        android:textDirection="rtl"
+        android:textSize="15sp"
+        android:layout_marginBottom="32dp" />
+
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="ورود به حساب کاربری"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1E3A8A"
+        android:elevation="4dp" />
+
+
+</LinearLayout>
+</ScrollView>
