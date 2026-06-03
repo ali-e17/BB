@@ -13,7 +13,7 @@
         android:theme="@style/Theme.BB">
 
         <activity
-            android:name="com.example.BB.LoginActivity"
+            android:name="com.example.bb.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

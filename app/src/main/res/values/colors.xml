@@ -7,4 +7,13 @@
     <color name="academy_bg_grey">#F5F6F8</color>
     <color name="academy_text_dark">#1D2939</color>
     <color name="academy_text_grey">#667085</color>
+    <color name="brand_navy">#1040D1</color>
+    <color name="brand_orange">#FF6E14</color>
+
+    <color name="screen_bg">#F8FAFF</color> <color name="card_white">#FFFFFF</color>
+
+    <color name="text_primary">#1D2939</color> <color name="text_secondary">#667085</color> <color name="bg_blue_light">#E0EAFF</color>
+    <color name="bg_orange_light">#FFF0E6</color>
+    <color name="bg_green_light">#DCFAE6</color>
+    <color name="bg_purple_light">#F4EBFF</color>
 </resources>

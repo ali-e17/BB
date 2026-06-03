@@ -23,8 +23,10 @@ class DashboardAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DashboardViewHolder {
+
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_dashboard_card, parent, false)
+
         return DashboardViewHolder(view)
     }
 

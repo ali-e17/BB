@@ -7,9 +7,9 @@
 
     <View
         android:id="@+id/timelineLine"
-        android:layout_width="2dp"
+        android:layout_width="4dp"
         android:layout_height="0dp"
-        android:background="#4DFF6E14"
+        android:background="#26FF6E14"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -17,17 +17,15 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/islandCard"
-        android:layout_width="260dp"
+        android:layout_width="280dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="@color/academy_bg_grey"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="10dp"
-        app:strokeWidth="1dp"
-        app:strokeColor="#0D1040D1"
-        android:outlineSpotShadowColor="#1A1040D1"
-        android:outlineAmbientShadowColor="#15000000"
+        app:cardBackgroundColor="@color/card_white"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="0dp"
+        android:outlineSpotShadowColor="@color/brand_navy"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,46 +36,44 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <FrameLayout
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/bg_top_fade"
-                android:backgroundTint="#1A1040D1">
-
-                <ImageView
-                    android:id="@+id/imgIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@android:drawable/ic_menu_send"
-                    app:tint="@color/academy_orange" />
+                android:id="@+id/iconContainer"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_circle_icon"> <ImageView
+                android:id="@+id/imgIcon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_menu_agenda"
+                app:tint="@color/brand_orange" />
             </FrameLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="16dp"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/txtTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Progress"
-                    android:textColor="@color/academy_text_dark"
-                    android:textSize="16sp"
+                    android:text="عنوان بخش"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/txtDesc"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Check your grades"
-                    android:textColor="@color/academy_text_grey"
-                    android:textSize="12sp" />
+                    android:layout_marginTop="4dp"
+                    android:text="توضیحات کوتاه اینجا"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
