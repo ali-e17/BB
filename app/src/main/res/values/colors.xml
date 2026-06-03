@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="academy_blue">#1040D1</color>
+    <color name="academy_orange">#FF6E14</color>
+    <color name="academy_bg_grey">#F5F6F8</color>
+    <color name="academy_text_dark">#1D2939</color>
+    <color name="academy_text_grey">#667085</color>
 </resources>
