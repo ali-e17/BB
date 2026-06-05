@@ -1,6 +1,8 @@
 package com.example.bb
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -11,21 +13,31 @@ enum class UserRole { STUDENT, TEACHER, ADMIN }
 class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
-    // نقش رو اینجا فقط تعریف می‌کنیم تا مقدارش رو از صفحه لاگین بگیریم
     private lateinit var currentUserRole: UserRole
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // جادوی اصلی اینجاست: خوندن نقش فرستاده شده از لاگین
+        // ۱. خواندن نقش فرستاده شده از لاگین
         val roleString = intent.getStringExtra("USER_ROLE") ?: "STUDENT"
         currentUserRole = try {
             UserRole.valueOf(roleString)
         } catch (e: Exception) {
-            UserRole.STUDENT // اگر خطایی شد پیش‌فرض همون دانش‌آموز باشه
+            UserRole.STUDENT
         }
 
+        // ================= اتصال دکمه پروفایل (اصلاح آی‌دی به btnProfile) =================
+        val btnProfile = findViewById<ImageView>(R.id.btnProfile)
+        btnProfile.setOnClickListener {
+            val intent = Intent(this, ProfileActivity::class.java)
+            // فرستادن نقش به صورت حروف کوچک به صفحه پروفایل شما
+            intent.putExtra("USER_ROLE", currentUserRole.name.lowercase())
+            startActivity(intent)
+        }
+        // ========================================================================
+
+        // ۲. تنظیمات مربوط به لیست صفحه هوم
         recyclerView = findViewById(R.id.recyclerViewDashboard)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
