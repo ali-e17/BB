@@ -24,11 +24,10 @@
 
             <ImageView
                 android:id="@+id/ivLogo"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
+                android:layout_width="130dp"
+                android:layout_height="130dp"
                 android:layout_marginTop="40dp"
-                android:src="@drawable/final50cm"
-                android:contentDescription="لوگوی آموزشگاه" />
+                android:src="@drawable/final50cm" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -37,8 +36,8 @@
                 android:textSize="28sp"
                 android:textStyle="bold"
                 android:textColor="#1E3A8A"
-                android:layout_marginTop="12dp" />
-
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="40dp" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -46,50 +45,62 @@
                 android:text="WELCOME"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#1E293B" />
+                android:textColor="#1E293B"
+                android:layout_marginBottom="24dp" />
 
-            <TextView
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutUsername"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Username"
-                android:textColor="#475569"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"
-                android:textDirection="rtl" />
+                android:layout_marginBottom="16dp"
+                android:hint="Username"
+                app:hintTextColor="#FF6B00"
+                android:textColorHint="#2B2727"
+                app:boxStrokeColor="@color/box_stroke_selector"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
-            <EditText
-                android:id="@+id/etUsername"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:paddingHorizontal="16dp"
-                android:background="@drawable/bg_input_field"
-                android:textDirection="rtl"
-                android:layout_marginBottom="20dp" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUsername"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    android:textColorHint="#2B2727"
+                    android:textDirection="ltr"
+                    android:inputType="textVisiblePassword" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <RelativeLayout
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutPassword"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:text="Password"
-                    android:textColor="#475569"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
+                android:layout_marginBottom="32dp"
+                android:hint="Password"
+                app:hintTextColor="#FF6B00"
+                android:textColorHint="#2B2727"
+                app:boxStrokeColor="@color/box_stroke_selector"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#1E3A8A"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
-            <EditText
-                android:id="@+id/etPassword"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:inputType="textPassword"
-                android:paddingHorizontal="16dp"
-                android:background="@drawable/bg_input_field"
-                android:textDirection="rtl"
-                android:layout_marginBottom="32dp" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    android:textColorHint="#2B2727"
+                    android:textDirection="ltr"
+                    android:inputType="textPassword" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <Button
                 android:id="@+id/btnLogin"
@@ -101,13 +112,6 @@
                 android:textColor="#FFFFFF"
                 android:backgroundTint="#FF6B00"
                 app:cornerRadius="12dp" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="24dp">
-            </LinearLayout>
 
         </LinearLayout>
     </RelativeLayout>
