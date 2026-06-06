@@ -67,6 +67,7 @@ class LoginActivity : AppCompatActivity() {
 
                 val intent = Intent(this, MainActivity::class.java)
                 intent.putExtra("USER_ROLE", role)
+                intent.putExtra("USERNAME", username)
                 startActivity(intent)
                 finish()
             } else {

@@ -7,7 +7,6 @@
     android:fitsSystemWindows="true"
     android:background="#F8FAFF">
 
-    <!-- Gradient header — tall enough to cover topBar + greeting -->
     <View
         android:id="@+id/headerBg"
         android:layout_width="match_parent"
@@ -15,7 +14,6 @@
         android:background="@drawable/bg_top_fade"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Floating top bar (unchanged from original) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -58,18 +56,17 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@android:drawable/presence_online"
-                    app:tint="@color/academy_orange" />
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/final50cm" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="8dp"
                     android:text="Bayane Bartar"
                     android:textColor="@color/academy_blue"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -87,7 +84,6 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Greeting section — sits on the gradient, matches login page vibe -->
     <LinearLayout
         android:id="@+id/greetingSection"
         android:layout_width="0dp"
@@ -100,33 +96,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- e.g. "Good morning 👋" -->
         <TextView
             android:id="@+id/txtGreeting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Good morning 👋"
-            android:textColor="#CCE4FF"
-            android:textSize="13sp" />
+            android:text="صبح بخیر 👋"
+            android:textColor="#667085"
+            android:textSize="14sp" />
 
-        <!-- User's name -->
         <TextView
             android:id="@+id/txtUserName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Welcome back"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp"
+            android:text="کاربر"
+            android:textColor="#1D2939"
+            android:textSize="24sp"
             android:textStyle="bold" />
 
-        <!-- Role badge chip — orange pill, matches login's button color -->
         <TextView
             android:id="@+id/txtRoleBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Student"
+            android:text="نقش"
             android:textColor="#FF6B00"
             android:textSize="12sp"
             android:textStyle="bold"
@@ -136,7 +129,6 @@
 
     </LinearLayout>
 
-    <!-- Dashboard card list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewDashboard"
         android:layout_width="match_parent"
@@ -144,6 +136,7 @@
         android:clipToPadding="false"
         android:paddingTop="16dp"
         android:paddingBottom="40dp"
+        android:layoutAnimation="@anim/layout_anim_slide_up"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/greetingSection" />
 
