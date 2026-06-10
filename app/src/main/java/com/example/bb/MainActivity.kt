@@ -3,6 +3,7 @@ package com.example.bb
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,22 +20,50 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // ۱. خواندن نقش فرستاده شده از لاگین
+        // ۱. خواندن نقش و یوزرنیم فرستاده شده از لاگین
         val roleString = intent.getStringExtra("USER_ROLE") ?: "STUDENT"
+        val usernameString = intent.getStringExtra("USERNAME") ?: "کاربر"
+
         currentUserRole = try {
             UserRole.valueOf(roleString)
         } catch (e: Exception) {
             UserRole.STUDENT
         }
 
-        // ================= اتصال دکمه پروفایل (اصلاح آی‌دی به btnProfile) =================
+        // ================= تنظیم هدر (خوش‌آمدگویی، نام و نقش) =================
+        val txtGreeting = findViewById<TextView>(R.id.txtGreeting)
+        val txtUserName = findViewById<TextView>(R.id.txtUserName)
+        val txtRoleBadge = findViewById<TextView>(R.id.txtRoleBadge)
+
+        // دریافت ساعت سیستم برای خوش‌آمدگویی هوشمند
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        txtGreeting.text = when (hour) {
+            in 0..11 -> "صبح بخیر 👋"
+            in 12..16 -> "ظهر بخیر ☀️"
+            in 17..19 -> "عصر بخیر 🌇"
+            else -> "شب بخیر 🌙"
+        }
+
+        // قرار دادن یوزرنیم (با حرف اول بزرگ)
+        txtUserName.text = usernameString.replaceFirstChar { it.uppercase() }
+
+        // تنظیم لیبل نقش با اسم‌های فارسی
+        txtRoleBadge.text = when (currentUserRole) {
+            UserRole.STUDENT -> "دانش‌آموز"
+            UserRole.TEACHER -> "استاد"
+            UserRole.ADMIN -> "مدیریت"
+        }
+        // ========================================================================
+
+        // ================= اتصال دکمه پروفایل =================
         val btnProfile = findViewById<ImageView>(R.id.btnProfile)
         btnProfile.setOnClickListener {
             val intent = Intent(this, ProfileActivity::class.java)
-            // فرستادن نقش به صورت حروف کوچک به صفحه پروفایل شما
             intent.putExtra("USER_ROLE", currentUserRole.name.lowercase())
             startActivity(intent)
         }
+
+        // ... (بقیه کدهای مربوط به RecyclerView و کارت‌ها همون قبلی‌ها باشن)
         // ========================================================================
 
         // ۲. تنظیمات مربوط به لیست صفحه هوم
