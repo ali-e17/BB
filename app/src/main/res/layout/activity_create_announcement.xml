@@ -4,32 +4,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:background="#FFFFFF">
-
-    <RelativeLayout
-        android:id="@+id/createToolbar"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        app:layout_constraintTop_toTopOf="parent">
-        <ImageView
-            android:id="@+id/btnCreateBack"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="8dp"
-            android:padding="12dp"
-            android:src="@android:drawable/ic_menu_revert"
-            app:tint="#1D2939" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="ایجاد پیام جدید"
-            android:textColor="#1040D1"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+    android:fitsSystemWindows="true"> <RelativeLayout
+    android:id="@+id/createToolbar"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    app:layout_constraintTop_toTopOf="parent">
+    <ImageView
+        android:id="@+id/btnCreateBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="8dp"
+        android:padding="12dp"
+        android:src="@android:drawable/ic_menu_revert"
+        app:tint="@color/main_text" /> <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:text="ایجاد پیام جدید"
+    android:textColor="@color/title_blue" android:textSize="18sp"
+    android:textStyle="bold" />
+</RelativeLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -47,8 +42,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="ارسال به:"
-                android:textColor="#1D2939"
-                android:textStyle="bold"
+                android:textColor="@color/main_text" android:textStyle="bold"
                 android:gravity="right"
                 android:layout_marginBottom="8dp" />
 
@@ -57,10 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
-                android:textColorHint="#475467"
-                app:hintTextColor="#1040D1"
-                app:boxStrokeColor="#1040D1"
-                app:boxCornerRadiusTopStart="12dp"
+                android:textColorHint="@color/sub_text" app:hintTextColor="@color/title_blue" app:boxStrokeColor="@color/title_blue" app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp">
@@ -69,22 +60,17 @@
                     android:id="@+id/dropdownAudience"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#050709"
-                    android:hint="انتخاب کلاس یا گروه"
+                    android:textColor="@color/main_text" android:hint="انتخاب کلاس یا گروه"
                     android:inputType="none"
                     android:background="@null"
-                    android:popupBackground="#FFFFFF" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:popupBackground="@color/card_background" /> </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
-                android:textColorHint="#475467"
-                app:hintTextColor="#1040D1"
-                app:boxStrokeColor="#1040D1"
-                app:boxCornerRadiusTopStart="12dp"
+                android:textColorHint="@color/sub_text" app:hintTextColor="@color/title_blue" app:boxStrokeColor="@color/title_blue" app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp">
@@ -93,8 +79,7 @@
                     android:id="@+id/etMessageTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#1D2939"
-                    android:hint="عنوان پیام"
+                    android:textColor="@color/main_text" android:hint="عنوان پیام"
                     android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -103,10 +88,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:textColorHint="#475467"
-                app:hintTextColor="#1040D1"
-                app:boxStrokeColor="#1040D1"
-                app:boxCornerRadiusTopStart="12dp"
+                android:textColorHint="@color/sub_text" app:hintTextColor="@color/title_blue" app:boxStrokeColor="@color/title_blue" app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp">
@@ -116,8 +98,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:minLines="6"
-                    android:textColor="#1D2939"
-                    android:hint="متن پیام خود را بنویسید..."
+                    android:textColor="@color/main_text" android:hint="متن پیام خود را بنویسید..."
                     android:gravity="top"
                     android:inputType="textMultiLine" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -128,11 +109,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="الصاق فایل یا جزوه (اختیاری)"
-                android:textColor="#1040D1"
-                app:strokeColor="#1040D1"
-                app:icon="@android:drawable/ic_menu_share"
-                app:iconTint="#1040D1"
-                app:iconGravity="textStart"
+                android:textColor="@color/title_blue" app:strokeColor="@color/title_blue" app:icon="@android:drawable/ic_menu_share"
+                app:iconTint="@color/title_blue" app:iconGravity="textStart"
                 android:layout_marginBottom="24dp"
                 app:cornerRadius="12dp" />
 

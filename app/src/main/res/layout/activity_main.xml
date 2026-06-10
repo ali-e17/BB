@@ -4,15 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:background="#F8FAFF">
-
-    <View
-        android:id="@+id/headerBg"
-        android:layout_width="match_parent"
-        android:layout_height="230dp"
-        android:background="@drawable/bg_top_fade"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/topBar"
@@ -25,7 +17,7 @@
         app:strokeWidth="0dp"
         android:outlineSpotShadowColor="#1A1040D1"
         android:outlineAmbientShadowColor="#20000000"
-        app:cardBackgroundColor="#FFFFFF"
+        app:cardBackgroundColor="@color/card_background"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -40,7 +32,7 @@
                 android:layout_height="48dp"
                 android:padding="12dp"
                 android:src="@android:drawable/ic_menu_myplaces"
-                app:tint="@color/academy_text_dark"
+                app:tint="@color/main_text"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -65,7 +57,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:text="Bayane Bartar"
-                    android:textColor="@color/academy_blue"
+                    android:textColor="@color/title_blue"
                     android:textSize="18sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -76,7 +68,7 @@
                 android:layout_height="48dp"
                 android:padding="12dp"
                 android:src="@android:drawable/ic_menu_preferences"
-                app:tint="@color/academy_text_dark"
+                app:tint="@color/main_text"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -84,11 +76,10 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/greetingSection"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:paddingHorizontal="28dp"
         android:paddingTop="14dp"
         android:paddingBottom="20dp"
@@ -96,38 +87,83 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/txtGreeting"
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/layoutHeaderActions"
+            android:layout_marginEnd="16dp">
+
+            <TextView
+                android:id="@+id/txtGreeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="صبح بخیر 👋"
+                android:textColor="@color/sub_text"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtUserName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="کاربر"
+                android:textColor="@color/main_text"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtRoleBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="نقش"
+                android:textColor="#FF6B00"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_role_badge"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutHeaderActions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="صبح بخیر 👋"
-            android:textColor="#667085"
-            android:textSize="14sp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-        <TextView
-            android:id="@+id/txtUserName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="کاربر"
-            android:textColor="#1D2939"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            <ImageView
+                android:id="@+id/btnThemeToggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_moon"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                app:tint="@color/main_text"
+                android:layout_marginEnd="8dp"
+                android:clickable="true"
+                android:focusable="true"/>
 
-        <TextView
-            android:id="@+id/txtRoleBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="نقش"
-            android:textColor="#FF6B00"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:background="@drawable/bg_role_badge"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="4dp" />
+            <ImageView
+                android:id="@+id/btnLanguageToggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_lang_en"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                app:tint="@color/main_text"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewDashboard"

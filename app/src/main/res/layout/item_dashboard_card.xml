@@ -21,12 +21,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="@color/card_white"
-        app:cardCornerRadius="24dp"
+        app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="24dp"
         app:cardElevation="8dp"
         app:strokeWidth="0dp"
-        android:outlineSpotShadowColor="@color/brand_navy"
-        app:layout_constraintTop_toTopOf="parent"
+        android:outlineSpotShadowColor="@color/title_blue" app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -42,13 +40,14 @@
                 android:id="@+id/iconContainer"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:background="@drawable/bg_circle_icon"> <ImageView
-                android:id="@+id/imgIcon"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_gravity="center"
-                android:src="@android:drawable/ic_menu_agenda"
-                app:tint="@color/brand_orange" />
+                android:background="@drawable/bg_circle_icon">
+                <ImageView
+                    android:id="@+id/imgIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_agenda"
+                    app:tint="@color/brand_orange" />
             </FrameLayout>
 
             <LinearLayout
@@ -62,8 +61,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="عنوان بخش"
-                    android:textColor="@color/text_primary"
-                    android:textSize="17sp"
+                    android:textColor="@color/main_text" android:textSize="17sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -72,8 +70,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="توضیحات کوتاه اینجا"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textColor="@color/sub_text" android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

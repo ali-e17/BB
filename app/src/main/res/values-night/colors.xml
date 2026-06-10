@@ -1,0 +1,3 @@
+<resources>
+    <color name="app_background">#0B132B</color> <color name="main_text">#BAE6FD</color> <color name="title_blue">#38BDF8</color> <color name="input_text">#F8FAFC</color> <color name="hint_color">#94A3B8</color>
+</resources>
