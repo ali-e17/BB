@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="6dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:strokeWidth="0dp"
+    app:cardElevation="2dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <FrameLayout
+            android:id="@+id/avatarContainer"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/bg_circle_icon"
+            android:backgroundTint="#E0EAFF">
+            <TextView
+                android:id="@+id/txtAvatar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="#1040D1"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:text="B" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@id/avatarContainer"
+            android:layout_alignParentStart="true"
+            android:layout_marginEnd="12dp"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/txtMsgDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:textColor="#667085"
+                    android:textSize="11sp"
+                    android:text="امروز" />
+                <TextView
+                    android:id="@+id/txtMsgSender"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:textColor="#1D2939"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:text="فرستنده" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/txtMsgTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="right"
+                android:textColor="#1040D1"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="عنوان" />
+
+            <TextView
+                android:id="@+id/txtMsgSnippet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="right"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="#667085"
+                android:textSize="12sp"
+                android:text="خلاصه پیام..." />
+        </LinearLayout>
+    </RelativeLayout>
+</com.google.android.material.card.MaterialCardView>
