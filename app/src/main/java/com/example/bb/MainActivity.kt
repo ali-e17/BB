@@ -92,7 +92,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         recyclerView.adapter = DashboardAdapter(items) { clickedItem ->
-            Toast.makeText(this, "ورود به: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
+            // اگر کاربر روی آیتم‌های مربوط به پیام‌ها و اطلاعیه‌ها کلیک کرد
+            if (clickedItem.title.contains("پیام") || clickedItem.title.contains("اطلاعیه")) {
+                val intent = Intent(this, AnnouncementsActivity::class.java)
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "ورود به: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

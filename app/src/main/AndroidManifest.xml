@@ -17,7 +17,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -30,6 +29,13 @@
             android:name=".ProfileActivity"
             android:exported="false" />
 
-    </application>
+        <activity
+            android:name=".AnnouncementsActivity"
+            android:exported="false" />
 
+        <activity
+            android:name=".AnnouncementDetailActivity"
+            android:exported="false" />
+
+    </application>
 </manifest>
