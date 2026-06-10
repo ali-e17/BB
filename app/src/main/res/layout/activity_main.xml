@@ -31,7 +31,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:padding="12dp"
-                android:src="@android:drawable/ic_menu_myplaces"
+                android:src="@drawable/ic_profile"
                 app:tint="@color/main_text"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -62,16 +62,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <ImageView
-                android:id="@+id/btnSettings"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_preferences"
-                app:tint="@color/main_text"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
