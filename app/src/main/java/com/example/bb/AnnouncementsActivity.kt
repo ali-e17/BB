@@ -2,10 +2,12 @@ package com.example.bb
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.jvm.java
 
 class AnnouncementsActivity : AppCompatActivity() {
 
@@ -18,7 +20,22 @@ class AnnouncementsActivity : AppCompatActivity() {
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewAnnouncements)
         recyclerView.layoutManager = LinearLayoutManager(this)
+        // خواندن نقش کاربر
+        val userRole = intent.getStringExtra("USER_ROLE") ?: "STUDENT"
 
+        // مدیریت دکمه شناور
+        val fabCreate = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabCreateMessage)
+
+        if (userRole == "TEACHER" || userRole == "ADMIN") {
+            fabCreate.visibility = View.VISIBLE
+            fabCreate.setOnClickListener {
+                val intent = Intent(this, CreateAnnouncementActivity::class.java)
+                intent.putExtra("USER_ROLE", userRole)
+                startActivity(intent)
+            }
+        } else {
+            fabCreate.visibility = View.GONE
+        }
         val mockData = listOf(
             Announcement("1", "تغییر ساعت کلاس ترم ۶", "کلاس فردا به جای ساعت ۱۰، ساعت ۱۳ برگزار می‌شود.", "آموزشگاه", "امروز", MessageType.TEXT_ONLY),
             Announcement("2", "جزوه فصل سوم زبان عمومی", "جزوه گرامر پیشرفته آپلود شد.", "استاد کمالی", "دیروز", MessageType.FILE_UPLOAD, "Grammar_Session3.pdf"),

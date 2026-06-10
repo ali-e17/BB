@@ -92,9 +92,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         recyclerView.adapter = DashboardAdapter(items) { clickedItem ->
-            // اگر کاربر روی آیتم‌های مربوط به پیام‌ها و اطلاعیه‌ها کلیک کرد
-            if (clickedItem.title.contains("پیام") || clickedItem.title.contains("اطلاعیه")) {
+            if (clickedItem.title.contains("پیام") || clickedItem.title.contains("اطلاع")) {
                 val intent = Intent(this, AnnouncementsActivity::class.java)
+                // این یک خط رو اضافه کن تا نقش به صفحه پیام‌ها فرستاده بشه
+                intent.putExtra("USER_ROLE", currentUserRole.name)
                 startActivity(intent)
             } else {
                 Toast.makeText(this, "ورود به: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
