@@ -4,58 +4,51 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:background="#FFFFFF">
+    android:fitsSystemWindows="true"> <com.google.android.material.card.MaterialCardView
+    android:id="@+id/topBar"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:layout_marginHorizontal="20dp"
+    android:layout_marginTop="16dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="16dp"
+    app:strokeWidth="0dp"
+    android:outlineSpotShadowColor="#1A1040D1"
+    android:outlineAmbientShadowColor="#20000000"
+    app:cardBackgroundColor="@color/card_background" app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent">
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/topBar"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="16dp"
-        app:strokeWidth="0dp"
-        android:outlineSpotShadowColor="#1A1040D1"
-        android:outlineAmbientShadowColor="#20000000"
-        app:cardBackgroundColor="#F8FAFF"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_height="match_parent">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <ImageView
+            android:id="@+id/btnDetailBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:padding="12dp"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="@color/main_text" /> <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/btnDetailBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="#1D2939" />
+        <TextView
+            android:id="@+id/txtDetailTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/main_text" android:textSize="22sp"
+            android:textStyle="bold"
+            android:text="عنوان کامل پیام" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/txtDetailTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="#1D2939"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:text="عنوان کامل پیام" />
-
-            </LinearLayout>
-        </RelativeLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+    </RelativeLayout>
+</com.google.android.material.card.MaterialCardView>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -82,7 +75,7 @@
                     android:layout_height="40dp"
                     android:layout_alignParentEnd="true"
                     android:background="@drawable/bg_circle_icon"
-                    android:backgroundTint="#FFF0E6">
+                    android:backgroundTint="@color/card_background" android:backgroundTintMode="src_atop">
                     <TextView
                         android:id="@+id/txtDetailAvatar"
                         android:layout_width="wrap_content"
@@ -104,16 +97,14 @@
                         android:id="@+id/txtDetailSender"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#1D2939"
-                        android:textSize="14sp"
+                        android:textColor="@color/main_text" android:textSize="14sp"
                         android:textStyle="bold"
                         android:text="فرستنده" />
                     <TextView
                         android:id="@+id/txtDetailDate"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#667085"
-                        android:textSize="12sp"
+                        android:textColor="@color/sub_text" android:textSize="12sp"
                         android:text="تاریخ" />
                 </LinearLayout>
             </RelativeLayout>
@@ -124,8 +115,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="right"
                 android:lineSpacingMultiplier="1.4"
-                android:textColor="#1D2939"
-                android:textSize="15sp"
+                android:textColor="@color/main_text" android:textSize="15sp"
                 android:text="متن کامل پیام..." />
 
             <com.google.android.material.card.MaterialCardView
@@ -137,8 +127,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:visibility="gone"
-                app:cardBackgroundColor="#F5F6F8"
-                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="12dp"
                 app:strokeWidth="0dp">
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -151,29 +140,26 @@
                         android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
                         android:src="@android:drawable/stat_sys_download"
-                        app:tint="#1040D1" />
-                    <LinearLayout
+                        app:tint="@color/title_blue" /> <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:gravity="end"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/txtFileName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:gravity="end"
-                        android:orientation="vertical">
-                        <TextView
-                            android:id="@+id/txtFileName"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="#1D2939"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:text="filename.pdf" />
-                        <TextView
-                            android:id="@+id/txtFileTypeLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="#667085"
-                            android:textSize="12sp"
-                            android:text="جزوه آموزشی" />
-                    </LinearLayout>
+                        android:textColor="@color/main_text" android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:text="filename.pdf" />
+                    <TextView
+                        android:id="@+id/txtFileTypeLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/sub_text" android:textSize="12sp"
+                        android:text="جزوه آموزشی" />
+                </LinearLayout>
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

@@ -1,11 +1,13 @@
 package com.example.bb
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -15,6 +17,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var currentUserRole: UserRole
+
+    // متغیر موقتی برای نگهداری وضعیت زبان
+    private var isEnglish: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +60,56 @@ class MainActivity : AppCompatActivity() {
         }
         // ========================================================================
 
+        // ================= اتصال دکمه‌های جدید (تم و زبان) =================
+        val btnThemeToggle = findViewById<ImageView>(R.id.btnThemeToggle)
+        val btnLanguageToggle = findViewById<ImageView>(R.id.btnLanguageToggle)
+
+        // چک کردن حالتِ فعلیِ سیستم جهت قرار دادن آیکون صحیح (خورشید یا ماه)
+        val currentMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        if (currentMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+            btnThemeToggle.setImageResource(R.drawable.ic_sun) // اگر تم تاریک است، آیکون خورشید را نشان بده
+        } else {
+            btnThemeToggle.setImageResource(R.drawable.ic_moon) // اگر تم روشن است، آیکون ماه را نشان بده
+        }
+
+        // تنظیم آیکون زبان موقع بالا آمدن برنامه (فعلاً روی EN)
+        btnLanguageToggle.setImageResource(if (isEnglish) R.drawable.ic_lang_en else R.drawable.ic_lang_fa)
+
+        // ۳. منطق دکمه تم (به‌روزرسانی شده با SharedPreferences برای ذخیره سراسری)
+        // منطق دکمه تم (نسخه اصلاح‌شده و بدون خطا)
+        btnThemeToggle.setOnClickListener {
+            val sharedPrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
+            val editor = sharedPrefs.edit()
+
+            // چک کردن وضعیت لایو و لحظه‌ای تم گوشی در زمان کلیک
+            val checkMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+
+            if (checkMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                editor.putBoolean("IS_DARK_MODE", false)
+                Toast.makeText(this, "حالت روشن فعال شد", Toast.LENGTH_SHORT).show()
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                editor.putBoolean("IS_DARK_MODE", true)
+                Toast.makeText(this, "حالت تاریک فعال شد", Toast.LENGTH_SHORT).show()
+            }
+            editor.apply()
+        }
+
+        // ۴. منطق دکمه تغییر زبان
+        btnLanguageToggle.setOnClickListener {
+            if (isEnglish) {
+                isEnglish = false
+                btnLanguageToggle.setImageResource(R.drawable.ic_lang_fa)
+                Toast.makeText(this, "English language activated (Simulation)", Toast.LENGTH_SHORT).show()
+            } else {
+                isEnglish = true
+                btnLanguageToggle.setImageResource(R.drawable.ic_lang_en)
+                Toast.makeText(this, "زبان فارسی فعال شد (شبیه‌سازی)", Toast.LENGTH_SHORT).show()
+            }
+        }
+        // ========================================================================
+
         // ================= اتصال دکمه پروفایل =================
         val btnProfile = findViewById<ImageView>(R.id.btnProfile)
         btnProfile.setOnClickListener {
@@ -62,11 +117,9 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("USER_ROLE", currentUserRole.name.lowercase())
             startActivity(intent)
         }
-
-        // ... (بقیه کدهای مربوط به RecyclerView و کارت‌ها همون قبلی‌ها باشن)
         // ========================================================================
 
-        // ۲. تنظیمات مربوط به لیست صفحه هوم
+        // ۲. تنظیمات مربوط به لیست صفحه هوم (RecyclerView)
         recyclerView = findViewById(R.id.recyclerViewDashboard)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -84,7 +137,7 @@ class MainActivity : AppCompatActivity() {
             }
             UserRole.ADMIN -> {
                 items.add(DashboardItem("مدیریت نمرات", "ثبت و تایید نمرات نهایی ترم", android.R.drawable.ic_menu_edit))
-                items.add(DashboardItem("تعریف کلاس‌ها", "مدیریت زمان‌بندی و ظرفیت کلاس", android.R.drawable.ic_input_add))
+                items.add(DashboardItem("تعریف کلاس‌ها", "مدیریت زمان‌ب بندی و ظرفیت کلاس", android.R.drawable.ic_input_add))
                 items.add(DashboardItem("اطلاع‌رسانی کل", "ارسال اخبار سراسری آموزشگاه", android.R.drawable.ic_menu_send))
                 items.add(DashboardItem("مدیریت دانش‌آموزان", "ثبت‌نام و ویرایش پروفایل زبان‌آموز", android.R.drawable.ic_menu_myplaces))
                 items.add(DashboardItem("پنل اساتید", "مدیریت و تخصیص کلاس به اساتید", android.R.drawable.ic_menu_recent_history))

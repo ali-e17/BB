@@ -16,4 +16,9 @@
     <color name="bg_orange_light">#FFF0E6</color>
     <color name="bg_green_light">#DCFAE6</color>
     <color name="bg_purple_light">#F4EBFF</color>
+    <color name="app_background">#F8FAFF</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="main_text">#1D2939</color>
+    <color name="sub_text">#667085</color>
+    <color name="hint_color">#64748B</color>
 </resources>
