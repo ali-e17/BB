@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/app_global_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/ivLogo"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/final50cm" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ویرایش حساب کاربری"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/title_blue"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="تغییر نام کاربری"
+            android:textColor="@color/title_blue"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:gravity="right"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutNewUsername"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="نام کاربری جدید"
+            app:hintTextColor="#FF6B00"
+            android:textColorHint="@color/hint_color"
+            app:boxStrokeColor="@color/title_blue"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNewUsername"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:textColor="@color/input_text"
+                android:textStyle="bold"
+                android:textDirection="ltr"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnUpdateUsername"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="تغییر نام کاربری"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF6B00"
+            app:cornerRadius="12dp"
+            android:layout_marginBottom="32dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="تغییر رمز عبور"
+            android:textColor="@color/title_blue"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:gravity="right"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutOldPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="رمز عبور فعلی"
+            android:layoutDirection="rtl"
+            app:hintTextColor="#FF6B00"
+            android:textColorHint="@color/hint_color"
+            app:boxStrokeColor="@color/title_blue"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/title_blue"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etOldPassword"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:textColor="@color/input_text"
+                android:textStyle="bold"
+                android:textDirection="ltr"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutNewPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="رمز عبور جدید"
+            android:layoutDirection="rtl"
+            app:hintTextColor="#FF6B00"
+            android:textColorHint="@color/hint_color"
+            app:boxStrokeColor="@color/title_blue"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/title_blue"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNewPassword"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:textColor="@color/input_text"
+                android:textStyle="bold"
+                android:textDirection="ltr"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutConfirmPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:hint="تکرار رمز عبور جدید"
+            android:layoutDirection="rtl"
+            app:hintTextColor="#FF6B00"
+            android:textColorHint="@color/hint_color"
+            app:boxStrokeColor="@color/title_blue"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/title_blue"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:textColor="@color/input_text"
+                android:textStyle="bold"
+                android:textDirection="ltr"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnUpdatePassword"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="تغییر رمز عبور"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF6B00"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</ScrollView>

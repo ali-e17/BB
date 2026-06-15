@@ -31,6 +31,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".UpdateProfileActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".AnnouncementsActivity"
             android:exported="false" />
 
