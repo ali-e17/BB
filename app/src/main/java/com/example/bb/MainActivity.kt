@@ -18,9 +18,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var currentUserRole: UserRole
 
-    // متغیر موقتی برای نگهداری وضعیت زبان
-    private var isEnglish: Boolean = true
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -62,26 +59,31 @@ class MainActivity : AppCompatActivity() {
 
         // ================= اتصال دکمه‌های جدید (تم و زبان) =================
         val btnThemeToggle = findViewById<ImageView>(R.id.btnThemeToggle)
-        val btnLanguageToggle = findViewById<ImageView>(R.id.btnLanguageToggle)
+        val btnLanguageToggle = findViewById<TextView>(R.id.btnLanguageToggle)
 
-        // چک کردن حالتِ فعلیِ سیستم جهت قرار دادن آیکون صحیح (خورشید یا ماه)
+        // الف) چک کردن حالتِ فعلیِ سیستم جهت قرار دادن آیکون صحیح تم (خورشید یا ماه)
         val currentMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         if (currentMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
-            btnThemeToggle.setImageResource(R.drawable.ic_sun) // اگر تم تاریک است، آیکون خورشید را نشان بده
+            btnThemeToggle.setImageResource(R.drawable.ic_sun)
         } else {
-            btnThemeToggle.setImageResource(R.drawable.ic_moon) // اگر تم روشن است، آیکون ماه را نشان بده
+            btnThemeToggle.setImageResource(R.drawable.ic_moon)
         }
 
-        // تنظیم آیکون زبان موقع بالا آمدن برنامه (فعلاً روی EN)
-        btnLanguageToggle.setImageResource(if (isEnglish) R.drawable.ic_lang_en else R.drawable.ic_lang_fa)
+        // ب) خواندن وضعیت پایدار زبان از SharedPreferences و تنظیم متن اولیه دکمه
+        val sharedPrefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        var currentLanguage = sharedPrefs.getString("APP_LANGUAGE", "fa") ?: "fa"
 
-        // ۳. منطق دکمه تم (به‌روزرسانی شده با SharedPreferences برای ذخیره سراسری)
-        // منطق دکمه تم (نسخه اصلاح‌شده و بدون خطا)
+        if (currentLanguage == "fa") {
+            btnLanguageToggle.text = "EN" // لایوت فارسی است، پیشنهاد دکمه انگلیسی است
+        } else {
+            btnLanguageToggle.text = "فا" // لایوت انگلیسی است، پیشنهاد دکمه فارسی است
+        }
+
+        // ۳. منطق دکمه تم
         btnThemeToggle.setOnClickListener {
-            val sharedPrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
-            val editor = sharedPrefs.edit()
+            val themePrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
+            val editor = themePrefs.edit()
 
-            // چک کردن وضعیت لایو و لحظه‌ای تم گوشی در زمان کلیک
             val checkMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
 
             if (checkMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
@@ -96,17 +98,22 @@ class MainActivity : AppCompatActivity() {
             editor.apply()
         }
 
-        // ۴. منطق دکمه تغییر زبان
+        // ۴. منطق دکمه جدید تغییر زبان متنی کاملاً همسان
         btnLanguageToggle.setOnClickListener {
-            if (isEnglish) {
-                isEnglish = false
-                btnLanguageToggle.setImageResource(R.drawable.ic_lang_fa)
-                Toast.makeText(this, "English language activated (Simulation)", Toast.LENGTH_SHORT).show()
+            val editor = sharedPrefs.edit()
+
+            if (currentLanguage == "fa") {
+                currentLanguage = "en"
+                btnLanguageToggle.text = "فا"
+                editor.putString("APP_LANGUAGE", "en")
+                Toast.makeText(this, "Language changed to English (Simulation)", Toast.LENGTH_SHORT).show()
             } else {
-                isEnglish = true
-                btnLanguageToggle.setImageResource(R.drawable.ic_lang_en)
-                Toast.makeText(this, "زبان فارسی فعال شد (شبیه‌سازی)", Toast.LENGTH_SHORT).show()
+                currentLanguage = "fa"
+                btnLanguageToggle.text = "EN"
+                editor.putString("APP_LANGUAGE", "fa")
+                Toast.makeText(this, "زبان به فارسی تغییر یافت (شبیه‌سازی)", Toast.LENGTH_SHORT).show()
             }
+            editor.apply()
         }
         // ========================================================================
 
@@ -147,7 +154,6 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = DashboardAdapter(items) { clickedItem ->
             if (clickedItem.title.contains("پیام") || clickedItem.title.contains("اطلاع")) {
                 val intent = Intent(this, AnnouncementsActivity::class.java)
-                // این یک خط رو اضافه کن تا نقش به صفحه پیام‌ها فرستاده بشه
                 intent.putExtra("USER_ROLE", currentUserRole.name)
                 startActivity(intent)
             } else {
