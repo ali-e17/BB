@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="6dp"
+    android:animateLayoutChanges="true"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="12dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/headerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/imgExpandArrow"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_arrow_down_clean"
+                app:tint="@color/sub_text" />
+
+            <ImageView
+                android:id="@+id/btnPreviewCard"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_toEndOf="@id/imgExpandArrow"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="12dp"
+                android:src="@android:drawable/ic_menu_view"
+                app:tint="@color/title_blue"
+                android:visibility="gone" /> <TextView
+            android:id="@+id/txtStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/btnPreviewCard"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/bg_role_badge"
+            android:backgroundTint="#FEE2E2"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:text="شروع نشده"
+            android:textColor="#EF4444"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtStudentName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="نام دانشجو"
+                android:textColor="@color/main_text"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:id="@+id/expandableBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="16dp"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#1AFFFFFF"
+                android:layout_marginBottom="8dp"/>
+
+            <LinearLayout
+                android:id="@+id/containerGrades"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

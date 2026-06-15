@@ -150,7 +150,11 @@ class MainActivity : AppCompatActivity() {
                 // این یک خط رو اضافه کن تا نقش به صفحه پیام‌ها فرستاده بشه
                 intent.putExtra("USER_ROLE", currentUserRole.name)
                 startActivity(intent)
-            } else {
+            } else if (clickedItem.title.contains("نمرات")) {
+                val intent = Intent(this, ReportCardSetupActivity::class.java)
+                startActivity(intent)
+            }
+            else {
                 Toast.makeText(this, "ورود به: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
             }
         }
