@@ -1,5 +1,6 @@
 package com.example.bb
 
+import android.content.Intent
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -9,6 +10,7 @@ import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import java.util.ArrayList
 
 class StudentGradeAdapter(
     private val students: List<StudentGrade>,
@@ -16,7 +18,6 @@ class StudentGradeAdapter(
     private val onStatusChanged: () -> Unit
 ) : RecyclerView.Adapter<StudentGradeAdapter.ViewHolder>() {
 
-    // متغیری برای ذخیره موقعیت آیتمی که الان باز است. 1- یعنی پیش‌فرض هیچکدام باز نیست.
     private var expandedPosition = -1
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -38,37 +39,54 @@ class StudentGradeAdapter(
         val student = students[position]
         holder.txtStudentName.text = student.name
 
-        // آپدیت وضعیت ظاهری (متن و رنگِ لیبل وضعیت)
         updateStatusUI(holder, student)
 
-        // --- منطق باز و بسته شدن هوشمند (آکاردئون تکی) ---
         val isExpanded = position == expandedPosition
         holder.expandableBody.visibility = if (isExpanded) View.VISIBLE else View.GONE
         holder.imgExpandArrow.rotation = if (isExpanded) 180f else 0f
 
+        // هندل کردن باز و بسته شدن کشو
         holder.headerLayout.setOnClickListener {
             val previousExpandedPosition = expandedPosition
 
             if (isExpanded) {
-                // اگر روی همین آیتمی که بازه کلیک کرد، ببندش
                 expandedPosition = -1
             } else {
-                // اگر روی یه آیتم دیگه کلیک کرد، قبلی رو ببند و این یکی رو باز کن
                 expandedPosition = holder.adapterPosition
             }
 
-            // به آداپتور میگیم فقط همین دو تا آیتم رو دوباره رفرش کن تا انیمیشن باز و بسته شدن اجرا بشه
             notifyItemChanged(previousExpandedPosition)
             notifyItemChanged(expandedPosition)
         }
 
-        // دکمه پیش‌نمایش
+        // ====== منطق دکمه پیش‌نمایش (چشم) ======
         holder.btnPreviewCard.setOnClickListener {
-            Toast.makeText(holder.itemView.context, "نمایش پیش‌نمایش کارنامه ${student.name}", Toast.LENGTH_SHORT).show()
+            val context = holder.itemView.context
+            val intent = Intent(context, ReportCardViewActivity::class.java)
+
+            // Pass Student ID and Full Name
+            intent.putExtra("STUDENT_ID", student.id)
+            intent.putExtra("STUDENT_NAME", student.name)
+
+            val criteriaNames = ArrayList<String>()
+            val scoresList = ArrayList<Int>()
+            val maxScoresList = ArrayList<Int>()
+
+            for (criteria in activeCriteria) {
+                criteriaNames.add(criteria.name)
+                scoresList.add(student.scores[criteria.id] ?: 0)
+                maxScoresList.add(criteria.maxScore) // Pass max value for "Out of" column
+            }
+
+            intent.putStringArrayListExtra("CRITERIA_NAMES", criteriaNames)
+            intent.putIntegerArrayListExtra("SCORES_LIST", scoresList)
+            intent.putIntegerArrayListExtra("MAX_SCORES_LIST", maxScoresList)
+
+            context.startActivity(intent)
         }
 
-        // --- تزریق داینامیک فیلدهای نمره ---
-        holder.containerGrades.removeAllViews() // پاکسازی قبلی‌ها برای جلوگیری از تکرار روی هم
+        // پاکسازی و تزریق داینامیک فیلدهای نمره
+        holder.containerGrades.removeAllViews()
         val inflater = LayoutInflater.from(holder.itemView.context)
 
         for (criteria in activeCriteria) {
@@ -76,24 +94,18 @@ class StudentGradeAdapter(
 
             val txtName = gradeView.findViewById<TextView>(R.id.txtCriteriaName)
             val etInput = gradeView.findViewById<TextInputEditText>(R.id.etScoreInput)
-            // از آیدی textInputLayoutScore که تو مرحله قبل ساختی استفاده می‌کنیم تا کرش نکنه
             val inputLayout = gradeView.findViewById<TextInputLayout>(R.id.textInputLayoutScore)
             val btnAbsent = gradeView.findViewById<Button>(R.id.btnAbsent)
 
             txtName.text = criteria.name
             inputLayout.hint = "از ${criteria.maxScore}"
 
-            // اگر قبلاً نمره‌ای برای این فیلد وارد شده بود، روی صفحه نشون بده
             student.scores[criteria.id]?.let { etInput.setText(it.toString()) }
 
-            // دکمه غایب (صفر دادن سریع)
             btnAbsent.setOnClickListener {
                 etInput.setText("0")
             }
 
-            // گوش دادن به تایپ شدن نمره
-
-            // گوش دادن به تایپ شدن نمره و اعتبارسنجی
             etInput.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -101,18 +113,17 @@ class StudentGradeAdapter(
                     val inputText = s.toString()
                     val score = inputText.toIntOrNull()
 
-                    // چک کردن قانون نمره (نباید بیشتر از سقف یا کمتر از صفر باشه)
+                    // اعتبارسنجی نمره
                     if (score != null && (score > criteria.maxScore || score < 0)) {
-                        inputLayout.error = "حداکثر: ${criteria.maxScore}" // متن ارور رو کوتاه و شیک کردیم
+                        inputLayout.error = "حداکثر: ${criteria.maxScore}"
                         student.scores[criteria.id] = null
                     } else {
                         inputLayout.error = null
                         student.scores[criteria.id] = score
                     }
 
-                    recalculateStudentStatus(student) // محاسبه مجدد وضعیت دانشجو
+                    recalculateStudentStatus(student)
 
-                    // آپدیت کردن ظاهر و چک کردن دکمه پابلیش
                     if (holder.adapterPosition != RecyclerView.NO_POSITION) {
                         updateStatusUI(holder, student)
                         onStatusChanged()
@@ -124,7 +135,6 @@ class StudentGradeAdapter(
         }
     }
 
-    // متدی برای محاسبه وضعیت دانشجو (شروع نشده، در حال ثبت، تکمیل شده)
     private fun recalculateStudentStatus(student: StudentGrade) {
         val filledCount = activeCriteria.count { student.scores[it.id] != null }
         student.status = when (filledCount) {
@@ -134,23 +144,22 @@ class StudentGradeAdapter(
         }
     }
 
-    // متدی برای آپدیت رنگ و متنِ لیبلِ وضعیتِ دانشجو
     private fun updateStatusUI(holder: ViewHolder, student: StudentGrade) {
         when (student.status) {
             EntryStatus.NOT_STARTED -> {
                 holder.txtStatusBadge.text = "شروع نشده"
-                holder.txtStatusBadge.setTextColor(0xFFEF4444.toInt()) // قرمز
+                holder.txtStatusBadge.setTextColor(0xFFEF4444.toInt())
                 holder.btnPreviewCard.visibility = View.GONE
             }
             EntryStatus.IN_PROGRESS -> {
                 holder.txtStatusBadge.text = "در حال ثبت"
-                holder.txtStatusBadge.setTextColor(0xFFF59E0B.toInt()) // زرد
+                holder.txtStatusBadge.setTextColor(0xFFF59E0B.toInt())
                 holder.btnPreviewCard.visibility = View.GONE
             }
             EntryStatus.COMPLETED -> {
                 holder.txtStatusBadge.text = "تکمیل شده"
-                holder.txtStatusBadge.setTextColor(0xFF10B981.toInt()) // سبز
-                holder.btnPreviewCard.visibility = View.VISIBLE // چشمِ پیش‌نمایش فعال میشه
+                holder.txtStatusBadge.setTextColor(0xFF10B981.toInt())
+                holder.btnPreviewCard.visibility = View.VISIBLE
             }
         }
     }
