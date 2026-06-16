@@ -10,4 +10,6 @@
 
     <color name="input_text">#F8FAFC</color>
     <color name="hint_color">#64748B</color>
+    <color name="logout_text_color">#FFEBEE</color>
+    <color name="logout_bg_color">#D32F2F</color>
 </resources>

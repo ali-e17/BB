@@ -15,6 +15,24 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // خواندن وضعیت پایدار زبان و لاگین از SharedPrefs
+        val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+
+        // کنترل سشن: اگر کاربر قبلاً لاگین کرده باشد، مستقیم وارد برنامه می‌شود
+        val isLoggedIn = sharedPreferences.getBoolean("IS_LOGGED_IN", false)
+        if (isLoggedIn) {
+            val savedRole = sharedPreferences.getString("CURRENT_USER_ROLE", "STUDENT") ?: "STUDENT"
+            val savedUsername = sharedPreferences.getString("CURRENT_USERNAME", "student") ?: "student"
+
+            val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("USER_ROLE", savedRole)
+            intent.putExtra("USERNAME", savedUsername)
+            startActivity(intent)
+            finish()
+            return // قطع اجرای بقیه متد onCreate
+        }
+
         setContentView(R.layout.activity_login)
 
         // ۱. اتصال المان‌های قدیمی لایوت
@@ -34,8 +52,6 @@ class LoginActivity : AppCompatActivity() {
             btnThemeToggle.setImageResource(R.drawable.ic_moon)
         }
 
-        // ب) خواندن وضعیت پایدار زبان از SharedPrefs و تنظیم متن دکمه
-        val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
         var currentLanguage = sharedPreferences.getString("APP_LANGUAGE", "fa") ?: "fa"
 
         if (currentLanguage == "fa") {
@@ -90,7 +106,7 @@ class LoginActivity : AppCompatActivity() {
             etPassword.hint = if (hasFocus) "Enter Password" else ""
         }
 
-        // منطق دکمه ورود (ثابت و بدون تغییر)
+        // منطق دکمه ورود
         btnLogin.setOnClickListener {
             val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
@@ -126,6 +142,14 @@ class LoginActivity : AppCompatActivity() {
 
             if (role != null) {
                 Toast.makeText(this, "ورود با موفقیت انجام شد", Toast.LENGTH_SHORT).show()
+
+                // ذخیره اطلاعات وضعیت ورود پایدار در دیتابیس لوکال اپ
+                sharedPreferences.edit().apply {
+                    putBoolean("IS_LOGGED_IN", true)
+                    putString("CURRENT_USER_ROLE", role)
+                    putString("CURRENT_USERNAME", username)
+                    apply()
+                }
 
                 val intent = Intent(this, MainActivity::class.java)
                 intent.putExtra("USER_ROLE", role)

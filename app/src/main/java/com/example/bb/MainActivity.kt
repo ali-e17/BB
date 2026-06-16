@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity() {
             }
             UserRole.ADMIN -> {
                 items.add(DashboardItem("مدیریت نمرات", "ثبت و تایید نمرات نهایی ترم", android.R.drawable.ic_menu_edit))
-                items.add(DashboardItem("تعریف کلاس‌ها", "مدیریت زمان‌ب بندی و ظرفیت کلاس", android.R.drawable.ic_input_add))
+                items.add(DashboardItem("مدیریت کلاس‌ها", "مدیریت زمان‌ بندی و ظرفیت کلاس", android.R.drawable.ic_input_add))
                 items.add(DashboardItem("اطلاع‌رسانی کل", "ارسال اخبار سراسری آموزشگاه", android.R.drawable.ic_menu_send))
                 items.add(DashboardItem("مدیریت دانش‌آموزان", "ثبت‌نام و ویرایش پروفایل زبان‌آموز", android.R.drawable.ic_menu_myplaces))
                 items.add(DashboardItem("پنل اساتید", "مدیریت و تخصیص کلاس به اساتید", android.R.drawable.ic_menu_recent_history))
