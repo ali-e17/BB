@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="#D1D5DB"> <RelativeLayout
+    android:id="@+id/viewToolbar"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:background="#FFFFFF"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <ImageView
+        android:id="@+id/btnViewBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="8dp"
+        android:padding="12dp"
+        android:src="@android:drawable/ic_menu_revert"
+        app:tint="#2B4E78" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="پیش‌نمایش کارنامه"
+        android:textColor="#2B4E78"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+</RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingBottom="16dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/viewToolbar"
+        app:layout_constraintBottom_toTopOf="@id/btnDownloadPdf">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="4dp"
+            app:cardElevation="10dp">
+
+            <LinearLayout
+                android:id="@+id/reportCardContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/imgLogo"
+                        android:layout_width="55dp"
+                        android:layout_height="55dp"
+                        android:src="@drawable/final50cm"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_marginStart="8dp"
+                        app:layout_constraintStart_toEndOf="@id/imgLogo"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bayan-E-Bartar Language School"
+                            android:textColor="#2B4E78"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="آموزشگاه زبان‌های خارجی بیان برتر"
+                            android:textColor="#2B4E78"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="bayanebartar95@gmail.com | Phone: 031-42660690"
+                            android:textColor="#4B5563"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_marginTop="8dp"
+                    android:background="#2B4E78" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="#F3F4F6"
+                    android:gravity="center"
+                    android:padding="4dp"
+                    android:text="Official Report Card"
+                    android:textColor="#FF6B00"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.2"
+                        app:cardElevation="0dp"
+                        app:cardCornerRadius="4dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="#2B4E78">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:background="#2B4E78"
+                                android:weightSum="3">
+
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.4" android:padding="6dp" android:text="Subject" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold" android:gravity="center"/>
+                                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#4B5563" />
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.8" android:padding="6dp" android:text="Score" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold" android:gravity="center"/>
+                                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#4B5563" />
+                                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.8" android:padding="6dp" android:text="Out of" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold" android:gravity="center"/>
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/rowsContainer"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <View android:layout_width="12dp" android:layout_height="match_parent" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:cardElevation="0dp"
+                            app:cardCornerRadius="4dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#2B4E78">
+
+                            <TableLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <TableRow android:background="#E5E7EB">
+                                    <TextView android:padding="6dp" android:text="Student ID:" android:textColor="#2B4E78" android:textSize="11sp" android:textStyle="bold" android:gravity="center_vertical|end"/>
+                                    <TextView android:id="@+id/txtReportID" android:padding="6dp" android:text="2602" android:textColor="#000000" android:textSize="11sp" android:gravity="center_vertical|start"/>
+                                </TableRow>
+                                <TableRow android:background="#FFFFFF">
+                                    <TextView android:padding="6dp" android:text="First Name:" android:textColor="#2B4E78" android:textSize="11sp" android:textStyle="bold" android:gravity="center_vertical|end"/>
+                                    <TextView android:id="@+id/txtReportFirstName" android:padding="6dp" android:text="Nazanin" android:textColor="#000000" android:textSize="11sp" android:gravity="center_vertical|start"/>
+                                </TableRow>
+                                <TableRow android:background="#FFFFFF">
+                                    <TextView android:padding="6dp" android:text="Last Name:" android:textColor="#2B4E78" android:textSize="11sp" android:textStyle="bold" android:gravity="center_vertical|end"/>
+                                    <TextView android:id="@+id/txtReportLastName" android:padding="6dp" android:text="Babolkhani" android:textColor="#000000" android:textSize="11sp" android:gravity="center_vertical|start"/>
+                                </TableRow>
+                            </TableLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            app:cardElevation="0dp"
+                            app:cardCornerRadius="4dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#2B4E78">
+
+                            <TableLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="#FFFFFF">
+                                <TableRow android:background="#2B4E78">
+                                    <TextView android:layout_weight="1" android:padding="4dp" android:text="Term:" android:textColor="#FFFFFF" android:gravity="center" android:textSize="11sp" android:textStyle="bold"/>
+                                    <TextView android:layout_weight="1.5" android:padding="4dp" android:text="Level:" android:textColor="#FFFFFF" android:gravity="center" android:textSize="11sp" android:textStyle="bold"/>
+                                </TableRow>
+                                <TableRow>
+                                    <TextView android:layout_weight="1" android:padding="6dp" android:text="1404" android:gravity="center" android:textColor="#000000" android:textSize="11sp"/>
+                                    <TextView android:layout_weight="1.5" android:padding="6dp" android:text="FF1" android:gravity="center" android:textColor="#000000" android:textSize="11sp"/>
+                                </TableRow>
+                            </TableLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/shape_total_box"
+                                android:orientation="vertical"
+                                android:padding="8dp"
+                                android:gravity="center">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Total Score:" android:textStyle="bold" android:textColor="#4B5563" android:textSize="12sp" android:gravity="center"/>
+                                <TextView android:id="@+id/txtReportTotalScore" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="95.75" android:textSize="24sp" android:textStyle="bold" android:textColor="#FF6B00" android:gravity="center"/>
+                            </LinearLayout>
+
+                            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp">
+                                <TableRow>
+                                    <TextView android:layout_weight="1" android:text="Status:" android:textStyle="bold" android:textColor="#2B4E78" android:paddingEnd="8dp" android:gravity="center_vertical|end"/>
+                                    <TextView android:layout_weight="1" android:text="Pass" android:textColor="#10B981" android:textStyle="bold" android:gravity="center_vertical|start"/>
+                                </TableRow>
+                                <TableRow android:layout_marginTop="4dp">
+                                    <TextView android:layout_weight="1" android:text="Rank:" android:textStyle="bold" android:textColor="#2B4E78" android:paddingEnd="8dp" android:gravity="center_vertical|end"/>
+                                    <TextView android:layout_weight="1" android:text="★★★★" android:textColor="#FF6B00" android:textStyle="bold" android:gravity="center_vertical|start"/>
+                                </TableRow>
+                            </TableLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="#F3F4F6"
+                    android:padding="8dp"
+                    android:text="GREAT WORK! This is to certify that you have participated in the term and level above. Your success in learning a new language is our strong desire."
+                    android:textColor="#4B5563"
+                    android:textSize="11sp"
+                    android:gravity="center"
+                    android:fontFamily="serif"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="12dp"
+                    android:background="#9CA3AF" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/lblSupervisor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Supervisor's Signature"
+                        android:textSize="11sp"
+                        android:textColor="#2B4E78"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/lblTeacher"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Teacher's Signature"
+                        android:textSize="11sp"
+                        android:textColor="#2B4E78"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/txtReportDate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:text="Date: 1404/6/5"
+                        android:textColor="#000000"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/lblSupervisor" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnDownloadPdf"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="24dp"
+        android:text="دانلود فایل PDF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#FF6B00"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

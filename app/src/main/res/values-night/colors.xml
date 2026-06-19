@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="card_background">#212E53</color>
+    <color name="app_background">#0B132B</color>
+
+    <color name="main_text">#BAE6FD</color>
+    <color name="title_blue">#38BDF8</color>
+
+    <color name="sub_text">#94A3B8</color>
+
+    <color name="input_text">#F8FAFC</color>
+    <color name="hint_color">#64748B</color>
+    <color name="logout_text_color">#FFEBEE</color>
+    <color name="logout_bg_color">#D32F2F</color>
+</resources>

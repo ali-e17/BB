@@ -3,17 +3,48 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="#FFFFFF">
+    android:fillViewport="true">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:background="@drawable/login_top_gradient" />
+        <LinearLayout
+            android:id="@+id/layoutLoginActions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp">
+
+            <ImageView
+                android:id="@+id/btnThemeToggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_moon"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                app:tint="@color/main_text"
+                android:layout_marginEnd="12dp"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:id="@+id/btnLanguageToggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="EN"
+                android:textColor="@color/main_text"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,7 +66,7 @@
                 android:text="Bayane Bartar"
                 android:textSize="28sp"
                 android:textStyle="bold"
-                android:textColor="#1E3A8A"
+                android:textColor="@color/title_blue"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="40dp" />
 
@@ -45,7 +76,7 @@
                 android:text="WELCOME"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#1E293B"
+                android:textColor="@color/main_text"
                 android:layout_marginBottom="24dp" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -56,7 +87,7 @@
                 android:layout_marginBottom="16dp"
                 android:hint="Username"
                 app:hintTextColor="#FF6B00"
-                android:textColorHint="#2B2727"
+                android:textColorHint="@color/hint_color"
                 app:boxStrokeColor="@color/box_stroke_selector"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -67,9 +98,9 @@
                     android:id="@+id/etUsername"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:textColor="#000000"
+                    android:textColor="@color/input_text"
                     android:textStyle="bold"
-                    android:textColorHint="#2B2727"
+                    android:textColorHint="@color/hint_color"
                     android:textDirection="ltr"
                     android:inputType="textVisiblePassword" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -82,10 +113,10 @@
                 android:layout_marginBottom="32dp"
                 android:hint="Password"
                 app:hintTextColor="#FF6B00"
-                android:textColorHint="#2B2727"
+                android:textColorHint="@color/hint_color"
                 app:boxStrokeColor="@color/box_stroke_selector"
                 app:passwordToggleEnabled="true"
-                app:passwordToggleTint="#1E3A8A"
+                app:passwordToggleTint="@color/title_blue"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
@@ -95,9 +126,9 @@
                     android:id="@+id/etPassword"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:textColor="#000000"
+                    android:textColor="@color/input_text"
                     android:textStyle="bold"
-                    android:textColorHint="#2B2727"
+                    android:textColorHint="@color/hint_color"
                     android:textDirection="ltr"
                     android:inputType="textPassword" />
             </com.google.android.material.textfield.TextInputLayout>
