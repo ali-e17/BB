@@ -57,5 +57,11 @@
         <activity
             android:name=".ReportCardViewActivity"
             android:exported="false" />
+        <activity
+            android:name=".StudentManagementActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AddEditStudentActivity"
+            android:exported="false" />
     </application>
 </manifest>
