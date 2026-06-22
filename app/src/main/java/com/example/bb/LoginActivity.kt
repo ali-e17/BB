@@ -15,13 +15,9 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // خواندن وضعیت پایدار زبان و لاگین از SharedPrefs
         val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
-        // کنترل سشن: اگر کاربر قبلاً لاگین کرده باشد، مستقیم وارد برنامه می‌شود
-        val isLoggedIn = sharedPreferences.getBoolean("IS_LOGGED_IN", false)
-        if (isLoggedIn) {
+        if (sharedPreferences.getBoolean("IS_LOGGED_IN", false)) {
             val savedRole = sharedPreferences.getString("CURRENT_USER_ROLE", "STUDENT") ?: "STUDENT"
             val savedUsername = sharedPreferences.getString("CURRENT_USERNAME", "student") ?: "student"
 
@@ -30,21 +26,17 @@ class LoginActivity : AppCompatActivity() {
             intent.putExtra("USERNAME", savedUsername)
             startActivity(intent)
             finish()
-            return // قطع اجرای بقیه متد onCreate
+            return
         }
 
         setContentView(R.layout.activity_login)
 
-        // ۱. اتصال المان‌های قدیمی لایوت
         val etUsername = findViewById<TextInputEditText>(R.id.etUsername)
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
-
-        // ۲. اتصال دکمه‌های جدید تنظیمات (تم و زبان)
         val btnThemeToggle = findViewById<ImageView>(R.id.btnThemeToggle)
         val btnLanguageToggle = findViewById<TextView>(R.id.btnLanguageToggle)
 
-        // الف) چک کردن حالتِ فعلی سیستم جهت قرار دادن آیکون صحیح تم (خورشید یا ماه)
         val currentMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         if (currentMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
             btnThemeToggle.setImageResource(R.drawable.ic_sun)
@@ -53,14 +45,8 @@ class LoginActivity : AppCompatActivity() {
         }
 
         var currentLanguage = sharedPreferences.getString("APP_LANGUAGE", "fa") ?: "fa"
+        btnLanguageToggle.text = if (currentLanguage == "fa") "EN" else "فا"
 
-        if (currentLanguage == "fa") {
-            btnLanguageToggle.text = "EN"
-        } else {
-            btnLanguageToggle.text = "فا"
-        }
-
-        // ۳. منطق کلیک دکمه تغییر تم سراسری
         btnThemeToggle.setOnClickListener {
             val themePrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
             val editor = themePrefs.edit()
@@ -78,72 +64,46 @@ class LoginActivity : AppCompatActivity() {
             editor.apply()
         }
 
-        // ۴. منطق کلیک دکمه تغییر زبان متنی کاملاً همسان
         btnLanguageToggle.setOnClickListener {
             val editor = sharedPreferences.edit()
-
             if (currentLanguage == "fa") {
                 currentLanguage = "en"
                 btnLanguageToggle.text = "فا"
                 editor.putString("APP_LANGUAGE", "en")
-                Toast.makeText(this, "Language changed to English (Simulation)", Toast.LENGTH_SHORT).show()
             } else {
                 currentLanguage = "fa"
                 btnLanguageToggle.text = "EN"
                 editor.putString("APP_LANGUAGE", "fa")
-                Toast.makeText(this, "زبان به فارسی تغییر یافت (شبیه‌سازی)", Toast.LENGTH_SHORT).show()
             }
             editor.apply()
         }
 
-        // مدیریت متن راهنمای فارسی موقع کلیک روی نام کاربری
-        etUsername.setOnFocusChangeListener { _, hasFocus ->
-            etUsername.hint = if (hasFocus) "Enter Username" else ""
-        }
-
-        // مدیریت متن راهنمای فارسی موقع کلیک روی رمز عبور
-        etPassword.setOnFocusChangeListener { _, hasFocus ->
-            etPassword.hint = if (hasFocus) "Enter Password" else ""
-        }
-
-        // منطق دکمه ورود
         btnLogin.setOnClickListener {
             val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
 
-            fun clearFields() {
-                etUsername.text?.clear()
-                etPassword.text?.clear()
-                etUsername.clearFocus()
-                etPassword.clearFocus()
-            }
-
             if (username.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "لطفاً تمام فیلدها را پر کنید", Toast.LENGTH_SHORT).show()
-                clearFields()
                 return@setOnClickListener
             }
 
             val adminUser = sharedPreferences.getString("ADMIN_USERNAME", "admin")
             val adminPass = sharedPreferences.getString("ADMIN_PASSWORD", "1234")
-
             val teacherUser = sharedPreferences.getString("TEACHER_USERNAME", "teacher")
             val teacherPass = sharedPreferences.getString("TEACHER_PASSWORD", "1234")
 
-            val studentUser = sharedPreferences.getString("STUDENT_USERNAME", "student")
-            val studentPass = sharedPreferences.getString("STUDENT_PASSWORD", "1234")
+            // دریافت کاربر از دیتابیس پویا
+            val student = AppDatabase.getStudentByUsername(username)
 
             val role = when {
                 username == adminUser && password == adminPass -> "ADMIN"
                 username == teacherUser && password == teacherPass -> "TEACHER"
-                username == studentUser && password == studentPass -> "STUDENT"
+                student != null && student.password == password -> "STUDENT"
                 else -> null
             }
 
             if (role != null) {
-                Toast.makeText(this, "ورود با موفقیت انجام شد", Toast.LENGTH_SHORT).show()
-
-                // ذخیره اطلاعات وضعیت ورود پایدار در دیتابیس لوکال اپ
+                Toast.makeText(this, "ورود موفق", Toast.LENGTH_SHORT).show()
                 sharedPreferences.edit().apply {
                     putBoolean("IS_LOGGED_IN", true)
                     putString("CURRENT_USER_ROLE", role)
@@ -158,7 +118,8 @@ class LoginActivity : AppCompatActivity() {
                 finish()
             } else {
                 Toast.makeText(this, "نام کاربری یا رمز عبور اشتباه است", Toast.LENGTH_SHORT).show()
-                clearFields()
+                etUsername.text?.clear()
+                etPassword.text?.clear()
             }
         }
     }
