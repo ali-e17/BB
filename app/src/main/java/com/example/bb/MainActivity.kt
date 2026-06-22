@@ -121,6 +121,8 @@ class MainActivity : AppCompatActivity() {
 
         val items = mutableListOf<DashboardItem>()
 
+        // ... بخش‌های قبلی کد بدون تغییر ...
+
         when (currentUserRole) {
             UserRole.STUDENT -> {
                 items.add(DashboardItem("برنامه کلاسی", "مشاهده روزها و ساعات برگزاری", android.R.drawable.ic_menu_today))
@@ -136,10 +138,12 @@ class MainActivity : AppCompatActivity() {
                 items.add(DashboardItem("صدور کارنامه", "ثبت نمره و چاپ کارنامه", android.R.drawable.ic_menu_edit))
                 items.add(DashboardItem("مدیریت کلاس‌ها", "تعریف کلاس جدید و زمان‌بندی", android.R.drawable.ic_input_add))
                 items.add(DashboardItem("اعلانات سیستم", "ارسال پیام به اساتید و دانش‌آموزان", android.R.drawable.ic_menu_send))
+
+                // آیتم پنجم که اضافه شد:
+                items.add(DashboardItem("مدیریت اساتید", "مشاهده، افزودن و تخصیص کلاس به مدرسین", android.R.drawable.ic_menu_save))
             }
         }
 
-        // لاجیک مسیریابی منوها (رفع باگ باز نشدن صفحات)
         recyclerView.adapter = DashboardAdapter(items) { clickedItem ->
             when {
                 clickedItem.title.contains("اعلان") -> {
@@ -152,8 +156,16 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
                 clickedItem.title.contains("دانش‌آموزان") -> {
-                    // این خط دقیقاً همون چیزیه که کم بود!
                     val intent = Intent(this, StudentManagementActivity::class.java)
+                    startActivity(intent)
+                }
+                clickedItem.title.contains("کلاس‌ها") -> {
+                    val intent = Intent(this, ClassManagementActivity::class.java)
+                    startActivity(intent)
+                }
+                clickedItem.title.contains("اساتید") -> {
+                    // مسیر هدایت به پنل مدیریت اساتید
+                    val intent = Intent(this, TeacherManagementActivity::class.java)
                     startActivity(intent)
                 }
                 else -> {
