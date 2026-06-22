@@ -84,5 +84,9 @@
             android:name=".AssignClassActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".AttendanceActivity"
+            android:exported="false" />
+
     </application>
 </manifest>

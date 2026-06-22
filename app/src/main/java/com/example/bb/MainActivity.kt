@@ -40,18 +40,18 @@ class MainActivity : AppCompatActivity() {
         // پیام متغیر بر اساس زمان روز
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         txtGreeting.text = when (hour) {
-            in 0..11 -> "صبح بخیر ،"
-            in 12..16 -> "ظهر بخیر ،"
-            in 17..19 -> "عصر بخیر ،"
-            else -> "شب بخیر ،"
+            in 0..11 -> "صبح بخیر،"
+            in 12..16 -> "ظهر بخیر،"
+            in 17..19 -> "عصر بخیر،"
+            else -> "شب بخیر،"
         }
 
         txtUserName.text = usernameString.replaceFirstChar { it.uppercase() }
 
         txtRoleBadge.text = when (currentUserRole) {
             UserRole.STUDENT -> "دانش‌آموز"
-            UserRole.TEACHER -> "استـاد"
-            UserRole.ADMIN -> "مدیریـت"
+            UserRole.TEACHER -> "استاد"
+            UserRole.ADMIN -> "مدیر کل"
         }
 
         // ================= تنظیمات تم و زبان =================
@@ -82,11 +82,11 @@ class MainActivity : AppCompatActivity() {
             if (checkMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                 editor.putBoolean("IS_DARK_MODE", false)
-                Toast.makeText(this, "حالت روز فعال شد", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "تم روشن شد", Toast.LENGTH_SHORT).show()
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
                 editor.putBoolean("IS_DARK_MODE", true)
-                Toast.makeText(this, "حالت شب فعال شد", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "تم تاریک شد", Toast.LENGTH_SHORT).show()
             }
             editor.apply()
         }
@@ -121,26 +121,25 @@ class MainActivity : AppCompatActivity() {
 
         val items = mutableListOf<DashboardItem>()
 
-        // ... بخش‌های قبلی کد بدون تغییر ...
-
         when (currentUserRole) {
             UserRole.STUDENT -> {
-                items.add(DashboardItem("برنامه کلاسی", "مشاهده روزها و ساعات برگزاری", android.R.drawable.ic_menu_today))
-                items.add(DashboardItem("کارنامه و نمرات", "مشاهده کارنامه ترمیک", android.R.drawable.ic_menu_sort_by_size))
-                items.add(DashboardItem("دیکشنری آفلاین", "جستجوی لغات سطح شما", android.R.drawable.ic_menu_search))
+                items.add(DashboardItem("برنامه کلاسی", "مشاهده روزها و ساعات کلاس‌ها", android.R.drawable.ic_menu_today))
+                items.add(DashboardItem("نمرات و کارنامه", "مشاهده کارنامه‌های صادر شده", android.R.drawable.ic_menu_sort_by_size))
+                items.add(DashboardItem("دیکشنری آفلاین", "جستجوی لغات بدون نیاز به نت", android.R.drawable.ic_menu_search))
+                // اضافه شدن مجدد اعلانات برای دانش‌آموز
+                items.add(DashboardItem("اعلانات آموزشگاه", "مشاهده پیام‌ها و تکالیف جدید", android.R.drawable.ic_menu_agenda))
             }
             UserRole.TEACHER -> {
-                items.add(DashboardItem("حضور و غیاب", "ثبت وضعیت حضور زبان‌آموزان", android.R.drawable.ic_menu_edit))
-                items.add(DashboardItem("اعلانات آموزشگاه", "پیام‌های مدیریت برای اساتید", android.R.drawable.ic_dialog_email))
+                items.add(DashboardItem("حضور و غیاب", "ثبت لیست حضور و غیاب کلاس", android.R.drawable.ic_menu_recent_history))
+                items.add(DashboardItem("ورود نمرات", "ثبت نمرات پایان‌ترم دانش‌آموزان", android.R.drawable.ic_menu_edit))
+                items.add(DashboardItem("اعلانات سیستم", "ارسال پیام برای کلاس‌ها", android.R.drawable.ic_dialog_email))
             }
             UserRole.ADMIN -> {
-                items.add(DashboardItem("مدیریت دانش‌آموزان", "جستجو و ویرایش اطلاعات زبان‌آموزان", android.R.drawable.ic_menu_myplaces))
+                items.add(DashboardItem("مدیریت دانش‌آموزان", "ثبت‌نام و ویرایش اطلاعات دانش‌آموزان", android.R.drawable.ic_menu_myplaces))
                 items.add(DashboardItem("صدور کارنامه", "ثبت نمره و چاپ کارنامه", android.R.drawable.ic_menu_edit))
                 items.add(DashboardItem("مدیریت کلاس‌ها", "تعریف کلاس جدید و زمان‌بندی", android.R.drawable.ic_input_add))
                 items.add(DashboardItem("اعلانات سیستم", "ارسال پیام به اساتید و دانش‌آموزان", android.R.drawable.ic_menu_send))
-
-                // آیتم پنجم که اضافه شد:
-                items.add(DashboardItem("مدیریت اساتید", "مشاهده، افزودن و تخصیص کلاس به مدرسین", android.R.drawable.ic_menu_save))
+                items.add(DashboardItem("مدیریت اساتید", "افزودن استاد جدید و مدیریت دسترسی", android.R.drawable.ic_menu_save))
             }
         }
 
@@ -151,7 +150,7 @@ class MainActivity : AppCompatActivity() {
                     intent.putExtra("USER_ROLE", currentUserRole.name)
                     startActivity(intent)
                 }
-                clickedItem.title.contains("کارنامه") -> {
+                clickedItem.title.contains("کارنامه") || clickedItem.title.contains("نمر") -> {
                     val intent = Intent(this, ReportCardSetupActivity::class.java)
                     startActivity(intent)
                 }
@@ -159,17 +158,20 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent(this, StudentManagementActivity::class.java)
                     startActivity(intent)
                 }
+                clickedItem.title.contains("حضور") -> {
+                    val intent = Intent(this, AttendanceActivity::class.java)
+                    startActivity(intent)
+                }
                 clickedItem.title.contains("کلاس‌ها") -> {
                     val intent = Intent(this, ClassManagementActivity::class.java)
                     startActivity(intent)
                 }
                 clickedItem.title.contains("اساتید") -> {
-                    // مسیر هدایت به پنل مدیریت اساتید
                     val intent = Intent(this, TeacherManagementActivity::class.java)
                     startActivity(intent)
                 }
                 else -> {
-                    Toast.makeText(this, "آیتم در حال توسعه است: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "این بخش در حال توسعه است: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
