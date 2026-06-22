@@ -48,20 +48,41 @@
         <activity
             android:name=".CreateAnnouncementActivity"
             android:exported="false" />
+
         <activity
             android:name=".ReportCardSetupActivity"
             android:exported="false" />
+
         <activity
             android:name=".GradeEntryActivity"
             android:exported="false" />
+
         <activity
             android:name=".ReportCardViewActivity"
             android:exported="false" />
+
         <activity
             android:name=".StudentManagementActivity"
             android:exported="false" />
+
         <activity
             android:name=".AddEditStudentActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ClassManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ClassDetailsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".TeacherManagementActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AssignClassActivity"
+            android:exported="false" />
+
     </application>
 </manifest>

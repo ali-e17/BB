@@ -17,13 +17,14 @@ class ProfileActivity : AppCompatActivity() {
 
     private lateinit var tvUserName: TextView
     private lateinit var tvUserRole: TextView
+    private lateinit var tvStudentClassStatus: TextView // به متغیرهای کلاس اضافه شد
     private lateinit var layoutStudentOptions: LinearLayout
     private lateinit var layoutTeacherOptions: LinearLayout
     private lateinit var userRole: String
 
     private lateinit var ivAvatar: ImageView
     private lateinit var btnChangeAvatar: TextView
-    private lateinit var btnLogout: LinearLayout // تعریف متغیر دکمه خروج حساب
+    private lateinit var btnLogout: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,16 +34,16 @@ class ProfileActivity : AppCompatActivity() {
 
         tvUserName = findViewById(R.id.tvUserName)
         tvUserRole = findViewById(R.id.tvUserRole)
+        tvStudentClassStatus = findViewById(R.id.tvStudentClassStatus) // مقداردهی اولیه
         layoutStudentOptions = findViewById(R.id.layoutStudentOptions)
         layoutTeacherOptions = findViewById(R.id.layoutTeacherOptions)
 
         ivAvatar = findViewById(R.id.ivAvatar)
         btnChangeAvatar = findViewById(R.id.btnChangeAvatar)
-        btnLogout = findViewById(R.id.btnLogout) // اتصال دکمه خروج به لایوت
+        btnLogout = findViewById(R.id.btnLogout)
 
         val btnChangeCredentials = findViewById<LinearLayout>(R.id.btnChangeCredentials)
 
-        // دریافت نقش کاربر از Intent؛ اگر نبود از حافظه داخلی لود می‌کند تا خطا ندهد
         val savedRoleFallback = sharedPreferences.getString("CURRENT_USER_ROLE", "student") ?: "student"
         userRole = intent.getStringExtra("USER_ROLE") ?: savedRoleFallback
 
@@ -56,13 +57,11 @@ class ProfileActivity : AppCompatActivity() {
             showAvatarSelectionDialog()
         }
 
-        // منطق کلیک دکمه خروج از حساب کاربری
         btnLogout.setOnClickListener {
             showLogoutConfirmationDialog()
         }
     }
 
-    // متد نمایش دیالوگ خروج با ساختار تمیز
     private fun showLogoutConfirmationDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("خروج از حساب")
@@ -71,7 +70,6 @@ class ProfileActivity : AppCompatActivity() {
         builder.setPositiveButton("بله") { dialog, _ ->
             val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
-            // پاک کردن وضعیت لاگین و اطلاعات سشن جاری
             sharedPreferences.edit().apply {
                 putBoolean("IS_LOGGED_IN", false)
                 putString("CURRENT_USER_ROLE", null)
@@ -81,7 +79,6 @@ class ProfileActivity : AppCompatActivity() {
 
             Toast.makeText(this, "از حساب خود خارج شدید", Toast.LENGTH_SHORT).show()
 
-            // هدایت کاربر به صفحه لاگین و بستن تمام صفحات قبلی در پشته سیستم
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
@@ -128,6 +125,7 @@ class ProfileActivity : AppCompatActivity() {
 
         val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
         val roleUpper = userRole.uppercase()
+        val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
 
         val intentUsername = intent.getStringExtra("USERNAME")
         if (!intentUsername.isNullOrEmpty()) {
@@ -135,8 +133,13 @@ class ProfileActivity : AppCompatActivity() {
             intent.removeExtra("USERNAME")
         }
 
-        val savedUsername = sharedPreferences.getString("${roleUpper}_USERNAME", userRole) ?: userRole
-        tvUserName.text = savedUsername
+        // نمایش نام واقعی در صورت دانش‌آموز بودن
+        if (roleUpper == "STUDENT") {
+            val student = AppDatabase.getStudentByUsername(currentUsername)
+            tvUserName.text = student?.name ?: sharedPreferences.getString("${roleUpper}_USERNAME", userRole)
+        } else {
+            tvUserName.text = sharedPreferences.getString("${roleUpper}_USERNAME", userRole) ?: userRole
+        }
 
         var savedAvatarName = sharedPreferences.getString("${roleUpper}_AVATAR", null)
         var resId = 0
@@ -161,21 +164,33 @@ class ProfileActivity : AppCompatActivity() {
             ivAvatar.setImageResource(android.R.drawable.sym_def_app_icon)
         }
 
+        // مدیریت هوشمند نمایش المان‌ها بر اساس نقش
         when (userRole.lowercase()) {
             "student" -> {
                 tvUserRole.text = "دانش‌آموز آموزشگاه"
                 layoutStudentOptions.visibility = View.VISIBLE
                 layoutTeacherOptions.visibility = View.GONE
+                tvStudentClassStatus.visibility = View.VISIBLE // فقط برای دانش‌آموز فعال می‌شود
+
+                val student = AppDatabase.getStudentByUsername(currentUsername)
+                if (student?.classId != null) {
+                    val levelNum = student.classId!!.replace("level_", "")
+                    tvStudentClassStatus.text = "کلاس فعلی شما: سطح $levelNum بیان برتر"
+                } else {
+                    tvStudentClassStatus.text = "شما هنوز در هیچ کلاسی ثبت‌نام نشده‌اید."
+                }
             }
             "teacher" -> {
                 tvUserRole.text = "مدرس رسمی بیان برتر"
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.VISIBLE
+                tvStudentClassStatus.visibility = View.GONE // برای مدرس مخفی می‌شود
             }
             "admin" -> {
                 tvUserRole.text = "دسترسی کامل (مدیر کل)"
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.GONE
+                tvStudentClassStatus.visibility = View.GONE // برای مدیر مخفی می‌شود
             }
         }
     }
