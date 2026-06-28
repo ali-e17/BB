@@ -2,215 +2,198 @@ package com.example.bb
 
 import android.content.Context
 
-// مدل دانش‌آموز
 data class StudentModel(
-    val name: String,          // نام و نام خانوادگی
-    val phone: String,         // شماره تماس (نام کاربری - غیرقابل تغییر)
-    val nationalId: String,    // کد ملی
-    var password: String,      // پسورد فعلی (پیش‌فرض همان کد ملی است)
-    var classId: String? = null // آی‌دی کلاسی که دانش‌آموز در آن عضو است (اگر null باشد یعنی کلاسی ندارد)
+    val name: String,
+    val phone: String,
+    val nationalId: String,
+    var password: String,
+    var classId: String? = null
 )
 
-// مدل استاد (جدید)
+// مدل استاد آپدیت شده (کد ملی و چند کلاس)
 data class TeacherModel(
-    val name: String,          // نام و نام خانوادگی استاد
-    val username: String,      // نام کاربری (شماره تماس یا شناسه یکتا)
-    var password: String,      // کلمه عبور
-    var classId: String? = null // آی‌دی کلاسی که به این استاد اختصاص داده شده (فقط یک کلاس)
+    var name: String,
+    var username: String,      // همون شماره تماس
+    var nationalId: String,    // کد ملی
+    var password: String,
+    var classIds: String = "", // لیست کلاس‌ها (با کاما جدا میشن)
+    var isActive: Boolean = true
 )
 
-// مدل کلاس (بروزرسانی شده برای پشتیبانی از ساعت کلاس)
 data class ClassModel(
-    val id: String,            // یک آی‌دی منحصربه‌فرد (مثلاً level_1 یا یک UUID پویای متغیر)
-    val className: String,     // نام سطح کلاس (مثلاً "سطح ۱ بیان برتر")
-    val classTime: String      // ساعت و روز کلاس (مثلاً "زوج ساعت ۱۷")
+    val id: String,
+    val className: String,
+    val classTime: String
 )
 
-// دیتابیس لوکال مرکزی اپلیکیشن برای مدیریت پایدار اطلاعات
 object AppDatabase {
     private const val PREFS_NAME = "AppDatabasePrefs"
     private val studentsList = mutableListOf<StudentModel>()
     private val classesList = mutableListOf<ClassModel>()
-    private val teachersList = mutableListOf<TeacherModel>() // لیست داینامیک اساتید (جدید)
+    private val teachersList = mutableListOf<TeacherModel>()
 
-    // مقداردهی اولیه دیتابیس و تعریف دانش‌آموزان، کلاس‌ها و اساتید تست
     fun init(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (!prefs.contains("initialized")) {
-            // اضافه کردن دانش‌آموزان تست
-            studentsList.add(StudentModel("دانش‌آموز تست (اصلی)", "student", "1111111111", "1234", null))
-            studentsList.add(StudentModel("علی رضایی", "09123456789", "0021456789", "0021456789", null))
-            studentsList.add(StudentModel("محسن کمالی", "09351112233", "1289654321", "1289654321", null))
-            studentsList.add(StudentModel("نازنین بابلخانی", "09117778899", "2051234567", "2051234567", null))
-
-            // اضافه کردن اساتید تست اولیه (جدید)
-            teachersList.add(TeacherModel("استاد علی علوی", "teacher", "1234", null))
-            teachersList.add(TeacherModel("دکتر مریم محمدی", "teacher2", "1234", null))
+            studentsList.add(StudentModel("دانش‌آموز تست", "student", "1111111111", "1234", null))
+            // اساتید تستی
+            teachersList.add(TeacherModel("استاد علی علوی", "09120000000", "1234567890", "1234567890", "", true))
 
             saveAllStudents(context)
             saveAllClasses(context)
-            saveAllTeachers(context) // ذخیره اساتید اولیه
+            saveAllTeachers(context)
             prefs.edit().putBoolean("initialized", true).apply()
         } else {
             loadAllStudents(context)
             loadAllClasses(context)
-            loadAllTeachers(context) // لود اساتید از حافظه
+            loadAllTeachers(context)
         }
     }
 
-    // --- مدیریت دانش‌آموزان ---
+    // --- دانش آموزان ---
     fun getAllStudents(): List<StudentModel> = studentsList
-
-    fun searchStudents(query: String): List<StudentModel> {
-        if (query.isEmpty()) return emptyList()
-        return studentsList.filter { it.name.contains(query, ignoreCase = true) }
-    }
-
-    fun getStudentByUsername(username: String): StudentModel? {
-        return studentsList.find { it.phone == username }
-    }
-
+    fun searchStudents(query: String): List<StudentModel> = studentsList.filter { it.name.contains(query, ignoreCase = true) }
+    fun getStudentByUsername(username: String): StudentModel? = studentsList.find { it.phone == username }
     fun updateStudentPassword(username: String, newPass: String, context: Context) {
-        getStudentByUsername(username)?.let {
-            it.password = newPass
-            saveAllStudents(context)
-        }
+        getStudentByUsername(username)?.let { it.password = newPass; saveAllStudents(context) }
     }
-
     fun assignClassToStudent(phone: String, classId: String?, context: Context) {
-        getStudentByUsername(phone)?.let {
-            it.classId = classId
-            saveAllStudents(context)
-        }
+        getStudentByUsername(phone)?.let { it.classId = classId; saveAllStudents(context) }
     }
+    fun getStudentsInClass(classId: String): List<StudentModel> = studentsList.filter { it.classId == classId }
 
-    fun getStudentsInClass(classId: String): List<StudentModel> {
-        return studentsList.filter { it.classId == classId }
-    }
-
-    // --- مدیریت کلاس‌ها ---
+    // --- کلاس‌ها ---
     fun getAllClasses(): List<ClassModel> = classesList
-
-    // همگام‌سازی نام متد با اکتیویتی تخصیص کلاس پنل اساتید
     fun getAllCreatedClasses(): List<ClassModel> = classesList
+    fun addClass(classModel: ClassModel, context: Context) { classesList.add(classModel); saveAllClasses(context) }
+    fun deleteClass(classId: String, context: Context) { classesList.removeAll { it.id == classId }; saveAllClasses(context) }
+    fun getClassNameById(classId: String?): String? = classesList.find { it.id == classId }?.className
 
-    fun addClass(classModel: ClassModel, context: Context) {
-        classesList.add(classModel)
-        saveAllClasses(context)
-    }
-
-    fun deleteClass(classId: String, context: Context) {
-        classesList.removeAll { it.id == classId }
-        saveAllClasses(context)
-    }
-
-    // --- مدیریت اساتید (بخش جدید اضافه شده) ---
+    // --- اساتید ---
     fun getAllTeachers(): List<TeacherModel> = teachersList
-
-    fun getTeacherByUsername(username: String): TeacherModel? {
-        return teachersList.find { it.username == username }
-    }
+    fun getTeacherByUsername(username: String): TeacherModel? = teachersList.find { it.username == username }
 
     fun addTeacher(teacher: TeacherModel, context: Context) {
-        teachersList.add(teacher)
+        // اگر استاد قبلا بود آپدیت میکنه، اگر نبود اضافه میکنه
+        val index = teachersList.indexOfFirst { it.username == teacher.username }
+        if (index != -1) teachersList[index] = teacher else teachersList.add(teacher)
         saveAllTeachers(context)
     }
 
-    fun deleteTeacher(username: String, context: Context) {
-        teachersList.removeAll { it.username == username }
-        saveAllTeachers(context)
+    // گرفتن کلاس‌های آزاد (تخصیص نیافته به هیچ استادی)
+    fun getAvailableClasses(): List<ClassModel> {
+        val assignedIds = teachersList.flatMap { it.classIds.split(",") }.filter { it.isNotEmpty() }
+        return classesList.filter { it.id !in assignedIds }
+    }
+
+    // گرفتن کلاس‌های یک استاد خاص
+    fun getTeacherClasses(username: String): List<ClassModel> {
+        val teacher = getTeacherByUsername(username) ?: return emptyList()
+        val ids = teacher.classIds.split(",").filter { it.isNotEmpty() }
+        return classesList.filter { it.id in ids }
     }
 
     fun assignClassToTeacher(username: String, classId: String, context: Context) {
         getTeacherByUsername(username)?.let {
-            it.classId = classId
+            val currentIds = it.classIds.split(",").filter { id -> id.isNotEmpty() }.toMutableList()
+            if (!currentIds.contains(classId)) {
+                currentIds.add(classId)
+                it.classIds = currentIds.joinToString(",")
+                saveAllTeachers(context)
+            }
+        }
+    }
+
+    fun removeClassFromTeacher(username: String, classId: String, context: Context) {
+        getTeacherByUsername(username)?.let {
+            val currentIds = it.classIds.split(",").filter { id -> id.isNotEmpty() }.toMutableList()
+            currentIds.remove(classId)
+            it.classIds = currentIds.joinToString(",")
             saveAllTeachers(context)
         }
     }
 
-    // --- ذخیره و لود در SharedPreferences ---
-    private fun saveAllStudents(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val editor = prefs.edit()
-        editor.putInt("student_count", studentsList.size)
-        studentsList.forEachIndexed { index, student ->
-            editor.putString("student_${index}_name", student.name)
-            editor.putString("student_${index}_phone", student.phone)
-            editor.putString("student_${index}_nationalId", student.nationalId)
-            editor.putString("student_${index}_password", student.password)
-            editor.putString("student_${index}_classId", student.classId)
-        }
-        editor.apply()
+    fun toggleTeacherArchiveStatus(username: String, context: Context): Boolean {
+        val teacher = getTeacherByUsername(username) ?: return false
+        // اگر کلاس داره، اجازه بایگانی نده
+        if (teacher.isActive && teacher.classIds.isNotEmpty()) return false
+        teacher.isActive = !teacher.isActive
+        saveAllTeachers(context)
+        return true
     }
 
+    // --- ذخیره و لود ---
+    private fun saveAllStudents(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        prefs.putInt("student_count", studentsList.size)
+        studentsList.forEachIndexed { i, s ->
+            prefs.putString("student_${i}_name", s.name)
+            prefs.putString("student_${i}_phone", s.phone)
+            prefs.putString("student_${i}_nationalId", s.nationalId)
+            prefs.putString("student_${i}_password", s.password)
+            prefs.putString("student_${i}_classId", s.classId)
+        }
+        prefs.apply()
+    }
     private fun loadAllStudents(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val count = prefs.getInt("student_count", 0)
         studentsList.clear()
-        for (i in 0 until count) {
-            val name = prefs.getString("student_${i}_name", "") ?: ""
+        for (i in 0 until prefs.getInt("student_count", 0)) {
             val phone = prefs.getString("student_${i}_phone", "") ?: ""
-            val nationalId = prefs.getString("student_${i}_nationalId", "") ?: ""
-            val password = prefs.getString("student_${i}_password", "") ?: ""
-            val classId = prefs.getString("student_${i}_classId", null)
-            if (phone.isNotEmpty()) {
-                studentsList.add(StudentModel(name, phone, nationalId, password, classId))
-            }
+            if (phone.isNotEmpty()) studentsList.add(StudentModel(
+                prefs.getString("student_${i}_name", "") ?: "", phone,
+                prefs.getString("student_${i}_nationalId", "") ?: "",
+                prefs.getString("student_${i}_password", "") ?: "",
+                prefs.getString("student_${i}_classId", null)
+            ))
         }
     }
-
     private fun saveAllClasses(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val editor = prefs.edit()
-        editor.putInt("class_count", classesList.size)
-        classesList.forEachIndexed { index, clazz ->
-            editor.putString("class_${index}_id", clazz.id)
-            editor.putString("class_${index}_name", clazz.className)
-            editor.putString("class_${index}_time", clazz.classTime)
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        prefs.putInt("class_count", classesList.size)
+        classesList.forEachIndexed { i, c ->
+            prefs.putString("class_${i}_id", c.id)
+            prefs.putString("class_${i}_name", c.className)
+            prefs.putString("class_${i}_time", c.classTime)
         }
-        editor.apply()
+        prefs.apply()
     }
-
     private fun loadAllClasses(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val count = prefs.getInt("class_count", 0)
         classesList.clear()
-        for (i in 0 until count) {
+        for (i in 0 until prefs.getInt("class_count", 0)) {
             val id = prefs.getString("class_${i}_id", "") ?: ""
-            val name = prefs.getString("class_${i}_name", "") ?: ""
-            val time = prefs.getString("class_${i}_time", "") ?: ""
-            if (id.isNotEmpty()) {
-                classesList.add(ClassModel(id, name, time))
-            }
+            if (id.isNotEmpty()) classesList.add(ClassModel(id,
+                prefs.getString("class_${i}_name", "") ?: "",
+                prefs.getString("class_${i}_time", "") ?: ""
+            ))
         }
     }
-
-    // متدهای ذخیره و لود اساتید (جدید)
     private fun saveAllTeachers(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val editor = prefs.edit()
-        editor.putInt("teacher_count", teachersList.size)
-        teachersList.forEachIndexed { index, teacher ->
-            editor.putString("teacher_${index}_name", teacher.name)
-            editor.putString("teacher_${index}_username", teacher.username)
-            editor.putString("teacher_${index}_password", teacher.password)
-            editor.putString("teacher_${index}_classId", teacher.classId)
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        prefs.putInt("teacher_count", teachersList.size)
+        teachersList.forEachIndexed { i, t ->
+            prefs.putString("teacher_${i}_name", t.name)
+            prefs.putString("teacher_${i}_username", t.username)
+            prefs.putString("teacher_${i}_nationalId", t.nationalId)
+            prefs.putString("teacher_${i}_password", t.password)
+            prefs.putString("teacher_${i}_classIds", t.classIds)
+            prefs.putBoolean("teacher_${i}_isActive", t.isActive)
         }
-        editor.apply()
+        prefs.apply()
     }
-
     private fun loadAllTeachers(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val count = prefs.getInt("teacher_count", 0)
         teachersList.clear()
-        for (i in 0 until count) {
-            val name = prefs.getString("teacher_${i}_name", "") ?: ""
+        for (i in 0 until prefs.getInt("teacher_count", 0)) {
             val username = prefs.getString("teacher_${i}_username", "") ?: ""
-            val password = prefs.getString("teacher_${i}_password", "") ?: ""
-            val classId = prefs.getString("teacher_${i}_classId", null)
-            if (username.isNotEmpty()) {
-                teachersList.add(TeacherModel(name, username, password, classId))
-            }
+            if (username.isNotEmpty()) teachersList.add(TeacherModel(
+                prefs.getString("teacher_${i}_name", "") ?: "", username,
+                prefs.getString("teacher_${i}_nationalId", "") ?: "",
+                prefs.getString("teacher_${i}_password", "") ?: "",
+                prefs.getString("teacher_${i}_classIds", "") ?: "",
+                prefs.getBoolean("teacher_${i}_isActive", true)
+            ))
         }
     }
 }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@color/card_background">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="افزودن استاد جدید"
+        android:textColor="@color/title_blue"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:hint="نام و نام خانوادگی استاد"
+        app:boxStrokeColor="#FF6B00"
+        app:hintTextColor="#FF6B00">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogTeacherName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/main_text"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:hint="نام کاربری (شماره تماس)"
+        app:boxStrokeColor="#FF6B00"
+        app:hintTextColor="#FF6B00">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogTeacherUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/main_text"
+            android:inputType="phone" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/btnDialogAddTeacher"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="ثبت و افزودن استاد"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#FF6B00"
+        app:cornerRadius="12dp" />
+</LinearLayout>
