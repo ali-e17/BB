@@ -22,7 +22,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // ۱. دریافت نقش کاربر و ایمن‌سازی
         val roleString = intent.getStringExtra("USER_ROLE") ?: "STUDENT"
         val usernameString = intent.getStringExtra("USERNAME") ?: "کاربر"
 
@@ -32,12 +31,10 @@ class MainActivity : AppCompatActivity() {
             UserRole.STUDENT
         }
 
-        // ================= بخش هدر (خوش‌آمدگویی و مشخصات) =================
         val txtGreeting = findViewById<TextView>(R.id.txtGreeting)
         val txtUserName = findViewById<TextView>(R.id.txtUserName)
         val txtRoleBadge = findViewById<TextView>(R.id.txtRoleBadge)
 
-        // پیام متغیر بر اساس زمان روز
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         txtGreeting.text = when (hour) {
             in 0..11 -> "صبح بخیر،"
@@ -54,7 +51,6 @@ class MainActivity : AppCompatActivity() {
             UserRole.ADMIN -> "مدیر کل"
         }
 
-        // ================= تنظیمات تم و زبان =================
         val btnThemeToggle = findViewById<ImageView>(R.id.btnThemeToggle)
         val btnLanguageToggle = findViewById<TextView>(R.id.btnLanguageToggle)
 
@@ -68,11 +64,7 @@ class MainActivity : AppCompatActivity() {
         val sharedPrefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
         var currentLanguage = sharedPrefs.getString("APP_LANGUAGE", "fa") ?: "fa"
 
-        if (currentLanguage == "fa") {
-            btnLanguageToggle.text = "EN"
-        } else {
-            btnLanguageToggle.text = "FA"
-        }
+        btnLanguageToggle.text = if (currentLanguage == "fa") "EN" else "FA"
 
         btnThemeToggle.setOnClickListener {
             val themePrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
@@ -107,7 +99,6 @@ class MainActivity : AppCompatActivity() {
             editor.apply()
         }
 
-        // ================= دکمه پروفایل =================
         val btnProfile = findViewById<ImageView>(R.id.btnProfile)
         btnProfile.setOnClickListener {
             val intent = Intent(this, ProfileActivity::class.java)
@@ -115,7 +106,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // ================= لیست آیتم‌های داشبورد =================
         recyclerView = findViewById(R.id.recyclerViewDashboard)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -123,22 +113,21 @@ class MainActivity : AppCompatActivity() {
 
         when (currentUserRole) {
             UserRole.STUDENT -> {
-                items.add(DashboardItem("برنامه کلاسی", "مشاهده روزها و ساعات کلاس‌ها", android.R.drawable.ic_menu_today))
-                items.add(DashboardItem("نمرات و کارنامه", "مشاهده کارنامه‌های صادر شده", android.R.drawable.ic_menu_sort_by_size))
+                // حذف شد: برنامه کلاسی
+                items.add(DashboardItem("کارنامه و نمرات", "مشاهده کارنامه‌های صادر شده", android.R.drawable.ic_menu_sort_by_size))
                 items.add(DashboardItem("دیکشنری آفلاین", "جستجوی لغات بدون نیاز به نت", android.R.drawable.ic_menu_search))
-                // اضافه شدن مجدد اعلانات برای دانش‌آموز
-                items.add(DashboardItem("اعلانات آموزشگاه", "مشاهده پیام‌ها و تکالیف جدید", android.R.drawable.ic_menu_agenda))
+                items.add(DashboardItem("اعلانات", "مشاهده پیام‌ها و تکالیف جدید", android.R.drawable.ic_menu_agenda))
             }
             UserRole.TEACHER -> {
+                // حذف شد: ورود نمرات
                 items.add(DashboardItem("حضور و غیاب", "ثبت لیست حضور و غیاب کلاس", android.R.drawable.ic_menu_recent_history))
-                items.add(DashboardItem("ورود نمرات", "ثبت نمرات پایان‌ترم دانش‌آموزان", android.R.drawable.ic_menu_edit))
-                items.add(DashboardItem("اعلانات سیستم", "ارسال پیام برای کلاس‌ها", android.R.drawable.ic_dialog_email))
+                items.add(DashboardItem("اعلانات", "ارسال پیام برای کلاس‌ها", android.R.drawable.ic_dialog_email))
             }
             UserRole.ADMIN -> {
                 items.add(DashboardItem("مدیریت دانش‌آموزان", "ثبت‌نام و ویرایش اطلاعات دانش‌آموزان", android.R.drawable.ic_menu_myplaces))
                 items.add(DashboardItem("صدور کارنامه", "ثبت نمره و چاپ کارنامه", android.R.drawable.ic_menu_edit))
                 items.add(DashboardItem("مدیریت کلاس‌ها", "تعریف کلاس جدید و زمان‌بندی", android.R.drawable.ic_input_add))
-                items.add(DashboardItem("اعلانات سیستم", "ارسال پیام به اساتید و دانش‌آموزان", android.R.drawable.ic_menu_send))
+                items.add(DashboardItem("اعلانات", "ارسال پیام به اساتید و دانش‌آموزان", android.R.drawable.ic_menu_send))
                 items.add(DashboardItem("مدیریت اساتید", "افزودن استاد جدید و مدیریت دسترسی", android.R.drawable.ic_menu_save))
             }
         }
@@ -151,8 +140,17 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
                 clickedItem.title.contains("کارنامه") || clickedItem.title.contains("نمر") -> {
-                    val intent = Intent(this, ReportCardSetupActivity::class.java)
-                    startActivity(intent)
+                    when (currentUserRole) {
+                        UserRole.ADMIN -> {
+                            val intent = Intent(this, ReportCardSetupActivity::class.java)
+                            startActivity(intent)
+                        }
+                        UserRole.STUDENT -> {
+                            // TODO: StudentReportCardActivity - باید ساخته بشه
+                            Toast.makeText(this, "این بخش در حال توسعه است", Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {}
+                    }
                 }
                 clickedItem.title.contains("دانش‌آموزان") -> {
                     val intent = Intent(this, StudentManagementActivity::class.java)
@@ -169,6 +167,10 @@ class MainActivity : AppCompatActivity() {
                 clickedItem.title.contains("اساتید") -> {
                     val intent = Intent(this, TeacherManagementActivity::class.java)
                     startActivity(intent)
+                }
+                clickedItem.title.contains("دیکشنری") -> {
+                    // TODO: DictionaryActivity - باید ساخته بشه
+                    Toast.makeText(this, "این بخش در حال توسعه است", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
                     Toast.makeText(this, "این بخش در حال توسعه است: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
