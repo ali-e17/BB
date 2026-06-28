@@ -1,37 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:layoutDirection="rtl">
+    android:fitsSystemWindows="true"
+    android:background="@drawable/app_global_background">
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="مدیریت اساتید آموزشگاه"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="?android:attr/textColorPrimary"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btnAddTeacher"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/topBarTeachers"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
-        android:text="＋ افزودن استاد جدید"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_alignParentBottom="true"/>
+        android:layout_height="64dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="16dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="16dp"
+        app:strokeWidth="0dp"
+        android:outlineSpotShadowColor="#1A1040D1"
+        android:outlineAmbientShadowColor="#20000000"
+        app:cardBackgroundColor="@color/card_background"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/btnTeacherMgmtBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@color/main_text" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="مدیریت اساتید آموزشگاه"
+                android:textColor="@color/title_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvTeachers"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/tvTitle"
-        android:layout_above="@id/btnAddTeacher"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"
-        android:scrollbars="vertical"/>
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:padding="12dp"
+        android:paddingBottom="80dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topBarTeachers" />
 
-</RelativeLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddTeacher"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="@color/brand_orange"
+        app:tint="@color/white"
+        app:elevation="6dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

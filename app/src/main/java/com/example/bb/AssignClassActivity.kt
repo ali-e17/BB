@@ -1,70 +1,126 @@
 package com.example.bb
 
 import android.os.Bundle
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.Spinner
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 
 class AssignClassActivity : AppCompatActivity() {
 
-    private lateinit var tvTeacherName: TextView
-    private lateinit var spinnerClasses: Spinner
-    private lateinit var btnSubmitAssignment: Button
+    private lateinit var rvSearchResults: RecyclerView
+    private lateinit var rvAssignedClasses: RecyclerView
+    private lateinit var etSearchClass: TextInputEditText
     private var teacherUsername: String = ""
+
+    private val searchResultsList = ArrayList<ClassModel>()
+    private val assignedClassesList = ArrayList<ClassModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_assign_class)
 
-        tvTeacherName = findViewById(R.id.tvTeacherName)
-        spinnerClasses = findViewById(R.id.spinnerClasses)
-        btnSubmitAssignment = findViewById(R.id.btnSubmitAssignment)
+        findViewById<ImageView>(R.id.btnAssignBack).setOnClickListener { finish() }
 
         teacherUsername = intent.getStringExtra("TEACHER_USERNAME") ?: ""
-        tvTeacherName.text = "تخصیص کلاس به استاد: $teacherUsername"
 
-        loadAvailableClasses()
+        rvSearchResults = findViewById(R.id.rvSearchResults)
+        rvAssignedClasses = findViewById(R.id.rvAssignedClasses)
+        etSearchClass = findViewById(R.id.etSearchClass)
 
-        btnSubmitAssignment.setOnClickListener {
-            val addedClasses = AppDatabase.getAllCreatedClasses()
-            val selectedPosition = spinnerClasses.selectedItemPosition
+        rvSearchResults.layoutManager = LinearLayoutManager(this)
+        rvAssignedClasses.layoutManager = LinearLayoutManager(this)
 
-            // مطمئن می‌شویم کلاسی انتخاب شده و لیست خالی نیست
-            if (selectedPosition != -1 && addedClasses.isNotEmpty()) {
-                // ۱. استخراج آی‌دی واقعی کلاس بر اساس ردیف انتخاب شده در اسپینر
-                val selectedClassId = addedClasses[selectedPosition].id
-                val selectedClassName = addedClasses[selectedPosition].className
+        updateAssignedClasses()
 
-                // ۲. پاس دادن پارامترها همراه با Context (همان this) برای ذخیره پایدار
-                AppDatabase.assignClassToTeacher(teacherUsername, selectedClassId, this)
+        etSearchClass.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString().trim()
+                if (query.isNotEmpty()) {
+                    searchResultsList.clear()
+                    // جستجو فقط در کلاس‌هایی که به هیچ استادی داده نشدن
+                    searchResultsList.addAll(AppDatabase.getAvailableClasses().filter { it.className.contains(query, ignoreCase = true) })
 
-                Toast.makeText(this, "کلاس $selectedClassName با موفقیت به استاد اختصاص یافت", Toast.LENGTH_SHORT).show()
-                finish()
-            } else {
-                Toast.makeText(this, "کلاسی برای تخصیص وجود ندارد!", Toast.LENGTH_SHORT).show()
+                    if (searchResultsList.isNotEmpty()) {
+                        rvSearchResults.visibility = View.VISIBLE
+                        setupSearchAdapter()
+                    } else {
+                        rvSearchResults.visibility = View.GONE
+                    }
+                } else {
+                    rvSearchResults.visibility = View.GONE
+                }
             }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+    }
+
+    private fun updateAssignedClasses() {
+        assignedClassesList.clear()
+        assignedClassesList.addAll(AppDatabase.getTeacherClasses(teacherUsername))
+
+        rvAssignedClasses.adapter = object : RecyclerView.Adapter<ClassActionViewHolder>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+                ClassActionViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_class_action, parent, false))
+
+            override fun onBindViewHolder(holder: ClassActionViewHolder, position: Int) {
+                val classModel = assignedClassesList[position]
+                holder.tvClassName.text = classModel.className
+                holder.tvClassTime.text = classModel.classTime
+
+                // دکمه قرمز برای حذف تخصیص
+                holder.btnAction.text = "✖"
+                holder.btnAction.setTextColor(android.graphics.Color.RED)
+                holder.btnAction.setStrokeColorResource(android.R.color.holo_red_dark)
+
+                holder.btnAction.setOnClickListener {
+                    AppDatabase.removeClassFromTeacher(teacherUsername, classModel.id, this@AssignClassActivity)
+                    updateAssignedClasses()
+                    Toast.makeText(this@AssignClassActivity, "کلاس از استاد گرفته شد", Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun getItemCount() = assignedClassesList.size
         }
     }
 
-    private fun loadAvailableClasses() {
-        // دریافت لیست کلاس‌ها از دیتابیس
-        val addedClasses = AppDatabase.getAllCreatedClasses()
+    private fun setupSearchAdapter() {
+        rvSearchResults.adapter = object : RecyclerView.Adapter<ClassActionViewHolder>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+                ClassActionViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_class_action, parent, false))
 
-        if (addedClasses.isEmpty()) {
-            Toast.makeText(this, "هیچ کلاسی در سیستم تعریف نشده است. ابتدا از بخش مدیریت کلاس‌ها اقدام کنید.", Toast.LENGTH_LONG).show()
-            btnSubmitAssignment.isEnabled = false
-            return
+            override fun onBindViewHolder(holder: ClassActionViewHolder, position: Int) {
+                val classModel = searchResultsList[position]
+                holder.tvClassName.text = classModel.className
+                holder.tvClassTime.text = classModel.classTime
+
+                // دکمه سبز/آبی برای افزودن
+                holder.btnAction.text = "+"
+                holder.btnAction.setTextColor(android.graphics.Color.parseColor("#FF6B00"))
+
+                holder.btnAction.setOnClickListener {
+                    AppDatabase.assignClassToTeacher(teacherUsername, classModel.id, this@AssignClassActivity)
+                    etSearchClass.text?.clear()
+                    rvSearchResults.visibility = View.GONE
+                    updateAssignedClasses()
+                }
+            }
+            override fun getItemCount() = searchResultsList.size
         }
+    }
 
-        // 🌟 اصلاح شد: هماهنگ‌سازی با فیلدهای واقعی ClassModel (یعنی className و classTime)
-        val classNames = addedClasses.map { "${it.className} (${it.classTime})" }
-
-        // تنظیم آداپتر برای نمایش لیست در Spinner
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, classNames)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerClasses.adapter = adapter
+    class ClassActionViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val tvClassName: TextView = view.findViewById(R.id.tvClassName)
+        val tvClassTime: TextView = view.findViewById(R.id.tvClassTime)
+        val btnAction: MaterialButton = view.findViewById(R.id.btnAction)
     }
 }
