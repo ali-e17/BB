@@ -2,117 +2,137 @@ package com.example.bb
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class TeacherManagementActivity : AppCompatActivity() {
 
     private lateinit var rvTeachers: RecyclerView
-    private lateinit var btnAddTeacher: Button
+    private lateinit var fabAddTeacher: FloatingActionButton
     private lateinit var teacherAdapter: TeacherAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_teacher_management)
 
-        rvTeachers = findViewById(R.id.rvTeachers)
-        btnAddTeacher = findViewById(R.id.btnAddTeacher)
+        findViewById<ImageView>(R.id.btnTeacherMgmtBack).setOnClickListener { finish() }
 
+        rvTeachers = findViewById(R.id.rvTeachers)
+        fabAddTeacher = findViewById(R.id.fabAddTeacher)
         rvTeachers.layoutManager = LinearLayoutManager(this)
 
         setupTeacherList()
 
-        // ＋ منطق افزودن استاد جدید با دیالوگ ورودی
-        btnAddTeacher.setOnClickListener {
-            showAddTeacherDialog()
+        // ارجاع به اکتیویتی جدید برای افزودن استاد
+        fabAddTeacher.setOnClickListener {
+            startActivity(Intent(this, AddEditTeacherActivity::class.java))
         }
     }
 
     private fun setupTeacherList() {
-        val teachersList = AppDatabase.getAllTeachers()
-
-        // تنظیم آداپتر با دو لیسنر: یکی برای کلیک معمولی و یکی برای لانگ‌کلیک (حذف)
         teacherAdapter = TeacherAdapter(
-            teachersList,
-            onItemClick = { clickedTeacher ->
-                // کلیک معمولی: هدایت به صفحه تخصیص کلاس
+            AppDatabase.getAllTeachers(),
+            onRowClick = { teacher ->
+                // کلیک روی ردیف -> رفتن به صفحه تخصیص کلاس جدید
                 val intent = Intent(this, AssignClassActivity::class.java)
-                intent.putExtra("TEACHER_USERNAME", clickedTeacher.username)
+                intent.putExtra("TEACHER_USERNAME", teacher.username)
                 startActivity(intent)
             },
-            onItemLongClick = { teacherToDelete ->
-                // لانگ کلیک: نمایش دیالوگ تایید حذف استاد
-                showDeleteConfirmationDialog(teacherToDelete)
+            onDetailsClick = { teacher ->
+                showTeacherDetailsBottomSheet(teacher)
             }
         )
-
         rvTeachers.adapter = teacherAdapter
     }
 
-    // متد بروزرسانی سریع لیست بعد از تغییرات
     private fun refreshList() {
         teacherAdapter.updateData(AppDatabase.getAllTeachers())
     }
 
-    // دیالوگ دریافت اطلاعات استاد جدید
-    private fun showAddTeacherDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("افزودن استاد جدید")
+    private fun showTeacherDetailsBottomSheet(teacherArg: TeacherModel) {
+        var teacher = teacherArg
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_teacher_details, null)
+        dialog.setContentView(view)
 
-        // ساخت یک لایه پویای ساده برای گرفتن نام و نام کاربری
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
-        }
+        val dialogTeacherAvatar = view.findViewById<TextView>(R.id.dialogTeacherAvatar)
+        val dialogTeacherName = view.findViewById<TextView>(R.id.dialogTeacherName)
+        val dialogTeacherUsername = view.findViewById<TextView>(R.id.dialogTeacherUsername)
+        val dialogTeacherClass = view.findViewById<TextView>(R.id.dialogTeacherClass)
+        val tvStatus = view.findViewById<TextView>(R.id.dialogTeacherStatus)
+        val archiveHint = view.findViewById<TextView>(R.id.dialogTeacherArchiveHint)
+        val btnArchive = view.findViewById<MaterialButton>(R.id.btnDialogTeacherArchive)
+        val btnEdit = view.findViewById<MaterialButton>(R.id.btnDialogTeacherEdit)
 
-        val etName = EditText(this).apply { hint = "نام و نام خانوادگی استاد" }
-        val etUsername = EditText(this).apply { hint = "نام کاربری (شماره تماس)" }
+        fun renderTeacher() {
+            dialogTeacherAvatar.text = teacher.name.firstOrNull()?.toString() ?: "A"
+            dialogTeacherName.text = teacher.name
+            dialogTeacherUsername.text = "کدملی: ${teacher.nationalId} | تماس: ${teacher.username}"
 
-        layout.addView(etName)
-        layout.addView(etUsername)
-        builder.setView(layout)
-
-        builder.setPositiveButton("ذخیره") { _, _ ->
-            val name = etName.text.toString().trim()
-            val username = etUsername.text.toString().trim()
-
-            if (name.isNotEmpty() && username.isNotEmpty()) {
-                // اضافه کردن به دیتابیس لوکال Models.kt
-                val newTeacher = TeacherModel(name, username, "1234", null)
-                AppDatabase.addTeacher(newTeacher, this)
-                refreshList() // بروزرسانی لیست در صفحه
-                Toast.makeText(this, "استاد با موفقیت اضافه شد", Toast.LENGTH_SHORT).show()
+            // پیدا کردن اسامی کلاس‌های استاد
+            val assignedClasses = AppDatabase.getTeacherClasses(teacher.username)
+            if (assignedClasses.isNotEmpty()) {
+                dialogTeacherClass.text = assignedClasses.joinToString("، ") { it.className }
             } else {
-                Toast.makeText(this, "لطفاً تمام فیلدها را پر کنید", Toast.LENGTH_SHORT).show()
+                dialogTeacherClass.text = "بدون کلاس تخصیص یافته"
+            }
+
+            if (teacher.isActive) {
+                tvStatus.text = "فعال"
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#10B981"))
+                btnArchive.text = "بایگانی کردن"
+            } else {
+                tvStatus.text = "بایگانی شده"
+                tvStatus.setTextColor(android.graphics.Color.GRAY)
+                btnArchive.text = "فعال‌سازی مجدد"
+            }
+
+            // اگر کلاس داره اجازه بایگانی نده
+            if (teacher.isActive && teacher.classIds.isNotEmpty()) {
+                btnArchive.isEnabled = false
+                btnArchive.alpha = 0.5f
+                archiveHint.visibility = android.view.View.VISIBLE
+            } else {
+                btnArchive.isEnabled = true
+                btnArchive.alpha = 1.0f
+                archiveHint.visibility = android.view.View.GONE
             }
         }
-        builder.setNegativeButton("انصراف", null)
-        builder.show()
-    }
 
-    // دیالوگ تایید حذف استاد
-    private fun showDeleteConfirmationDialog(teacher: TeacherModel) {
-        AlertDialog.Builder(this)
-            .setTitle("حذف استاد")
-            .setMessage("آیا از حذف استاد «${teacher.name}» مطمئن هستید؟")
-            .setPositiveButton("بله، حذف شود") { _, _ ->
-                AppDatabase.deleteTeacher(teacher.username, this)
+        renderTeacher()
+
+        btnArchive.setOnClickListener {
+            val success = AppDatabase.toggleTeacherArchiveStatus(teacher.username, this)
+            if (success) {
+                teacher = AppDatabase.getTeacherByUsername(teacher.username) ?: teacher
+                renderTeacher()
                 refreshList()
-                Toast.makeText(this, "استاد حذف شد", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, if (teacher.isActive) "استاد فعال شد" else "استاد بایگانی شد", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "ابتدا باید کلاس‌های این استاد را بگیرید", Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("خیر", null)
-            .show()
+        }
+
+        btnEdit.setOnClickListener {
+            dialog.dismiss()
+            // ارجاع به صفحه اکتیویتی ادیت
+            val intent = Intent(this, AddEditTeacherActivity::class.java)
+            intent.putExtra("TEACHER_USERNAME", teacher.username)
+            startActivity(intent)
+        }
+
+        dialog.show()
     }
 
     override fun onResume() {
         super.onResume()
-        // وقتی از صفحه تخصیص کلاس برمی‌گردیم لیست دوباره لود شود تا تغییرات احتمالی اعمال شده باشند
         refreshList()
     }
 }

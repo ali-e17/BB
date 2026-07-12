@@ -91,5 +91,6 @@
         <activity
             android:name=".DictionaryActivity"
             android:exported="false" />
+        <activity android:name=".AddEditTeacherActivity" android:exported="false" />
     </application>
 </manifest>
