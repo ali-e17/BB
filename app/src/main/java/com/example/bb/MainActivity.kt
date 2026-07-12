@@ -170,6 +170,10 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent(this, TeacherManagementActivity::class.java)
                     startActivity(intent)
                 }
+                clickedItem.title.contains("دیکشنری") -> {
+                    val intent = Intent(this, DictionaryActivity::class.java)
+                    startActivity(intent)
+                }
                 else -> {
                     Toast.makeText(this, "این بخش در حال توسعه است: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
                 }

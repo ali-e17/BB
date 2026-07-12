@@ -88,5 +88,8 @@
             android:name=".AttendanceActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".DictionaryActivity"
+            android:exported="false" />
     </application>
 </manifest>
