@@ -169,6 +169,8 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
                 clickedItem.title.contains("دیکشنری") -> {
+                    val intent = Intent(this, DictionaryActivity::class.java)
+                    startActivity(intent)
                     // TODO: DictionaryActivity - باید ساخته بشه
                     Toast.makeText(this, "این بخش در حال توسعه است", Toast.LENGTH_SHORT).show()
                 }
