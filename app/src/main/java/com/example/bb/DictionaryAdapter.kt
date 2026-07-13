@@ -3,7 +3,6 @@ package com.example.bb
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
@@ -17,10 +16,6 @@ class DictionaryAdapter(
         val tvPartOfSpeech: TextView = view.findViewById(R.id.tvPartOfSpeech)
         val cardPartOfSpeech: MaterialCardView = view.findViewById(R.id.cardPartOfSpeech)
         val tvDefinition: TextView = view.findViewById(R.id.tvDefinition)
-
-        // بخش مثال‌ها
-        val layoutExample: LinearLayout = view.findViewById(R.id.layoutExample)
-        val tvExample: TextView = view.findViewById(R.id.tvExample)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -41,14 +36,6 @@ class DictionaryAdapter(
             holder.tvPartOfSpeech.text = entry.partOfSpeech
         } else {
             holder.cardPartOfSpeech.visibility = View.GONE
-        }
-
-        // مدیریت نمایش مثال‌ها
-        if (!entry.example.isNullOrEmpty()) {
-            holder.layoutExample.visibility = View.VISIBLE
-            holder.tvExample.text = "\"${entry.example}\"" // گذاشتن مثال داخل کوتیشن
-        } else {
-            holder.layoutExample.visibility = View.GONE
         }
     }
 

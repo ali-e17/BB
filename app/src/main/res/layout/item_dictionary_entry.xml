@@ -65,30 +65,5 @@
             android:textColor="@color/main_text"
             android:textSize="16sp" />
 
-        <LinearLayout
-            android:id="@+id/layoutExample"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="12dp">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/sub_text"
-                android:alpha="0.2"
-                android:layout_marginBottom="12dp"/>
-
-            <TextView
-                android:id="@+id/tvExample"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/sub_text"
-                android:textStyle="italic"
-                android:textSize="14sp"
-                android:lineSpacingExtra="4dp"
-                android:gravity="start"/>
-        </LinearLayout>
-
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

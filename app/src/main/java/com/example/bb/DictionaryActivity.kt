@@ -57,4 +57,11 @@ class DictionaryActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
     }
+
+    override fun onDestroy() {
+        if (::dbHelper.isInitialized) {
+            dbHelper.close()
+        }
+        super.onDestroy()
+    }
 }
