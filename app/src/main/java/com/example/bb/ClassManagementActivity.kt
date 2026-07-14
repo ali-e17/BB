@@ -16,6 +16,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.UUID
 
 class ClassManagementActivity : AppCompatActivity() {
@@ -28,16 +31,14 @@ class ClassManagementActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_class_management)
 
-        // دکمه بازگشت هدر
         findViewById<ImageView>(R.id.btnClassMgmtBack).setOnClickListener { finish() }
 
         rvLevels = findViewById(R.id.rvLevels)
         rvLevels.layoutManager = LinearLayoutManager(this)
 
         setupAdapter()
-        refreshClassesList()
+        refreshClassesList() // دریافت آنلاین لیست کلاس‌ها هنگام باز شدن صفحه
 
-        // دکمه شناور پلاس نارنجی برای اد کردن کلاس جدید
         findViewById<FloatingActionButton>(R.id.fabAddClass).setOnClickListener {
             showAddClassDialog()
         }
@@ -48,10 +49,25 @@ class ClassManagementActivity : AppCompatActivity() {
         refreshClassesList()
     }
 
+    // 🌐 ارتباط با سرور: دریافت لیست کلاس‌ها
     private fun refreshClassesList() {
-        classesAdapterList.clear()
-        classesAdapterList.addAll(AppDatabase.getAllClasses())
-        classAdapter.notifyDataSetChanged()
+        RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
+            override fun onResponse(call: Call<List<ClassModel>>, response: Response<List<ClassModel>>) {
+                if (response.isSuccessful) {
+                    response.body()?.let { list ->
+                        classesAdapterList.clear()
+                        classesAdapterList.addAll(list)
+                        classAdapter.notifyDataSetChanged()
+                    }
+                } else {
+                    Toast.makeText(this@ClassManagementActivity, "خطا در دریافت اطلاعات از سرور", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
+                Toast.makeText(this@ClassManagementActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     private fun setupAdapter() {
@@ -68,18 +84,16 @@ class ClassManagementActivity : AppCompatActivity() {
 
                 holder.btnDelete.isEnabled = item.status == ClassStatus.ACTIVE
                 holder.btnDelete.alpha = if (item.status == ClassStatus.ACTIVE) 1f else 0.4f
+
                 holder.btnDelete.setOnClickListener {
                     AlertDialog.Builder(this@ClassManagementActivity)
                         .setTitle("پایان ترم")
                         .setMessage("کلاس پایان‌یافته و سابقه اعضا، حضورغیاب و کارنامه‌های آن حفظ می‌شود. ادامه می‌دهید؟")
                         .setPositiveButton("بله") { _, _ ->
-                            AppDatabase.completeClass(item.id)
-                            refreshClassesList()
-                            Toast.makeText(this@ClassManagementActivity, "ترم کلاس پایان یافت", Toast.LENGTH_SHORT).show()
+                            completeClassOnServer(item.id) // 🌐 فراخوانی متد آنلاین پایان ترم
                         }.setNegativeButton("خیر", null).show()
                 }
 
-                // کلیک روی نام کلاس برای ورود به صفحه جزئیات
                 holder.layoutText.setOnClickListener {
                     val intent = Intent(this@ClassManagementActivity, ClassDetailsActivity::class.java)
                     intent.putExtra("CLASS_ID", item.id)
@@ -93,11 +107,33 @@ class ClassManagementActivity : AppCompatActivity() {
         rvLevels.adapter = classAdapter
     }
 
+    // 🌐 ارتباط با سرور: تغییر وضعیت کلاس به پایان‌یافته
+    private fun completeClassOnServer(classId: String) {
+        val request = CompleteClassRequest(classId)
+        RetrofitClient.instance.completeClass(request).enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful && response.body()?.status == "success") {
+                    Toast.makeText(this@ClassManagementActivity, "ترم کلاس با موفقیت پایان یافت", Toast.LENGTH_SHORT).show()
+                    refreshClassesList()
+                } else {
+                    Toast.makeText(this@ClassManagementActivity, "خطا در ثبت پایان ترم", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                Toast.makeText(this@ClassManagementActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
     private fun showAddClassDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_class, null)
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
+
+        // شفاف کردن پس‌زمینه برای نمایش درست گوشه‌های گرد
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         val etName = dialogView.findViewById<TextInputEditText>(R.id.etDialogClassName)
         val etStart = dialogView.findViewById<TextInputEditText>(R.id.etDialogClassStartTime)
@@ -118,20 +154,33 @@ class ClassManagementActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // ساخت شیء بر اساس مدل واقعی ClassModel شما
             val newClass = ClassModel(
                 id = UUID.randomUUID().toString(),
                 className = name,
                 startTime = start,
                 endTime = end,
                 daysOfWeek = days,
-                sessionCount = sessionCount
+                sessionCount = sessionCount,
+                status = ClassStatus.ACTIVE,
+                createdAt = AppDatabase.today()
             )
 
-            AppDatabase.addClass(newClass, this@ClassManagementActivity)
-            refreshClassesList()
-            dialog.dismiss()
-            Toast.makeText(this, "کلاس جدید با موفقیت اضافه شد", Toast.LENGTH_SHORT).show()
+            // 🌐 ارتباط با سرور: ثبت کلاس جدید
+            RetrofitClient.instance.addClass(newClass).enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                    if (response.isSuccessful && response.body()?.status == "success") {
+                        Toast.makeText(this@ClassManagementActivity, "کلاس جدید با موفقیت اضافه شد", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                        refreshClassesList()
+                    } else {
+                        Toast.makeText(this@ClassManagementActivity, "خطا در ثبت کلاس", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                    Toast.makeText(this@ClassManagementActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
 
         dialog.show()
