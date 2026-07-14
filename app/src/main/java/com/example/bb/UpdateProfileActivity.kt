@@ -31,29 +31,21 @@ class UpdateProfileActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // خواندن رمز عبور فعلی کاربر
             val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
-            val currentSavedPassword = if (userRole == "STUDENT") {
-                AppDatabase.getStudentByUsername(currentUsername)?.password ?: "1234"
-            } else {
-                sharedPreferences.getString("${userRole}_PASSWORD", "1234") ?: "1234"
-            }
-
-            if (oldPassword != currentSavedPassword) {
-                Toast.makeText(this, "رمز عبور فعلی وارد شده اشتباه است!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
             if (newPassword != confirmPassword) {
                 Toast.makeText(this, "رمز عبور جدید و تکرار آن همخوانی ندارند!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // ذخیره رمز جدید
-            if (userRole == "STUDENT") {
-                AppDatabase.updateStudentPassword(currentUsername, newPassword, this)
-            } else {
-                sharedPreferences.edit().putString("${userRole}_PASSWORD", newPassword).apply()
+            if (newPassword.length < 4) {
+                Toast.makeText(this, "رمز جدید باید حداقل ۴ کاراکتر باشد", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val role = runCatching { UserRole.valueOf(userRole) }.getOrDefault(UserRole.STUDENT)
+            if (!AppDatabase.updatePassword(role, currentUsername, oldPassword, newPassword)) {
+                Toast.makeText(this, "رمز عبور فعلی اشتباه است", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
 
             Toast.makeText(this, "رمز عبور با موفقیت تغییر کرد", Toast.LENGTH_SHORT).show()

@@ -49,22 +49,23 @@ class AddEditTeacherActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (phone.length != 11 || !phone.all(Char::isDigit) || nationalId.length != 10 || !nationalId.all(Char::isDigit)) {
+                Toast.makeText(this, "شماره تلفن باید ۱۱ رقم و کد ملی ۱۰ رقم باشد", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             if (isEditMode) {
-                // آپدیت استاد (باید متد آپدیت رو تو دیتابیس هماهنگ کنی)
                 val teacher = AppDatabase.getTeacherByUsername(originalUsername)
                 if (teacher != null) {
-                    teacher.name = name
-                    teacher.username = phone
-                    teacher.nationalId = nationalId
-                    // اگر شماره عوض شده، باید حواست باشه تو دیتابیس کلیدش عوض بشه
-                    // (ساده‌ترین راه: متد اختصاصی آپدیت بنویسی)
-                    AppDatabase.addTeacher(teacher, this) // در حالت ساده اوررایت میشه
+                    val updatedTeacher = teacher.copy(name = name, username = phone, nationalId = nationalId)
+                    val error = AppDatabase.upsertTeacher(updatedTeacher, originalUsername)
+                    if (error != null) { Toast.makeText(this, error, Toast.LENGTH_SHORT).show(); return@setOnClickListener }
                     Toast.makeText(this, "ویرایش انجام شد", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                // ساخت استاد جدید: کدملی میشه رمز عبورش
                 val newTeacher = TeacherModel(name, phone, nationalId, password = nationalId)
-                AppDatabase.addTeacher(newTeacher, this)
+                val error = AppDatabase.upsertTeacher(newTeacher)
+                if (error != null) { Toast.makeText(this, error, Toast.LENGTH_SHORT).show(); return@setOnClickListener }
                 Toast.makeText(this, "استاد با موفقیت ثبت شد", Toast.LENGTH_SHORT).show()
             }
             finish()

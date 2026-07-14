@@ -9,8 +9,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 
 class StudentAdapter(
-    private var studentList: List<Student>,
-    private val onDetailsClicked: (Student) -> Unit // وقتی روی دکمه جزئیات کلیک شد
+    private var studentList: List<StudentModel>,
+    private val onDetailsClicked: (StudentModel) -> Unit
 ) : RecyclerView.Adapter<StudentAdapter.StudentViewHolder>() {
 
     class StudentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -29,9 +29,9 @@ class StudentAdapter(
     override fun onBindViewHolder(holder: StudentViewHolder, position: Int) {
         val student = studentList[position]
 
-        holder.tvName.text = student.fullName
+        holder.tvName.text = student.name
         holder.tvId.text = "کد: ${student.studentCode}"
-        holder.tvLevel.text = student.level
+        holder.tvLevel.text = AppDatabase.getClassNameById(student.classId) ?: "بدون کلاس فعال"
         holder.ivAvatar.setImageResource(student.avatarResId)
 
         // اگر بایگانی شده بود، رنگش رو خاکستری کنیم (جلوه بصری خفن)
@@ -51,7 +51,7 @@ class StudentAdapter(
     override fun getItemCount(): Int = studentList.size
 
     // این تابع برای سرچ زنده استفاده میشه
-    fun updateList(newList: List<Student>) {
+    fun updateList(newList: List<StudentModel>) {
         studentList = newList
         notifyDataSetChanged()
     }

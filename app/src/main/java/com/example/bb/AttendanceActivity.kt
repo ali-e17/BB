@@ -1,105 +1,110 @@
 package com.example.bb
 
+import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class AttendanceActivity : AppCompatActivity() {
-
-    private lateinit var rvAttendance: RecyclerView
-    private lateinit var txtLiveStats: TextView
-    private lateinit var containerDates: LinearLayout
-    private lateinit var adapter: AttendanceAdapter
+    private lateinit var recycler: RecyclerView
+    private lateinit var stats: TextView
+    private lateinit var dates: LinearLayout
+    private lateinit var saveButton: Button
     private var records = mutableListOf<AttendanceRecord>()
+    private var selectedClass: ClassModel? = null
+    private var selectedDate = ""
+    private var teacherPhone = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_attendance)
-
         findViewById<ImageView>(R.id.btnBack).setOnClickListener { finish() }
+        recycler = findViewById(R.id.rvAttendance)
+        stats = findViewById(R.id.txtLiveStats)
+        dates = findViewById(R.id.containerDates)
+        saveButton = findViewById(R.id.btnSaveAttendance)
+        recycler.layoutManager = LinearLayoutManager(this)
 
-        rvAttendance = findViewById(R.id.rvAttendance)
-        txtLiveStats = findViewById(R.id.txtLiveStats)
-        containerDates = findViewById(R.id.containerDates)
-        val spinnerClass = findViewById<AutoCompleteTextView>(R.id.spinnerClass)
-        val btnSave = findViewById<Button>(R.id.btnSaveAttendance)
-
-        // تنظیم دراپ‌داون کلاس‌ها
-        val classes = arrayOf("کلاس FF1 (گرامر)", "کلاس FF2 (مکالمه)")
-        spinnerClass.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, classes))
-        spinnerClass.setText(classes[0], false)
-
-        setupMockDates()
-        generateMockStudents()
-
-        rvAttendance.layoutManager = LinearLayoutManager(this)
-        adapter = AttendanceAdapter(records) {
-            updateLiveStats()
+        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        teacherPhone = prefs.getString("CURRENT_USERNAME", "").orEmpty()
+        val role = prefs.getString("CURRENT_USER_ROLE", "TEACHER")
+        val availableClasses = if (role == UserRole.ADMIN.name) AppDatabase.getAllClasses(false)
+        else AppDatabase.getTeacherClasses(teacherPhone)
+        val spinner = findViewById<AutoCompleteTextView>(R.id.spinnerClass)
+        spinner.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, availableClasses.map { it.className }))
+        spinner.setOnItemClickListener { _, _, position, _ -> selectClass(availableClasses[position]) }
+        if (availableClasses.isNotEmpty()) {
+            spinner.setText(availableClasses.first().className, false)
+            selectClass(availableClasses.first())
+        } else {
+            stats.text = "هیچ کلاس فعالی به شما تخصیص داده نشده است"
+            saveButton.isEnabled = false
         }
-        rvAttendance.adapter = adapter
 
-        updateLiveStats()
-
-        btnSave.setOnClickListener {
-            Toast.makeText(this, "اطلاعات با موفقیت در سرور ثبت شد", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-    }
-
-    private fun updateLiveStats() {
-        val present = records.count { it.status == AttendanceStatus.PRESENT }
-        val late = records.count { it.status == AttendanceStatus.LATE }
-        val absent = records.count { it.status == AttendanceStatus.ABSENT }
-
-        txtLiveStats.text = "حاضر: $present | غایب: $absent | تأخیر: $late"
-    }
-
-    private fun setupMockDates() {
-        val dates = listOf("۵ شهریور (امروز)", "۳ شهریور", "۱ شهریور", "۲۸ مرداد")
-
-        dates.forEachIndexed { index, dateText ->
-            val tvDate = TextView(this).apply {
-                text = dateText
-                textSize = 14f
-                setPadding(40, 20, 40, 20)
-
-                val marginParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                marginParams.setMargins(8, 0, 8, 0)
-                layoutParams = marginParams
-
-                val bg = GradientDrawable().apply {
-                    cornerRadius = 30f
-                    // تاریخ امروز نارنجی بشه، بقیه خاکستری
-                    setColor(if (index == 0) Color.parseColor("#FF6E14") else Color.parseColor("#E5E7EB"))
-                }
-                background = bg
-                setTextColor(if (index == 0) Color.WHITE else Color.parseColor("#1D2939"))
-
-                setOnClickListener {
-                    Toast.makeText(this@AttendanceActivity, "نمایش اطلاعات: $dateText", Toast.LENGTH_SHORT).show()
-                }
-            }
-            containerDates.addView(tvDate)
+        saveButton.setOnClickListener {
+            val model = selectedClass ?: return@setOnClickListener
+            AlertDialog.Builder(this)
+                .setTitle("ثبت نهایی حضور و غیاب")
+                .setMessage("پس از ثبت، این لیست قابل ویرایش نیست. مطمئن هستید؟")
+                .setPositiveButton("ثبت نهایی") { _, _ ->
+                    val saved = AppDatabase.finalizeAttendance(model.id, selectedDate, teacherPhone,
+                        records.map { AttendanceItem(it.student.id, it.status, it.delayMinutes) })
+                    if (saved) {
+                        Toast.makeText(this, "ثبت شد؛ اعلان غیبت و تأخیر به‌صورت خودکار ساخته شد", Toast.LENGTH_LONG).show()
+                        loadDate(selectedDate)
+                    } else Toast.makeText(this, "این جلسه قبلاً ثبت نهایی شده است", Toast.LENGTH_SHORT).show()
+                }.setNegativeButton("انصراف", null).show()
         }
     }
 
-    private fun generateMockStudents() {
-        val s1 = Student("1", "کوثر", "شریفی", "2601", "FF1", "", "", true, R.drawable.avatar_student_1)
-        val s2 = Student("2", "ریحانه", "محمدی", "2602", "FF1", "", "", true, R.drawable.avatar_student_2)
-        val s3 = Student("3", "نازنین", "بابلخانی", "2603", "FF1", "", "", true, R.drawable.avatar_student_3)
-        val s4 = Student("4", "علی", "رضایی", "2580", "FF1", "", "", true, R.drawable.avatar_student_4)
+    private fun selectClass(model: ClassModel) {
+        selectedClass = model
+        selectedDate = AppDatabase.today()
+        renderDates(model)
+        loadDate(selectedDate)
+    }
 
-        records.add(AttendanceRecord(s1, AttendanceStatus.ABSENT))
-        records.add(AttendanceRecord(s2, AttendanceStatus.ABSENT))
-        records.add(AttendanceRecord(s3, AttendanceStatus.ABSENT))
-        records.add(AttendanceRecord(s4, AttendanceStatus.ABSENT))
+    private fun renderDates(model: ClassModel) {
+        dates.removeAllViews()
+        val allDates = (listOf(AppDatabase.today()) + AppDatabase.getAttendanceHistory(model.id).map { it.date }).distinct()
+        allDates.forEach { date ->
+            dates.addView(TextView(this).apply {
+                text = if (date == AppDatabase.today()) "$date (امروز)" else date
+                textSize = 13f; setPadding(32, 18, 32, 18)
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(8, 0, 8, 0) }
+                background = GradientDrawable().apply { cornerRadius = 28f; setColor(if (date == selectedDate) Color.parseColor("#FF6E14") else Color.parseColor("#E5E7EB")) }
+                setTextColor(if (date == selectedDate) Color.WHITE else Color.parseColor("#1D2939"))
+                setOnClickListener { selectedDate = date; renderDates(model); loadDate(date) }
+            })
+        }
+    }
+
+    private fun loadDate(date: String) {
+        val model = selectedClass ?: return
+        val saved = AppDatabase.getAttendance(model.id, date)
+        records = AppDatabase.getStudentsInClass(model.id).map { student ->
+            val item = saved?.items?.find { it.studentId == student.id }
+            AttendanceRecord(student, item?.status ?: AttendanceStatus.PRESENT, item?.delayMinutes ?: 0, saved != null)
+        }.toMutableList()
+        recycler.adapter = AttendanceAdapter(records) { updateStats() }
+        saveButton.isEnabled = saved == null && records.isNotEmpty() && date == AppDatabase.today()
+        saveButton.text = if (saved == null) "ثبت نهایی حضور و غیاب" else "ثبت نهایی شده (غیرقابل ویرایش)"
+        updateStats()
+    }
+
+    private fun updateStats() {
+        stats.text = "حاضر: ${records.count { it.status == AttendanceStatus.PRESENT }} | غایب: ${records.count { it.status == AttendanceStatus.ABSENT }} | تأخیر: ${records.count { it.status == AttendanceStatus.LATE }}"
     }
 }

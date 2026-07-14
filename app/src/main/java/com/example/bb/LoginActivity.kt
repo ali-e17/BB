@@ -87,37 +87,24 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val adminUser = sharedPreferences.getString("ADMIN_USERNAME", "admin")
-            val adminPass = sharedPreferences.getString("ADMIN_PASSWORD", "1234")
-            val teacherUser = sharedPreferences.getString("TEACHER_USERNAME", "teacher")
-            val teacherPass = sharedPreferences.getString("TEACHER_PASSWORD", "1234")
-
-            // دریافت کاربر از دیتابیس پویا
-            val student = AppDatabase.getStudentByUsername(username)
-
-            val role = when {
-                username == adminUser && password == adminPass -> "ADMIN"
-                username == teacherUser && password == teacherPass -> "TEACHER"
-                student != null && student.password == password -> "STUDENT"
-                else -> null
-            }
-
-            if (role != null) {
+            val authenticated = AppDatabase.authenticate(username, password)
+            if (authenticated != null) {
                 Toast.makeText(this, "ورود موفق", Toast.LENGTH_SHORT).show()
                 sharedPreferences.edit().apply {
                     putBoolean("IS_LOGGED_IN", true)
-                    putString("CURRENT_USER_ROLE", role)
+                    putString("CURRENT_USER_ROLE", authenticated.role.name)
                     putString("CURRENT_USERNAME", username)
+                    putString("CURRENT_DISPLAY_NAME", authenticated.displayName)
                     apply()
                 }
 
                 val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("USER_ROLE", role)
+                intent.putExtra("USER_ROLE", authenticated.role.name)
                 intent.putExtra("USERNAME", username)
                 startActivity(intent)
                 finish()
             } else {
-                Toast.makeText(this, "نام کاربری یا رمز عبور اشتباه است", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "شماره تلفن یا رمز عبور اشتباه است", Toast.LENGTH_SHORT).show()
                 etUsername.text?.clear()
                 etPassword.text?.clear()
             }

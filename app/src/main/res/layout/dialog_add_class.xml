@@ -39,16 +39,61 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
-        android:hint="ساعت و روز کلاس (مثلاً زوج ۱۷:۰۰ الی ۱۸:۳۰)"
+        android:hint="ساعت شروع (مثلاً ۱۷:۰۰)"
         app:boxStrokeColor="#FF6B00"
         app:hintTextColor="#FF6B00">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etDialogClassTime"
+            android:id="@+id/etDialogClassStartTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/main_text"
             android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="ساعت پایان (مثلاً ۱۸:۳۰)"
+        app:boxStrokeColor="#FF6B00">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogClassEndTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="time"
+            android:textColor="@color/main_text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="روزهای هفته (مثلاً شنبه، دوشنبه)"
+        app:boxStrokeColor="#FF6B00">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogClassDays"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:textColor="@color/main_text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:hint="تعداد جلسات"
+        app:boxStrokeColor="#FF6B00">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogSessionCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="@color/main_text" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
