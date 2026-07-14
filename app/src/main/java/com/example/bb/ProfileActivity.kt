@@ -133,13 +133,8 @@ class ProfileActivity : AppCompatActivity() {
             intent.removeExtra("USERNAME")
         }
 
-        // نمایش نام واقعی در صورت دانش‌آموز بودن
-        if (roleUpper == "STUDENT") {
-            val student = AppDatabase.getStudentByUsername(currentUsername)
-            tvUserName.text = student?.name ?: sharedPreferences.getString("${roleUpper}_USERNAME", userRole)
-        } else {
-            tvUserName.text = sharedPreferences.getString("${roleUpper}_USERNAME", userRole) ?: userRole
-        }
+        val role = runCatching { UserRole.valueOf(roleUpper) }.getOrDefault(UserRole.STUDENT)
+        tvUserName.text = AppDatabase.getDisplayName(role, currentUsername)
 
         var savedAvatarName = sharedPreferences.getString("${roleUpper}_AVATAR", null)
         var resId = 0
@@ -174,8 +169,7 @@ class ProfileActivity : AppCompatActivity() {
 
                 val student = AppDatabase.getStudentByUsername(currentUsername)
                 if (student?.classId != null) {
-                    val levelNum = student.classId!!.replace("level_", "")
-                    tvStudentClassStatus.text = "کلاس فعلی شما: سطح $levelNum بیان برتر"
+                    tvStudentClassStatus.text = "کلاس فعلی شما: ${AppDatabase.getClassNameById(student.classId)}"
                 } else {
                     tvStudentClassStatus.text = "شما هنوز در هیچ کلاسی ثبت‌نام نشده‌اید."
                 }

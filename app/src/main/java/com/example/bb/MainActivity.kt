@@ -11,8 +11,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-enum class UserRole { STUDENT, TEACHER, ADMIN }
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
@@ -43,7 +41,7 @@ class MainActivity : AppCompatActivity() {
             else -> "شب بخیر،"
         }
 
-        txtUserName.text = usernameString.replaceFirstChar { it.uppercase() }
+        txtUserName.text = AppDatabase.getDisplayName(currentUserRole, usernameString)
 
         txtRoleBadge.text = when (currentUserRole) {
             UserRole.STUDENT -> "دانش‌آموز"
@@ -146,8 +144,7 @@ class MainActivity : AppCompatActivity() {
                             startActivity(intent)
                         }
                         UserRole.STUDENT -> {
-                            // TODO: StudentReportCardActivity - باید ساخته بشه
-                            Toast.makeText(this, "این بخش در حال توسعه است", Toast.LENGTH_SHORT).show()
+                            showStudentReportCards(usernameString)
                         }
                         else -> {}
                     }
@@ -177,5 +174,29 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun showStudentReportCards(phone: String) {
+        val student = AppDatabase.getStudentByUsername(phone) ?: return
+        val reports = AppDatabase.getReportCardsForStudent(student.id)
+        if (reports.isEmpty()) {
+            Toast.makeText(this, "هنوز کارنامه‌ای برای شما منتشر نشده است", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = reports.map { report ->
+            "${AppDatabase.getClassNameById(report.classId) ?: "کلاس"} - ${report.publishedAt}"
+        }.toTypedArray()
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("کارنامه‌های منتشرشده")
+            .setItems(labels) { _, position ->
+                val report = reports[position]
+                startActivity(Intent(this, ReportCardViewActivity::class.java).apply {
+                    putExtra("STUDENT_ID", student.studentCode)
+                    putExtra("STUDENT_NAME", student.name)
+                    putStringArrayListExtra("CRITERIA_NAMES", ArrayList(report.criteria.map { it.name }))
+                    putIntegerArrayListExtra("SCORES_LIST", ArrayList(report.criteria.map { report.scores[it.id] ?: 0 }))
+                    putIntegerArrayListExtra("MAX_SCORES_LIST", ArrayList(report.criteria.map { it.maxScore }))
+                })
+            }.show()
     }
 }

@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 class ReportCardSetupActivity : AppCompatActivity() {
 
     private val defaultComponents = mutableListOf(
-        GradeComponent("1", "Work Book", 18),
+        GradeComponent("1", "Work Book", 22),
         GradeComponent("2", "Class Activity", 13),
         GradeComponent("3", "Attendance", 5),
         GradeComponent("4", "Midterm", 20),
@@ -39,9 +39,8 @@ class ReportCardSetupActivity : AppCompatActivity() {
         btnSaveLayout = findViewById(R.id.btnSaveLayout)
         dropdownClassTarget = findViewById(R.id.dropdownClassTarget)
 
-        // راه‌اندازی منوی کشویی کلاس‌ها
-        val classes = arrayOf("کلاس ترم ۶", "کلاس آیلتس فشرده", "کلاس مکالمه مبتدی")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, classes)
+        val classes = AppDatabase.getAllClasses(false)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, classes.map { it.className })
         dropdownClassTarget.setAdapter(adapter)
 
         buildDynamicFields()
@@ -49,9 +48,10 @@ class ReportCardSetupActivity : AppCompatActivity() {
 
         btnSaveLayout.setOnClickListener {
             val selectedClass = dropdownClassTarget.text.toString()
+            val selectedClassModel = classes.find { it.className == selectedClass }
 
             // جلوگیری از عبور در صورت انتخاب نشدن کلاس
-            if (selectedClass.isEmpty()) {
+            if (selectedClassModel == null) {
                 Toast.makeText(this, "لطفاً ابتدا یک کلاس را انتخاب کنید", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -62,6 +62,7 @@ class ReportCardSetupActivity : AppCompatActivity() {
             val activeFields = defaultComponents.filter { it.isSelected }
             intent.putExtra("ACTIVE_CRITERIA", ArrayList(activeFields))
             intent.putExtra("SELECTED_CLASS", selectedClass)
+            intent.putExtra("SELECTED_CLASS_ID", selectedClassModel.id)
 
             startActivity(intent)
             // دستور finish() رو ننوشتیم تا ادمین بتونه با دکمه بک برگرده اینجا

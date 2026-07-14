@@ -10,7 +10,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,153 +18,95 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class StudentManagementActivity : AppCompatActivity() {
-
-    private lateinit var rvStudents: RecyclerView
-    private lateinit var studentAdapter: StudentAdapter
-    private lateinit var etSearchStudent: EditText
-    private lateinit var spinnerClassFilter: AutoCompleteTextView
-
-    private var allStudents = mutableListOf<Student>()
-    private var currentSearchQuery = ""
-    private var currentSelectedLevel = "همه کلاس‌ها"
-
-    // دریافت خروجی هوشمند از صفحه ثبت نام و ویرایش
-    private val formLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val data = result.data
-            @Suppress("DEPRECATION")
-            val student = data?.getSerializableExtra("RESULT_STUDENT") as? Student
-            val isEdit = data?.getBooleanExtra("IS_EDIT", false) ?: false
-
-            if (student != null) {
-                if (isEdit) {
-                    val index = allStudents.indexOfFirst { it.id == student.id }
-                    if (index != -1) allStudents[index] = student
-                    Toast.makeText(this, "اطلاعات بروزرسانی شد", Toast.LENGTH_SHORT).show()
-                } else {
-                    allStudents.add(student)
-                    Toast.makeText(this, "دانش‌آموز جدید اضافه شد", Toast.LENGTH_SHORT).show()
-                }
-                applyFilters()
-            }
-        }
-    }
+    private lateinit var adapter: StudentAdapter
+    private lateinit var classFilter: AutoCompleteTextView
+    private var search = ""
+    private var selectedClassId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_management)
 
-        rvStudents = findViewById(R.id.rvStudents)
-        etSearchStudent = findViewById(R.id.etSearchStudent)
-        spinnerClassFilter = findViewById(R.id.spinnerClassFilter)
-        val btnBack = findViewById<ImageView>(R.id.btnBack)
-        val fabAddStudent = findViewById<FloatingActionButton>(R.id.fabAddStudent)
-
-        btnBack.setOnClickListener { finish() }
-
-        generateMockData()
-
-        // راه‌اندازی فیلتر کلاس‌ها با متد جدید
-        val filterOptions = listOf("همه کلاس‌ها", "FF1", "FF2", "FF3", "FF4")
-        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, filterOptions)
-        spinnerClassFilter.setAdapter(spinnerAdapter)
-
-        // تنظیم مدیریت لیست
-        rvStudents.layoutManager = LinearLayoutManager(this)
-        studentAdapter = StudentAdapter(allStudents) { student ->
-            showStudentDetailsBottomSheet(student)
+        findViewById<ImageView>(R.id.btnBack).setOnClickListener { finish() }
+        findViewById<FloatingActionButton>(R.id.fabAddStudent).setOnClickListener {
+            startActivity(Intent(this, AddEditStudentActivity::class.java))
         }
-        rvStudents.adapter = studentAdapter
 
-        // لیسنر سرچ زنده
-        etSearchStudent.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                currentSearchQuery = s.toString()
-                applyFilters()
-            }
-            override fun afterTextChanged(s: Editable?) {}
+        classFilter = findViewById(R.id.spinnerClassFilter)
+        val recycler = findViewById<RecyclerView>(R.id.rvStudents)
+        recycler.layoutManager = LinearLayoutManager(this)
+        adapter = StudentAdapter(emptyList()) { showDetails(it) }
+        recycler.adapter = adapter
+
+        findViewById<EditText>(R.id.etSearchStudent).addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) { search = s.toString().trim(); refresh() }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
         })
+    }
 
-        // لیسنر صحیح برای دراپ‌داون در متریال دیزاین
-        spinnerClassFilter.setOnItemClickListener { _, _, position, _ ->
-            currentSelectedLevel = filterOptions[position]
-            applyFilters()
-        }
+    override fun onResume() {
+        super.onResume()
+        setupClassFilter()
+        refresh()
+    }
 
-        fabAddStudent.setOnClickListener {
-            val intent = Intent(this, AddEditStudentActivity::class.java)
-            formLauncher.launch(intent)
+    private fun setupClassFilter() {
+        val activeClasses = AppDatabase.getAllClasses(false)
+        val labels = listOf("همه کلاس‌ها", "بدون کلاس") + activeClasses.map { it.className }
+        classFilter.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, labels))
+        classFilter.setOnItemClickListener { _, _, position, _ ->
+            selectedClassId = when (position) {
+                0 -> null
+                1 -> NO_CLASS
+                else -> activeClasses[position - 2].id
+            }
+            refresh()
         }
     }
 
-    private fun applyFilters() {
-        val filteredList = allStudents.filter { student ->
-            val matchesSearch = student.fullName.contains(currentSearchQuery, ignoreCase = true) ||
-                    student.studentCode.contains(currentSearchQuery, ignoreCase = true)
-
-            val matchesClass = currentSelectedLevel == "همه کلاس‌ها" || student.level == currentSelectedLevel
-
+    private fun refresh() {
+        val filtered = AppDatabase.getAllStudents().filter { student ->
+            val matchesSearch = search.isBlank() || student.name.contains(search, true) ||
+                student.studentCode.contains(search, true) || student.phone.contains(search)
+            val matchesClass = when (selectedClassId) {
+                null -> true
+                NO_CLASS -> student.classId == null
+                else -> student.classId == selectedClassId
+            }
             matchesSearch && matchesClass
         }
-        studentAdapter.updateList(filteredList)
+        adapter.updateList(filtered)
     }
 
-    private fun showStudentDetailsBottomSheet(student: Student) {
+    private fun showDetails(student: StudentModel) {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_student_details, null)
         dialog.setContentView(view)
-
-        view.findViewById<TextView>(R.id.dialogName).text = student.fullName
-        view.findViewById<TextView>(R.id.dialogCode).text = "کد دانشجویی: ${student.studentCode}"
-        view.findViewById<TextView>(R.id.dialogLevel).text = student.level
-        view.findViewById<TextView>(R.id.dialogPhone).text = student.phoneNumber
+        view.findViewById<TextView>(R.id.dialogName).text = student.name
+        view.findViewById<TextView>(R.id.dialogCode).text = "کد دانش‌آموزی: ${student.studentCode}"
+        view.findViewById<TextView>(R.id.dialogLevel).text = AppDatabase.getClassNameById(student.classId) ?: "بدون کلاس فعال"
+        view.findViewById<TextView>(R.id.dialogPhone).text = "${student.phone} | کد ملی: ${student.nationalId}"
         view.findViewById<TextView>(R.id.dialogRegDate).text = student.registrationDate
         view.findViewById<ImageView>(R.id.dialogAvatar).setImageResource(student.avatarResId)
 
-        val tvStatus = view.findViewById<TextView>(R.id.dialogStatus)
-        val btnArchive = view.findViewById<MaterialButton>(R.id.btnDialogArchive)
-
-        if (student.isActive) {
-            tvStatus.text = "فعال"
-            tvStatus.setTextColor(android.graphics.Color.parseColor("#10B981"))
-            btnArchive.text = "بایگانی کردن"
-        } else {
-            tvStatus.text = "بایگانی شده"
-            val typedValue = android.util.TypedValue()
-            theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
-            tvStatus.setTextColor(typedValue.data)
-            btnArchive.text = "فعال‌سازی مجدد"
+        val status = view.findViewById<TextView>(R.id.dialogStatus)
+        val archive = view.findViewById<MaterialButton>(R.id.btnDialogArchive)
+        status.text = if (student.isActive) "فعال" else "بایگانی شده"
+        archive.text = if (student.isActive) "بایگانی کردن" else "فعال‌سازی مجدد"
+        archive.setOnClickListener {
+            if (!AppDatabase.setStudentActive(student.id, !student.isActive)) {
+                Toast.makeText(this, "ابتدا دانش‌آموز را از کلاس فعال خارج کنید", Toast.LENGTH_SHORT).show()
+            } else {
+                dialog.dismiss(); refresh()
+            }
         }
-
-        // لاجیک دکمه بایگانی (Soft Delete)
-        btnArchive.setOnClickListener {
-            student.isActive = !student.isActive
-            val index = allStudents.indexOfFirst { it.id == student.id }
-            if (index != -1) allStudents[index] = student
-            applyFilters()
-            dialog.dismiss()
-            Toast.makeText(this, if (student.isActive) "دانش‌آموز فعال شد" else "دانش‌آموز بایگانی شد", Toast.LENGTH_SHORT).show()
-        }
-
-        // لاجیک دکمه ویرایش اطلاعات
         view.findViewById<MaterialButton>(R.id.btnDialogEdit).setOnClickListener {
             dialog.dismiss()
-            val intent = Intent(this, AddEditStudentActivity::class.java)
-            intent.putExtra("STUDENT_DATA", student)
-            formLauncher.launch(intent)
+            startActivity(Intent(this, AddEditStudentActivity::class.java).putExtra("STUDENT_DATA", student))
         }
-
         dialog.show()
     }
 
-    private fun generateMockData() {
-        if (allStudents.isEmpty()) {
-            allStudents.add(Student("1", "کوثر", "شریفی", "2601", "FF1", "09131111111", "1404/01/15", true, R.drawable.avatar_student_1))
-            allStudents.add(Student("2", "ریحانه", "محمدی", "2602", "FF1", "09132222222", "1404/02/20", true, R.drawable.avatar_student_2))
-            allStudents.add(Student("3", "نازنین", "بابلخانی", "2603", "FF2", "09133333333", "1403/11/01", true, R.drawable.avatar_student_3))
-            allStudents.add(Student("4", "علی", "رضایی", "2580", "FF3", "09134444444", "1403/05/12", false, R.drawable.avatar_student_4))
-            allStudents.add(Student("5", "محمد", "حسینی", "2599", "FF4", "09135455555", "1404/04/10", true, R.drawable.avatar_student_5))
-        }
-    }
+    companion object { private const val NO_CLASS = "__NO_CLASS__" }
 }

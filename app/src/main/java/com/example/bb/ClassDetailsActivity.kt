@@ -21,12 +21,14 @@ class ClassDetailsActivity : AppCompatActivity() {
 
     private val searchResultsList = ArrayList<StudentModel>()
     private val classMembersList = ArrayList<StudentModel>()
+    private var isEditable = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_class_details)
 
         classId = intent.getStringExtra("CLASS_ID") ?: ""
+        isEditable = AppDatabase.getClassById(classId)?.status == ClassStatus.ACTIVE
         findViewById<TextView>(R.id.txtClassName).text = intent.getStringExtra("CLASS_NAME")
 
         rvSearchResults = findViewById(R.id.rvSearchResults)
@@ -41,7 +43,7 @@ class ClassDetailsActivity : AppCompatActivity() {
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val query = s.toString().trim()
-                if (query.isNotEmpty()) {
+                if (query.isNotEmpty() && isEditable) {
                     searchResultsList.clear()
                     // جستجوی دانش‌آموزانی که در این کلاس نیستند
                     searchResultsList.addAll(AppDatabase.searchStudents(query).filter { it.classId != classId })
@@ -62,7 +64,7 @@ class ClassDetailsActivity : AppCompatActivity() {
 
     private fun updateClassMembers() {
         classMembersList.clear()
-        classMembersList.addAll(AppDatabase.getStudentsInClass(classId))
+        classMembersList.addAll(if (isEditable) AppDatabase.getStudentsInClass(classId) else AppDatabase.getStudentsEverInClass(classId))
 
         rvClassMembers.adapter = object : RecyclerView.Adapter<StudentViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -73,6 +75,7 @@ class ClassDetailsActivity : AppCompatActivity() {
                 holder.tvName.text = student.name
                 holder.tvPhone.text = student.phone
                 holder.btnAction.text = "✖"
+                holder.btnAction.isEnabled = isEditable
 
                 holder.btnAction.setOnClickListener {
                     AppDatabase.assignClassToStudent(student.phone, null, this@ClassDetailsActivity)
@@ -93,6 +96,7 @@ class ClassDetailsActivity : AppCompatActivity() {
                 holder.tvName.text = student.name
                 holder.tvPhone.text = student.phone
                 holder.btnAction.text = "+"
+                holder.btnAction.isEnabled = isEditable
 
                 holder.btnAction.setOnClickListener {
                     AppDatabase.assignClassToStudent(student.phone, classId, this@ClassDetailsActivity)

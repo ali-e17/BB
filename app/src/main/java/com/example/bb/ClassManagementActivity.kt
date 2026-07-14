@@ -66,11 +66,17 @@ class ClassManagementActivity : AppCompatActivity() {
                 holder.tvName.text = item.className
                 holder.tvTime.text = item.classTime
 
-                // دکمه حذف کلاس
+                holder.btnDelete.isEnabled = item.status == ClassStatus.ACTIVE
+                holder.btnDelete.alpha = if (item.status == ClassStatus.ACTIVE) 1f else 0.4f
                 holder.btnDelete.setOnClickListener {
-                    AppDatabase.deleteClass(item.id, this@ClassManagementActivity)
-                    refreshClassesList()
-                    Toast.makeText(this@ClassManagementActivity, "کلاس با موفقیت حذف شد", Toast.LENGTH_SHORT).show()
+                    AlertDialog.Builder(this@ClassManagementActivity)
+                        .setTitle("پایان ترم")
+                        .setMessage("کلاس پایان‌یافته و سابقه اعضا، حضورغیاب و کارنامه‌های آن حفظ می‌شود. ادامه می‌دهید؟")
+                        .setPositiveButton("بله") { _, _ ->
+                            AppDatabase.completeClass(item.id)
+                            refreshClassesList()
+                            Toast.makeText(this@ClassManagementActivity, "ترم کلاس پایان یافت", Toast.LENGTH_SHORT).show()
+                        }.setNegativeButton("خیر", null).show()
                 }
 
                 // کلیک روی نام کلاس برای ورود به صفحه جزئیات
@@ -94,14 +100,20 @@ class ClassManagementActivity : AppCompatActivity() {
             .create()
 
         val etName = dialogView.findViewById<TextInputEditText>(R.id.etDialogClassName)
-        val etTime = dialogView.findViewById<TextInputEditText>(R.id.etDialogClassTime)
+        val etStart = dialogView.findViewById<TextInputEditText>(R.id.etDialogClassStartTime)
+        val etEnd = dialogView.findViewById<TextInputEditText>(R.id.etDialogClassEndTime)
+        val etDays = dialogView.findViewById<TextInputEditText>(R.id.etDialogClassDays)
+        val etSessions = dialogView.findViewById<TextInputEditText>(R.id.etDialogSessionCount)
         val btnAdd = dialogView.findViewById<Button>(R.id.btnDialogAdd)
 
         btnAdd.setOnClickListener {
             val name = etName.text.toString().trim()
-            val time = etTime.text.toString().trim()
+            val start = etStart.text.toString().trim()
+            val end = etEnd.text.toString().trim()
+            val days = etDays.text.toString().trim()
+            val sessionCount = etSessions.text.toString().trim().toIntOrNull()
 
-            if (name.isEmpty() || time.isEmpty()) {
+            if (name.isEmpty() || start.isEmpty() || end.isEmpty() || days.isEmpty() || sessionCount == null || sessionCount <= 0) {
                 Toast.makeText(this, "لطفاً تمام فیلدها را پر کنید", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -110,7 +122,10 @@ class ClassManagementActivity : AppCompatActivity() {
             val newClass = ClassModel(
                 id = UUID.randomUUID().toString(),
                 className = name,
-                classTime = time
+                startTime = start,
+                endTime = end,
+                daysOfWeek = days,
+                sessionCount = sessionCount
             )
 
             AppDatabase.addClass(newClass, this@ClassManagementActivity)
