@@ -1,17 +1,27 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.BB" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">@drawable/app_global_background</item>
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
+    <style name="Theme.BB" parent="Base.Theme.BB" />
+
     <style name="CustomMaterialTimePicker" parent="ThemeOverlay.MaterialComponents.TimePicker">
-        <item name="colorPrimary">#FF6B00</item> <item name="colorSurface">#1A2238</item> <item name="colorOnSurface">#FFFFFF</item> <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimary">#FF6B00</item>
+        <item name="colorSurface">#1A2238</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearanceRoundedDialog</item>
         <item name="materialButtonStyle">@style/DarkTimePickerButtonStyle</item>
     </style>
 
     <style name="DarkTimePickerButtonStyle" parent="Widget.MaterialComponents.Button.TextButton">
-        <item name="android:textColor">#60A5FA</item> </style>
+        <item name="android:textColor">#60A5FA</item>
+    </style>
 </resources>

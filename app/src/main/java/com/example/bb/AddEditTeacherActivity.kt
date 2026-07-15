@@ -14,6 +14,7 @@ class AddEditTeacherActivity : AppCompatActivity() {
     private var originalUsername = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        findViewById<ImageView>(R.id.btnTeacherBack).setOnClickListener { finish() }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_teacher) // لایوتی که ساختی رو بده
 

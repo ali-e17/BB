@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,6 +25,7 @@ class ClassDetailsActivity : AppCompatActivity() {
     private var isEditable = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        findViewById<ImageView>(R.id.btnDetailsBack).setOnClickListener { finish() }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_class_details)
 

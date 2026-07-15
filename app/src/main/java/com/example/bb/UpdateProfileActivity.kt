@@ -3,6 +3,7 @@ package com.example.bb
 import android.content.Context
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
@@ -12,7 +13,7 @@ class UpdateProfileActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_update_profile)
-
+        findViewById<ImageView>(R.id.btnUpdateProfileBack).setOnClickListener { finish() }
         val etOldPassword = findViewById<TextInputEditText>(R.id.etOldPassword)
         val etNewPassword = findViewById<TextInputEditText>(R.id.etNewPassword)
         val etConfirmPassword = findViewById<TextInputEditText>(R.id.etConfirmPassword)

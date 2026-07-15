@@ -1,15 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.BB" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">@drawable/app_global_background</item>
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.BB" parent="Base.Theme.BB" />
 
     <style name="CustomMaterialTimePicker" parent="ThemeOverlay.MaterialComponents.TimePicker">
-        <item name="colorPrimary">#FF6B00</item> <item name="colorSurface">#FFFFFF</item> <item name="colorOnSurface">#000000</item> <item name="colorOnPrimary">#FFFFFF</item> <item name="shapeAppearanceMediumComponent">@style/ShapeAppearanceRoundedDialog</item>
+        <item name="colorPrimary">#FF6B00</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#000000</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearanceRoundedDialog</item>
     </style>
 
     <style name="ShapeAppearanceRoundedDialog" parent="ShapeAppearance.MaterialComponents.MediumComponent">
