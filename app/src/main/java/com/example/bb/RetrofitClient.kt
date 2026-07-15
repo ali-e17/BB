@@ -14,7 +14,26 @@ data class ApiResponse(
 )
 
 // ۲. تعریف مسیرهای سرور (به این میگن API Interface)
-interface ApiService {
+interface ApiService
+{
+    @POST("toggle_student_active.php")
+    fun toggleStudentActive(@Body request: ToggleActiveRequest): Call<ApiResponse>
+
+    @POST("login.php")
+    fun login(@Body request: LoginRequest): Call<LoginResponse>
+
+    @POST("assign_class.php")
+    fun assignClass(@Body request: AssignClassRequest): Call<ApiResponse>
+
+    // دریافت لیست دانش‌آموزان
+    @GET("get_students.php")
+    fun getStudents(): Call<List<StudentModel>>
+
+    // ثبت دانش‌آموز جدید
+    @POST("add_student.php")
+    fun addStudent(@Body studentModel: StudentModel): Call<ApiResponse>
+
+
     @POST("complete_class.php")
     fun completeClass(@Body request: CompleteClassRequest): Call<ApiResponse>
 
@@ -49,3 +68,8 @@ object RetrofitClient {
     }
 }
 data class CompleteClassRequest(val id: String)
+data class AssignClassRequest(val studentId: String, val classId: String?)
+
+data class LoginRequest(val username: String, val password: String)
+data class LoginResponse(val status: String, val role: String?, val displayName: String?, val message: String?)
+data class ToggleActiveRequest(val studentId: String, val isActive: Boolean)

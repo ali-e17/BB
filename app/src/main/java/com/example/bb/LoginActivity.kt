@@ -10,6 +10,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.textfield.TextInputEditText
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class LoginActivity : AppCompatActivity() {
 
@@ -17,6 +20,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
+        // بررسی لاگین بودن از قبل
         if (sharedPreferences.getBoolean("IS_LOGGED_IN", false)) {
             val savedRole = sharedPreferences.getString("CURRENT_USER_ROLE", "STUDENT") ?: "STUDENT"
             val savedUsername = sharedPreferences.getString("CURRENT_USERNAME", "student") ?: "student"
@@ -87,27 +91,46 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val authenticated = AppDatabase.authenticate(username, password)
-            if (authenticated != null) {
-                Toast.makeText(this, "ورود موفق", Toast.LENGTH_SHORT).show()
-                sharedPreferences.edit().apply {
-                    putBoolean("IS_LOGGED_IN", true)
-                    putString("CURRENT_USER_ROLE", authenticated.role.name)
-                    putString("CURRENT_USERNAME", username)
-                    putString("CURRENT_DISPLAY_NAME", authenticated.displayName)
-                    apply()
+            // غیرفعال کردن دکمه برای جلوگیری از چندبار کلیک کردن
+            btnLogin.isEnabled = false
+            btnLogin.text = "در حال بررسی..."
+
+            // 🌐 درخواست لاگین از سرور
+            val request = LoginRequest(username, password)
+            RetrofitClient.instance.login(request).enqueue(object : Callback<LoginResponse> {
+                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                    btnLogin.isEnabled = true
+                    btnLogin.text = "ENTER"
+
+                    val body = response.body()
+                    if (response.isSuccessful && body?.status == "success") {
+                        Toast.makeText(this@LoginActivity, "ورود موفق", Toast.LENGTH_SHORT).show()
+
+                        sharedPreferences.edit().apply {
+                            putBoolean("IS_LOGGED_IN", true)
+                            putString("CURRENT_USER_ROLE", body.role ?: "STUDENT")
+                            putString("CURRENT_USERNAME", username)
+                            putString("CURRENT_DISPLAY_NAME", body.displayName ?: "کاربر")
+                            apply()
+                        }
+
+                        val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                        intent.putExtra("USER_ROLE", body.role)
+                        intent.putExtra("USERNAME", username)
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        Toast.makeText(this@LoginActivity, "شماره تلفن یا رمز عبور اشتباه است", Toast.LENGTH_SHORT).show()
+                        etPassword.text?.clear()
+                    }
                 }
 
-                val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("USER_ROLE", authenticated.role.name)
-                intent.putExtra("USERNAME", username)
-                startActivity(intent)
-                finish()
-            } else {
-                Toast.makeText(this, "شماره تلفن یا رمز عبور اشتباه است", Toast.LENGTH_SHORT).show()
-                etUsername.text?.clear()
-                etPassword.text?.clear()
-            }
+                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                    btnLogin.isEnabled = true
+                    btnLogin.text = "ENTER"
+                    Toast.makeText(this@LoginActivity, "خطا در اتصال به سرور", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
     }
 }
