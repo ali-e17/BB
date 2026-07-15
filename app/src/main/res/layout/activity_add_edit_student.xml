@@ -114,6 +114,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:visibility="gone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
@@ -152,7 +153,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/input_text"
-                    android:hint="شماره تماس"
+                    android:maxLength="10"
+                    android:hint="شماره تماس (بدون صفر)"
                     android:inputType="phone" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -172,23 +174,6 @@
                     android:hint="کد ملی (رمز اولیه)"
                     android:inputType="number"
                     android:maxLength="10"
-                    android:textColor="@color/input_text" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
-                app:hintTextColor="@color/title_blue"
-                app:boxStrokeColor="@color/title_blue">
-
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/spinnerFormLevel"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="تخصیص کلاس (اختیاری)"
-                    android:inputType="none"
                     android:textColor="@color/input_text" />
             </com.google.android.material.textfield.TextInputLayout>
 
