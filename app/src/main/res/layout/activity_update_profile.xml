@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true"
     android:fillViewport="true">
 
     <LinearLayout
@@ -13,15 +14,34 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <TextView
+        <RelativeLayout
+            android:id="@+id/updateProfileToolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="تغییر رمز عبور"
-            android:textColor="@color/title_blue"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:gravity="right"
-            android:layout_marginBottom="16dp" />
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/btnUpdateProfileBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@color/main_text"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="تغییر رمز عبور"
+                android:textColor="@color/title_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutOldPassword"

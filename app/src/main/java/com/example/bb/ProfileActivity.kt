@@ -17,7 +17,7 @@ class ProfileActivity : AppCompatActivity() {
 
     private lateinit var tvUserName: TextView
     private lateinit var tvUserRole: TextView
-    private lateinit var tvStudentClassStatus: TextView // به متغیرهای کلاس اضافه شد
+    private lateinit var tvStudentClassStatus: TextView
     private lateinit var layoutStudentOptions: LinearLayout
     private lateinit var layoutTeacherOptions: LinearLayout
     private lateinit var userRole: String
@@ -25,134 +25,68 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var ivAvatar: ImageView
     private lateinit var btnChangeAvatar: TextView
     private lateinit var btnLogout: LinearLayout
+    private lateinit var btnChangePassword: LinearLayout // متغیر جدید برای دکمه تغییر رمز
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
+        findViewById<ImageView>(R.id.btnProfileBack).setOnClickListener { finish() }
+
         val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
+        userRole = sharedPreferences.getString("CURRENT_USER_ROLE", "STUDENT") ?: "STUDENT"
 
         tvUserName = findViewById(R.id.tvUserName)
         tvUserRole = findViewById(R.id.tvUserRole)
-        tvStudentClassStatus = findViewById(R.id.tvStudentClassStatus) // مقداردهی اولیه
+        tvStudentClassStatus = findViewById(R.id.tvStudentClassStatus)
         layoutStudentOptions = findViewById(R.id.layoutStudentOptions)
         layoutTeacherOptions = findViewById(R.id.layoutTeacherOptions)
 
         ivAvatar = findViewById(R.id.ivAvatar)
         btnChangeAvatar = findViewById(R.id.btnChangeAvatar)
         btnLogout = findViewById(R.id.btnLogout)
+        btnChangePassword = findViewById(R.id.btnChangePassword) // حل مشکل Unresolved reference
 
-        val btnChangeCredentials = findViewById<LinearLayout>(R.id.btnChangeCredentials)
-
-        val savedRoleFallback = sharedPreferences.getString("CURRENT_USER_ROLE", "student") ?: "student"
-        userRole = intent.getStringExtra("USER_ROLE") ?: savedRoleFallback
-
-        btnChangeCredentials.setOnClickListener {
+        // باز شدن مستقیم صفحه تغییر رمز با کلیک روی دکمه تغییر رمز عبور
+        btnChangePassword.setOnClickListener {
             val intent = Intent(this, UpdateProfileActivity::class.java)
-            intent.putExtra("USER_ROLE", userRole.uppercase())
+            intent.putExtra("USER_ROLE", userRole)
             startActivity(intent)
+        }
+
+        btnLogout.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("خروج از حساب")
+                .setMessage("آیا می‌خواهید از حساب کاربری خود خارج شوید؟")
+                .setPositiveButton("بله") { _, _ ->
+                    sharedPreferences.edit().apply {
+                        putBoolean("IS_LOGGED_IN", false)
+                        putString("CURRENT_USER_ROLE", "STUDENT")
+                        putString("CURRENT_USERNAME", "")
+                        putString("CURRENT_DISPLAY_NAME", "")
+                        apply()
+                    }
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                .setNegativeButton("خیر", null)
+                .show()
         }
 
         btnChangeAvatar.setOnClickListener {
             showAvatarSelectionDialog()
         }
 
-        btnLogout.setOnClickListener {
-            showLogoutConfirmationDialog()
-        }
-    }
+        // نمایش نام کاربر
+        val displayName = sharedPreferences.getString("CURRENT_DISPLAY_NAME", "")
+        tvUserName.text = if (!displayName.isNullOrEmpty()) displayName else "کاربر عزیز"
 
-    private fun showLogoutConfirmationDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("خروج از حساب")
-        builder.setMessage("آیا مطمئن هستید که می‌خواهید از حساب کاربری خود خارج شوید؟")
-
-        builder.setPositiveButton("بله") { dialog, _ ->
-            val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-
-            sharedPreferences.edit().apply {
-                putBoolean("IS_LOGGED_IN", false)
-                putString("CURRENT_USER_ROLE", null)
-                putString("CURRENT_USERNAME", null)
-                apply()
-            }
-
-            Toast.makeText(this, "از حساب خود خارج شدید", Toast.LENGTH_SHORT).show()
-
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
-        }
-
-        builder.setNegativeButton("خیر") { dialog, _ ->
-            dialog.dismiss()
-        }
-
-        val alertDialog = builder.create()
-        alertDialog.show()
-    }
-
-    private fun showAvatarSelectionDialog() {
-        val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        val roleUpper = userRole.uppercase()
-
-        val filteredAvatars = when (roleUpper) {
-            "ADMIN" -> listOf(R.drawable.avatar_admin_1, R.drawable.avatar_admin_2, R.drawable.avatar_admin_3, R.drawable.avatar_admin_4, R.drawable.avatar_admin_5)
-            "TEACHER" -> listOf(R.drawable.avatar_teacher_1, R.drawable.avatar_teacher_2, R.drawable.avatar_teacher_3, R.drawable.avatar_teacher_4, R.drawable.avatar_teacher_5, R.drawable.avatar_teacher_6)
-            else -> listOf(R.drawable.avatar_student_1, R.drawable.avatar_student_2, R.drawable.avatar_student_3, R.drawable.avatar_student_4, R.drawable.avatar_student_5, R.drawable.avatar_student_6, R.drawable.avatar_student_7, R.drawable.avatar_student_8, R.drawable.avatar_student_9)
-        }
-
-        val dialog = BottomSheetDialog(this)
-        val dialogView = layoutInflater.inflate(R.layout.dialog_avatar_selector, null)
-        dialog.setContentView(dialogView)
-
-        val rvAvatarGrid = dialogView.findViewById<RecyclerView>(R.id.rvAvatarGrid)
-
-        rvAvatarGrid.adapter = AvatarAdapter(filteredAvatars) { clickedResId ->
-            val clickedAvatarName = resources.getResourceEntryName(clickedResId)
-            sharedPreferences.edit().putString("${roleUpper}_AVATAR", clickedAvatarName).apply()
-            ivAvatar.setImageResource(clickedResId)
-            Toast.makeText(this, "آواتار با موفقیت تغییر یافت", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        val roleUpper = userRole.uppercase()
-        val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
-
-        val intentUsername = intent.getStringExtra("USERNAME")
-        if (!intentUsername.isNullOrEmpty()) {
-            sharedPreferences.edit().putString("${roleUpper}_USERNAME", intentUsername).apply()
-            intent.removeExtra("USERNAME")
-        }
-
-        val role = runCatching { UserRole.valueOf(roleUpper) }.getOrDefault(UserRole.STUDENT)
-        tvUserName.text = AppDatabase.getDisplayName(role, currentUsername)
-
-        var savedAvatarName = sharedPreferences.getString("${roleUpper}_AVATAR", null)
-        var resId = 0
-
-        if (!savedAvatarName.isNullOrEmpty()) {
-            resId = resources.getIdentifier(savedAvatarName, "drawable", packageName)
-        }
-
-        if (resId == 0) {
-            savedAvatarName = when (roleUpper) {
-                "ADMIN" -> "avatar_admin"
-                "TEACHER" -> listOf("avatar_teacher_1", "avatar_teacher_2", "avatar_teacher_3").random()
-                else -> listOf("avatar_student_1", "avatar_student_2", "student_avatar_2", "avatar_student_4").random()
-            }
-            sharedPreferences.edit().putString("${roleUpper}_AVATAR", savedAvatarName).apply()
-            resId = resources.getIdentifier(savedAvatarName, "drawable", packageName)
-        }
-
+        // ست کردن آواتار بر اساس نام ذخیره شده
+        val savedAvatarName = sharedPreferences.getString("AVATAR_NAME_${currentUsername}", "avatar_student_1")
+        val resId = resources.getIdentifier(savedAvatarName, "drawable", packageName)
         if (resId != 0) {
             ivAvatar.setImageResource(resId)
         } else {
@@ -165,7 +99,7 @@ class ProfileActivity : AppCompatActivity() {
                 tvUserRole.text = "دانش‌آموز آموزشگاه"
                 layoutStudentOptions.visibility = View.VISIBLE
                 layoutTeacherOptions.visibility = View.GONE
-                tvStudentClassStatus.visibility = View.VISIBLE // فقط برای دانش‌آموز فعال می‌شود
+                tvStudentClassStatus.visibility = View.VISIBLE
 
                 val student = AppDatabase.getStudentByUsername(currentUsername)
                 if (student?.classId != null) {
@@ -178,14 +112,51 @@ class ProfileActivity : AppCompatActivity() {
                 tvUserRole.text = "مدرس رسمی بیان برتر"
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.VISIBLE
-                tvStudentClassStatus.visibility = View.GONE // برای مدرس مخفی می‌شود
+                tvStudentClassStatus.visibility = View.GONE
             }
             "admin" -> {
                 tvUserRole.text = "دسترسی کامل (مدیر کل)"
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.GONE
-                tvStudentClassStatus.visibility = View.GONE // برای مدیر مخفی می‌شود
+                tvStudentClassStatus.visibility = View.GONE
             }
         }
+    }
+
+    private fun showAvatarSelectionDialog() {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_avatar_selector, null)
+        val rvAvatars = view.findViewById<RecyclerView>(R.id.rvAvatarGrid)
+
+        val avatars = listOf(
+            resources.getIdentifier("avatar_student_1", "drawable", packageName),
+            resources.getIdentifier("avatar_student_2", "drawable", packageName),
+            resources.getIdentifier("avatar_student_3", "drawable", packageName),
+            resources.getIdentifier("avatar_student_4", "drawable", packageName),
+            resources.getIdentifier("avatar_student_5", "drawable", packageName),
+            resources.getIdentifier("avatar_student_6", "drawable", packageName)
+        ).filter { it != 0 }
+
+        rvAvatars.adapter = AvatarAdapter(avatars) { selectedResId ->
+            ivAvatar.setImageResource(selectedResId)
+            val avatarName = resources.getResourceEntryName(selectedResId)
+
+            val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+            val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
+            sharedPreferences.edit().putString("AVATAR_NAME_${currentUsername}", avatarName).apply()
+
+            if (userRole.lowercase() == "student") {
+                val student = AppDatabase.getStudentByUsername(currentUsername)
+                student?.let {
+                    val updated = it.copy(avatarResId = selectedResId)
+                    AppDatabase.upsertStudent(updated, currentUsername)
+                }
+            }
+
+            Toast.makeText(this, "عکس پروفایل به‌روزرسانی شد", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+        dialog.setContentView(view)
+        dialog.show()
     }
 }

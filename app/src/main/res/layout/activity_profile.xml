@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@drawable/app_global_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -11,6 +13,35 @@
         android:orientation="vertical"
         android:padding="24dp"
         android:gravity="center_horizontal">
+
+        <RelativeLayout
+            android:id="@+id/profileToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/btnProfileBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@color/main_text"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="پروفایل کاربری"
+                android:textColor="@color/title_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/tvStudentClassStatus"
@@ -23,60 +54,59 @@
             android:textSize="15sp"
             android:textStyle="bold"
             android:gravity="right"
-            android:visibility="gone" /> <androidx.cardview.widget.CardView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="24dp"
-        app:cardCornerRadius="50dp"
-        app:cardElevation="2dp"
-        app:cardBackgroundColor="@color/card_background">
+            android:visibility="gone" />
 
-        <ImageView
-            android:id="@+id/ivAvatar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@android:drawable/sym_def_app_icon"
-            android:scaleType="centerCrop"
-            android:background="@color/card_background"/>
-    </androidx.cardview.widget.CardView>
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="8dp"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/card_background">
+
+            <ImageView
+                android:id="@+id/ivAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/sym_def_app_icon" />
+        </androidx.cardview.widget.CardView>
 
         <TextView
             android:id="@+id/btnChangeAvatar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="تغییر آواتار"
+            android:layout_marginTop="12dp"
+            android:text="تغییر عکس پروفایل"
             android:textColor="@color/title_blue"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true"
+            android:padding="6dp"
             android:background="?android:attr/selectableItemBackground"
-            android:padding="4dp"/>
+            android:clickable="true"
+            android:focusable="true" />
 
         <TextView
             android:id="@+id/tvUserName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="کاربر مهمان"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:text="نام و نام خانوادگی کاربر"
             android:textColor="@color/main_text"
-            android:layout_marginTop="16dp" />
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvUserRole"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
             android:text="نقش کاربری"
-            android:textSize="14sp"
-            android:textColor="#FF6B00"
-            android:textStyle="bold"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="32dp" />
+            android:textColor="@color/sub_text"
+            android:textSize="14sp" />
 
         <LinearLayout
-            android:id="@+id/btnChangeCredentials"
+            android:id="@+id/btnChangePassword"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:background="@drawable/bg_input_field"
@@ -84,18 +114,25 @@
             android:orientation="horizontal"
             android:gravity="center_vertical|right"
             android:paddingHorizontal="16dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="12dp"
             android:clickable="true"
-            android:focusable="true"
-            android:layout_marginBottom="12dp">
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_lock_idle_lock"
+                app:tint="@color/title_blue"
+                android:layout_marginRight="12dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="تغییر نام کاربری و رمز عبور"
+                android:text="تغییر رمز عبور"
                 android:textColor="@color/main_text"
                 android:textSize="15sp"
-                android:textStyle="bold"
-                android:layout_marginRight="12dp"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -103,10 +140,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:layout_marginBottom="12dp"
+            android:visibility="visible">
 
             <LinearLayout
-                android:id="@+id/btnStudentClasses"
+                android:id="@+id/btnViewStudentReportCards"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:background="@drawable/bg_input_field"
@@ -114,34 +152,20 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical|right"
                 android:paddingHorizontal="16dp"
-                android:layout_marginBottom="12dp"
                 android:clickable="true"
                 android:focusable="true">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="مشاهده کلاس‌های ثبت‌نام شده"
-                    android:textColor="@color/main_text"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/btnStudentReportCards"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:background="@drawable/bg_input_field"
-                android:backgroundTint="@color/card_background"
-                android:orientation="horizontal"
-                android:gravity="center_vertical|right"
-                android:paddingHorizontal="16dp"
-                android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_agenda"
+                    app:tint="@color/title_blue"
+                    android:layout_marginRight="12dp" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="مشاهده کارنامه‌ها و نمرات"
+                    android:text="مشاهده کارنامه‌های منتشر شده"
                     android:textColor="@color/main_text"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -153,10 +177,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:layout_marginBottom="12dp"
             android:visibility="gone">
 
             <LinearLayout
-                android:id="@+id/btnTeacherHistory"
+                android:id="@+id/btnViewTeacherClasses"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:background="@drawable/bg_input_field"
@@ -164,9 +189,16 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical|right"
                 android:paddingHorizontal="16dp"
-                android:layout_marginBottom="12dp"
                 android:clickable="true"
                 android:focusable="true">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_my_calendar"
+                    app:tint="@color/title_blue"
+                    android:layout_marginRight="12dp" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
