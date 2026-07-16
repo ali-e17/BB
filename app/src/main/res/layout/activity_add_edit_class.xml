@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true"
     android:layoutDirection="rtl">
 
     <com.google.android.material.card.MaterialCardView
@@ -13,11 +13,13 @@
         android:layout_height="64dp"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/card_background"
         app:cardCornerRadius="20dp"
         app:cardElevation="8dp"
-        app:strokeWidth="0dp"
-        app:cardBackgroundColor="@color/card_background"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeWidth="0dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -29,12 +31,12 @@
                 android:layout_height="48dp"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="@color/main_text"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:focusable="true"/>
+                android:focusable="true"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@color/main_text" />
 
             <TextView
                 android:id="@+id/tvClassEditTitle"
@@ -51,6 +53,7 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:fillViewport="true"
         android:layout_marginTop="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBarClassEdit">
@@ -60,14 +63,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
-            android:paddingBottom="24dp">
+            android:paddingBottom="32dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="18dp"
                 android:hint="نام کلاس (سطح آموزشی)"
                 app:boxStrokeColor="@color/brand_orange"
                 app:hintTextColor="@color/brand_orange">
@@ -76,32 +79,22 @@
                     android:id="@+id/spinnerClassName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/main_text"
-                    android:inputType="text" />
+                    android:inputType="none"
+                    android:textColor="@color/main_text" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="انتخاب استاد کلاس (اختیاری)"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/brand_orange">
-
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/spinnerTeacherName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/main_text"
-                    android:inputType="none" />
-            </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="8dp"
+                android:text="ساعت برگزاری"
+                android:textColor="@color/main_text"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
                 android:weightSum="2">
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -110,7 +103,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                    android:hint="ساعت شروع (مثال 16:30)"
+                    android:hint="شروع؛ مثل 15 یا 1530"
                     app:boxStrokeColor="@color/brand_orange"
                     app:hintTextColor="@color/brand_orange">
 
@@ -118,8 +111,11 @@
                         android:id="@+id/etStartTime"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:"
+                        android:imeOptions="actionNext"
+                        android:inputType="number"
+                        android:maxLength="5"
                         android:textColor="@color/main_text"
-                        android:inputType="time"
                         android:textDirection="ltr" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -129,7 +125,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:hint="ساعت پایان (مثال 18:00)"
+                    android:hint="پایان؛ مثل 1630"
                     app:boxStrokeColor="@color/brand_orange"
                     app:hintTextColor="@color/brand_orange">
 
@@ -137,34 +133,89 @@
                         android:id="@+id/etEndTime"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:"
+                        android:imeOptions="actionNext"
+                        android:inputType="number"
+                        android:maxLength="5"
                         android:textColor="@color/main_text"
-                        android:inputType="time"
                         android:textDirection="ltr" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="18dp"
+                android:text="عدد 15 به‌صورت خودکار 15:00 و عدد 1530 به‌صورت 15:30 ذخیره می‌شود."
+                android:textColor="@color/sub_text"
+                android:textSize="12sp" />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="روزهای برگزاری:"
+                android:layout_marginBottom="8dp"
+                android:text="روزهای برگزاری"
                 android:textColor="@color/main_text"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                android:textStyle="bold" />
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipGroupDays"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="18dp"
+                app:selectionRequired="false"
+                app:singleLine="false"
                 app:singleSelection="false">
 
-                <com.google.android.material.chip.Chip android:id="@+id/chipSat" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="شنبه" />
-                <com.google.android.material.chip.Chip android:id="@+id/chipSun" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="یک‌شنبه" />
-                <com.google.android.material.chip.Chip android:id="@+id/chipMon" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="دوشنبه" />
-                <com.google.android.material.chip.Chip android:id="@+id/chipTue" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="سه‌شنبه" />
-                <com.google.android.material.chip.Chip android:id="@+id/chipWed" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="چهارشنبه" />
-                <com.google.android.material.chip.Chip android:id="@+id/chipThu" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="پنج‌شنبه" />
-                <com.google.android.material.chip.Chip android:id="@+id/chipFri" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="جمعه" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSat"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="شنبه" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSun"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="یک‌شنبه" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMon"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="دوشنبه" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipTue"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="سه‌شنبه" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipWed"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="چهارشنبه" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipThu"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="پنج‌شنبه" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFri"
+                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="جمعه" />
             </com.google.android.material.chip.ChipGroup>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -180,85 +231,43 @@
                     android:id="@+id/etSessionCount"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/main_text"
-                    android:inputType="number" />
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:maxLength="3"
+                    android:textColor="@color/main_text" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <Button
-                android:id="@+id/btnSaveClass"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="ثبت و ذخیره کلاس"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/brand_orange"
-                app:cornerRadius="12dp" />
+                android:layout_height="56dp">
 
-            <LinearLayout
-                android:id="@+id/layoutStudentManagement"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="32dp"
-                android:visibility="gone">
-
-                <View
+                <Button
+                    android:id="@+id/btnSaveClass"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/sub_text"
-                    android:alpha="0.2"
-                    android:layout_marginBottom="16dp"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="مدیریت دانش‌آموزان این کلاس"
-                    android:textColor="@color/title_blue"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="@color/brand_orange"
+                    android:text="ثبت و ذخیره کلاس"
+                    android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
+                    app:cornerRadius="12dp" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="جستجو برای افزودن به کلاس..."
-                    app:boxStrokeColor="@color/title_blue">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etSearchNewStudent"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/main_text"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvStudentSearchResults"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:background="@color/card_background"
-                    android:elevation="4dp"
+                <ProgressBar
+                    android:id="@+id/progressSavingClass"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
                     android:visibility="gone" />
+            </FrameLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="لیست افراد ثبت‌نام شده:"
-                    android:textColor="@color/sub_text"
-                    android:textStyle="bold" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvEnrolledStudents"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp" />
-
-            </LinearLayout>
-
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="تخصیص استاد و مدیریت دانش‌آموزان از صفحه‌های جدا انجام می‌شود."
+                android:textColor="@color/sub_text"
+                android:textSize="12sp" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

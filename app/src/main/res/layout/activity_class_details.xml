@@ -3,7 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true"
+    android:layoutDirection="rtl">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/topBarDetails"
@@ -11,11 +13,13 @@
         android:layout_height="64dp"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="16dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="4dp"
-        app:strokeWidth="0dp"
         app:cardBackgroundColor="@color/card_background"
-        app:layout_constraintTop_toTopOf="parent">
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeWidth="0dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -27,24 +31,61 @@
                 android:layout_height="48dp"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="@color/main_text"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:focusable="true"/>
+                android:focusable="true"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@color/main_text" />
 
             <TextView
                 android:id="@+id/txtClassName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="نام کلاس"
+                android:ellipsize="end"
+                android:maxWidth="250dp"
+                android:maxLines="1"
+                android:text="اعضای کلاس"
                 android:textColor="@color/title_blue"
                 android:textSize="18sp"
                 android:textStyle="bold" />
         </RelativeLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/toggleClassStudents"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="16dp"
+        app:checkedButton="@id/btnMembersTab"
+        app:selectionRequired="true"
+        app:singleSelection="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topBarDetails">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMembersTab"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="اعضای کلاس"
+            android:textSize="13sp"
+            app:strokeColor="@color/brand_orange" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddStudentsTab"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="افزودن دانش‌آموز"
+            android:textSize="13sp"
+            app:strokeColor="@color/brand_orange" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutSearch"
@@ -52,49 +93,60 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        android:hint="جستجوی دانش‌آموز جهت افزودن به کلاس..."
-        android:layoutDirection="rtl"
+        android:layout_marginTop="14dp"
+        android:hint="جست‌وجو بین اعضای کلاس"
         app:boxStrokeColor="@color/title_blue"
-        app:layout_constraintTop_toBottomOf="@id/topBarDetails">
+        app:hintTextColor="@color/title_blue"
+        app:startIconDrawable="@android:drawable/ic_menu_search"
+        app:startIconTint="@color/sub_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toggleClassStudents">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearchStudent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/main_text"
-            android:inputType="text" />
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:textColor="@color/main_text" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvSearchResults"
+        android:id="@+id/rvClassStudents"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:background="@color/card_background"
-        android:elevation="8dp"
-        android:visibility="gone"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutSearch" />
 
     <TextView
-        android:id="@+id/lblMembers"
+        android:id="@+id/tvStudentsEmpty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="24dp"
-        android:text="دانش‌آموزان این کلاس:"
-        android:textColor="@color/main_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layoutSearch" />
+        android:layout_marginHorizontal="32dp"
+        android:gravity="center"
+        android:text="هنوز دانش‌آموزی در این کلاس ثبت نشده است"
+        android:textColor="@color/sub_text"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/rvClassStudents"
+        app:layout_constraintEnd_toEndOf="@id/rvClassStudents"
+        app:layout_constraintStart_toStartOf="@id/rvClassStudents"
+        app:layout_constraintTop_toTopOf="@id/rvClassStudents" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvClassMembers"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:padding="8dp"
+    <ProgressBar
+        android:id="@+id/progressClassMembers"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lblMembers" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

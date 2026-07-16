@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true"
     android:layoutDirection="rtl">
 
     <com.google.android.material.card.MaterialCardView
@@ -13,31 +13,79 @@
         android:layout_height="64dp"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/card_background"
         app:cardCornerRadius="20dp"
         app:cardElevation="8dp"
-        app:strokeWidth="0dp"
-        app:cardBackgroundColor="@color/card_background"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeWidth="0dp">
 
-        <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
             <ImageView
                 android:id="@+id/btnAssignBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
                 android:padding="12dp"
                 android:src="@android:drawable/ic_menu_revert"
                 app:tint="@color/main_text" />
+
             <TextView
+                android:id="@+id/tvAssignTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="تخصیص کلاس به استاد"
+                android:ellipsize="end"
+                android:maxWidth="250dp"
+                android:maxLines="1"
+                android:text="کلاس‌های استاد"
                 android:textColor="@color/title_blue"
-                android:textSize="18sp"
+                android:textSize="17sp"
                 android:textStyle="bold" />
         </RelativeLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/toggleTeacherClasses"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="16dp"
+        app:checkedButton="@id/btnAssignedClassesTab"
+        app:selectionRequired="true"
+        app:singleSelection="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topBarAssign">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAssignedClassesTab"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="کلاس‌های استاد"
+            android:textSize="13sp"
+            app:strokeColor="@color/brand_orange" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddClassTab"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="افزودن کلاس"
+            android:textSize="13sp"
+            app:strokeColor="@color/brand_orange" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutSearch"
@@ -45,49 +93,60 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        android:hint="جستجوی کلاس (فقط کلاس‌های آزاد)"
+        android:layout_marginTop="14dp"
+        android:hint="جست‌وجو بین کلاس‌های استاد"
         app:boxStrokeColor="@color/brand_orange"
         app:hintTextColor="@color/brand_orange"
-        app:layout_constraintTop_toBottomOf="@id/topBarAssign">
+        app:startIconDrawable="@android:drawable/ic_menu_search"
+        app:startIconTint="@color/sub_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toggleTeacherClasses">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearchClass"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/main_text"
-            android:inputType="text" />
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:textColor="@color/main_text" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvSearchResults"
+        android:id="@+id/rvTeacherClasses"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_marginHorizontal="20dp"
-        android:background="@color/card_background"
-        android:elevation="8dp"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/layoutSearch" />
-
-    <TextView
-        android:id="@+id/lblAssigned"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="20dp"
-        android:text="کلاس‌های اختصاص یافته به این استاد:"
-        android:textColor="@color/main_text"
-        android:textStyle="bold"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutSearch" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvAssignedClasses"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:paddingHorizontal="16dp"
+    <TextView
+        android:id="@+id/tvTeacherClassesEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:gravity="center"
+        android:text="هنوز کلاسی به این استاد تخصیص داده نشده است"
+        android:textColor="@color/sub_text"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/rvTeacherClasses"
+        app:layout_constraintEnd_toEndOf="@id/rvTeacherClasses"
+        app:layout_constraintStart_toStartOf="@id/rvTeacherClasses"
+        app:layout_constraintTop_toTopOf="@id/rvTeacherClasses" />
+
+    <ProgressBar
+        android:id="@+id/progressTeacherClasses"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lblAssigned" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,58 +5,180 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="@drawable/app_global_background">
+    android:background="@drawable/app_global_background"
+    android:layoutDirection="rtl">
 
-    <RelativeLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/entryToolbar"
         android:layout_width="match_parent"
         android:layout_height="64dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="0dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/btnEntryBack"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="8dp"
-            android:padding="12dp"
-            android:src="@android:drawable/ic_menu_revert"
-            app:tint="@color/main_text" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layoutDirection="ltr">
 
-        <TextView
-            android:id="@+id/txtClassTitle"
-            android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/btnEntryBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="4dp"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                app:tint="@color/main_text" />
+
+            <TextView
+                android:id="@+id/txtClassTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:maxWidth="260dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:text="نمرات کلاس"
+                android:textColor="@color/title_blue"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardGradeStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="12dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="1dp"
+        app:strokeWidth="0dp"
+        app:layout_constraintTop_toBottomOf="@id/entryToolbar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="ورود نمرات کلاس"
-            android:textColor="@color/title_blue"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+            android:orientation="vertical"
+            android:padding="14dp">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerStudents"
+            <TextView
+                android:id="@+id/txtGradeProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0 از 0 کارنامه آماده انتشار"
+                android:textColor="@color/main_text"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtGradeStorageHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="نمره‌ها فعلاً روی همین دستگاه ذخیره می‌شوند."
+                android:textColor="@color/sub_text"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutSearchGradeStudent"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="10dp"
+        android:hint="جستجوی دانش‌آموز"
+        app:boxStrokeColor="@color/title_blue"
+        app:hintTextColor="@color/title_blue"
+        app:startIconDrawable="@android:drawable/ic_menu_search"
+        app:layout_constraintTop_toBottomOf="@id/cardGradeStatus">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSearchGradeStudent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:textColor="@color/main_text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/entryToolbar"
-        app:layout_constraintBottom_toTopOf="@id/btnPublishLayout" />
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutSearchGradeStudent"
+        app:layout_constraintBottom_toTopOf="@id/layoutGradeActions">
 
-    <Button
-        android:id="@+id/btnPublishLayout"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerStudents"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="12dp" />
+
+        <ProgressBar
+            android:id="@+id/progressGrades"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/txtEmptyGrades"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="دانش‌آموزی برای نمایش وجود ندارد"
+            android:textColor="@color/sub_text"
+            android:textSize="14sp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutGradeActions"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="20dp"
-        android:text="انتشار نهایی کارنامه‌ها"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#FF6B00"
-        app:cornerRadius="12dp"
-        android:enabled="false"
-        android:alpha="0.5"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnSaveDraft"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="ذخیره پیش‌نویس"
+            android:textColor="@color/title_blue"
+            android:textStyle="bold"
+            app:strokeColor="@color/title_blue"
+            app:cornerRadius="12dp" />
+
+        <Button
+            android:id="@+id/btnPublishLayout"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="انتشار نهایی کارنامه‌ها"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF6B00"
+            android:enabled="false"
+            android:alpha="0.5"
+            app:cornerRadius="12dp" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

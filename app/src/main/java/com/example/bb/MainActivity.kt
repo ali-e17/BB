@@ -20,21 +20,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val topBar = findViewById<com.google.android.material.card.MaterialCardView>(R.id.topBar)
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(topBar) { view, insets ->
-            // ارتفاع ساعت و باتری گوشی رو درمیاره
-            val statusBarHeight = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars()).top
-
-            val params = view.layoutParams as android.view.ViewGroup.MarginLayoutParams
-            // اون ۱۶dp فاصله‌ای که خودت تو XML دادی رو تبدیل به پیکسل می‌کنه
-            val defaultMarginPx = (16 * resources.displayMetrics.density).toInt()
-
-            // مارجین بالای کارت رو برابر می‌کنه با: (ارتفاع نوار گوشی + ۱۶dp خودت)
-            params.topMargin = statusBarHeight + defaultMarginPx
-            view.layoutParams = params
-            insets
-        }
-
         val roleString = intent.getStringExtra("USER_ROLE") ?: "STUDENT"
         val usernameString = intent.getStringExtra("USERNAME") ?: "کاربر"
 
@@ -199,7 +184,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         val labels = reports.map { report ->
-            "${AppDatabase.getClassNameById(report.classId) ?: "کلاس"} - ${report.publishedAt}"
+            "${AppDatabase.getClassNameById(report.classId) ?: "کلاس"} - ${report.updatedAt}"
         }.toTypedArray()
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("کارنامه‌های منتشرشده")
@@ -208,6 +193,8 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, ReportCardViewActivity::class.java).apply {
                     putExtra("STUDENT_ID", student.studentCode)
                     putExtra("STUDENT_NAME", student.name)
+                    putExtra("CLASS_NAME", AppDatabase.getClassNameById(report.classId) ?: "کلاس")
+                    putExtra("REPORT_DATE", report.updatedAt)
                     putStringArrayListExtra("CRITERIA_NAMES", ArrayList(report.criteria.map { it.name }))
                     putIntegerArrayListExtra("SCORES_LIST", ArrayList(report.criteria.map { report.scores[it.id] ?: 0 }))
                     putIntegerArrayListExtra("MAX_SCORES_LIST", ArrayList(report.criteria.map { it.maxScore }))

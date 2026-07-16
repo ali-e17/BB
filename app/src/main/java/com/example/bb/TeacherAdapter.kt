@@ -30,21 +30,14 @@ class TeacherAdapter(
 
     override fun onBindViewHolder(holder: TeacherViewHolder, position: Int) {
         val teacher = teachers[position]
+        val classCount = AppDatabase.getTeacherClasses(teacher.username).size
 
         holder.txtAvatar.text = teacher.name.firstOrNull()?.toString() ?: "A"
         holder.tvTeacherName.text = teacher.name
+        holder.tvTeacherUsername.text = "شماره: ${teacher.username} | کلاس فعال: $classCount"
 
-        // نمایش اینکه چندتا کلاس داره
-        val classCount = if (teacher.classIds.isEmpty()) 0 else teacher.classIds.split(",").size
-        holder.tvTeacherUsername.text = "شماره: ${teacher.username} | کلاس‌ها: $classCount"
-
-        if (!teacher.isActive) {
-            holder.txtArchivedBadge.visibility = View.VISIBLE
-            holder.itemRoot.alpha = 0.5f
-        } else {
-            holder.txtArchivedBadge.visibility = View.GONE
-            holder.itemRoot.alpha = 1.0f
-        }
+        holder.txtArchivedBadge.visibility = if (teacher.isActive) View.GONE else View.VISIBLE
+        holder.itemRoot.alpha = if (teacher.isActive) 1f else 0.55f
 
         holder.itemView.setOnClickListener { onRowClick(teacher) }
         holder.btnViewDetails.setOnClickListener { onDetailsClick(teacher) }
@@ -53,7 +46,7 @@ class TeacherAdapter(
     override fun getItemCount(): Int = teachers.size
 
     fun updateData(newTeachers: List<TeacherModel>) {
-        this.teachers = newTeachers
+        teachers = newTeachers
         notifyDataSetChanged()
     }
 }
