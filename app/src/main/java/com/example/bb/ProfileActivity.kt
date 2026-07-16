@@ -12,6 +12,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -25,7 +28,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var ivAvatar: ImageView
     private lateinit var btnChangeAvatar: TextView
     private lateinit var btnLogout: LinearLayout
-    private lateinit var btnChangePassword: LinearLayout // متغیر جدید برای دکمه تغییر رمز
+    private lateinit var btnChangePassword: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,9 +49,8 @@ class ProfileActivity : AppCompatActivity() {
         ivAvatar = findViewById(R.id.ivAvatar)
         btnChangeAvatar = findViewById(R.id.btnChangeAvatar)
         btnLogout = findViewById(R.id.btnLogout)
-        btnChangePassword = findViewById(R.id.btnChangePassword) // حل مشکل Unresolved reference
+        btnChangePassword = findViewById(R.id.btnChangePassword)
 
-        // باز شدن مستقیم صفحه تغییر رمز با کلیک روی دکمه تغییر رمز عبور
         btnChangePassword.setOnClickListener {
             val intent = Intent(this, UpdateProfileActivity::class.java)
             intent.putExtra("USER_ROLE", userRole)
@@ -80,11 +82,9 @@ class ProfileActivity : AppCompatActivity() {
             showAvatarSelectionDialog()
         }
 
-        // نمایش نام کاربر
         val displayName = sharedPreferences.getString("CURRENT_DISPLAY_NAME", "")
         tvUserName.text = if (!displayName.isNullOrEmpty()) displayName else "کاربر عزیز"
 
-        // ست کردن آواتار بر اساس نام ذخیره شده
         val savedAvatarName = sharedPreferences.getString("AVATAR_NAME_${currentUsername}", "avatar_student_1")
         val resId = resources.getIdentifier(savedAvatarName, "drawable", packageName)
         if (resId != 0) {
@@ -93,7 +93,6 @@ class ProfileActivity : AppCompatActivity() {
             ivAvatar.setImageResource(android.R.drawable.sym_def_app_icon)
         }
 
-        // مدیریت هوشمند نمایش المان‌ها بر اساس نقش
         when (userRole.lowercase()) {
             "student" -> {
                 tvUserRole.text = "دانش‌آموز آموزشگاه"
@@ -101,12 +100,39 @@ class ProfileActivity : AppCompatActivity() {
                 layoutTeacherOptions.visibility = View.GONE
                 tvStudentClassStatus.visibility = View.VISIBLE
 
-                val student = AppDatabase.getStudentByUsername(currentUsername)
-                if (student?.classId != null) {
-                    tvStudentClassStatus.text = "کلاس فعلی شما: ${AppDatabase.getClassNameById(student.classId)}"
-                } else {
-                    tvStudentClassStatus.text = "شما هنوز در هیچ کلاسی ثبت‌نام نشده‌اید."
-                }
+                tvStudentClassStatus.text = "در حال بررسی وضعیت کلاس..."
+
+                // 🌟 دریافت آیدی منحصر به فرد کاربر به جای شماره تلفن مشترک
+                val currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
+
+                RetrofitClient.instance.getStudents().enqueue(object : Callback<List<StudentModel>> {
+                    override fun onResponse(call: Call<List<StudentModel>>, response: Response<List<StudentModel>>) {
+                        if (response.isSuccessful) {
+                            val allStudents = response.body().orEmpty()
+
+                            // 🌟 جستجوی ۱۰۰٪ دقیق بر اساس آیدی دیتابیس
+                            val myStudent = allStudents.find { it.id == currentUserId }
+
+                            if (!myStudent?.classId.isNullOrBlank()) {
+                                RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
+                                    override fun onResponse(call: Call<List<ClassModel>>, response2: Response<List<ClassModel>>) {
+                                        val classes = response2.body().orEmpty()
+                                        val myClass = classes.find { it.id == myStudent?.classId }
+                                        tvStudentClassStatus.text = " ${myClass?.className ?: "نامشخص"}"
+                                    }
+                                    override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
+                                        tvStudentClassStatus.text = "خطا در دریافت نام کلاس"
+                                    }
+                                })
+                            } else {
+                                tvStudentClassStatus.text = "شما هنوز در هیچ کلاسی ثبت‌نام نشده‌اید."
+                            }
+                        }
+                    }
+                    override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
+                        tvStudentClassStatus.text = "عدم اتصال به سرور"
+                    }
+                })
             }
             "teacher" -> {
                 tvUserRole.text = "مدرس رسمی بیان برتر"
