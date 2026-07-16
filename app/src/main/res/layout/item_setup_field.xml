@@ -2,104 +2,84 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardCriterion"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="6dp"
+    android:layout_marginVertical="5dp"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="12dp"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="14dp"
+    app:cardElevation="1dp"
+    app:strokeColor="#1A2B4E78"
+    app:strokeWidth="1dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/rowMainLayout"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="12dp">
-
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/checkboxField"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:buttonTint="@color/title_blue"
-            android:checked="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <TextView
-            android:id="@+id/txtFieldName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
-            android:text="Midterm"
-            android:textColor="@color/main_text"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="right"
-            app:layout_constraintEnd_toStartOf="@id/checkboxField"
-            app:layout_constraintStart_toEndOf="@id/scoreControls"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+        android:layout_height="72dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp">
 
         <LinearLayout
-            android:id="@+id/scoreControls"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:id="@+id/selectionArea"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/checkboxField"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:checked="false"
+                android:gravity="center"
+                app:buttonTint="@color/title_blue" />
 
             <TextView
-                android:id="@+id/btnDecrease"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:text="−"
-                android:textColor="@color/sub_text"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="55dp"
+                android:id="@+id/txtFieldName"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="4dp"
-                app:boxStrokeColor="@color/title_blue"
-                app:hintEnabled="false"
-                app:boxCornerRadiusTopStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusBottomEnd="8dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etMaxScore"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:padding="8dp"
-                    android:text="20"
-                    android:textColor="@color/input_text"
-                    android:inputType="number"
-                    android:textSize="14sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/btnIncrease"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:text="+"
-                android:textColor="@color/title_blue"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"/>
-
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="Midterm"
+                android:textColor="@color/main_text"
+                android:textSize="15sp"
+                android:textStyle="bold" />
         </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/scoreInputLayout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="92dp"
+            android:layout_height="58dp"
+            android:layout_marginStart="10dp"
+            android:hint="بارم"
+            android:enabled="false"
+            app:boxCornerRadiusTopStart="10dp"
+            app:boxCornerRadiusTopEnd="10dp"
+            app:boxCornerRadiusBottomStart="10dp"
+            app:boxCornerRadiusBottomEnd="10dp"
+            app:boxStrokeColor="@color/title_blue"
+            app:hintTextColor="@color/title_blue">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etMaxScore"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:inputType="number"
+                android:maxLength="3"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:text="0"
+                android:textColor="@color/input_text"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

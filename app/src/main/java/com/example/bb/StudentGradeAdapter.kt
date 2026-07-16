@@ -6,19 +6,25 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.util.ArrayList
 
 class StudentGradeAdapter(
-    private val students: List<StudentGrade>,
+    students: List<StudentGrade>,
     private val activeCriteria: List<GradeComponent>,
+    private val className: String,
     private val onStatusChanged: () -> Unit
 ) : RecyclerView.Adapter<StudentGradeAdapter.ViewHolder>() {
 
-    private var expandedPosition = -1
+    private val students = mutableListOf<StudentGrade>().apply { addAll(students) }
+    private var expandedStudentId: String? = null
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val headerLayout: RelativeLayout = view.findViewById(R.id.headerLayout)
@@ -31,103 +37,105 @@ class StudentGradeAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_student_grade, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_student_grade, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val student = students[position]
         holder.txtStudentName.text = student.name
-
+        recalculateStudentStatus(student)
         updateStatusUI(holder, student)
 
-        val isExpanded = position == expandedPosition
+        val isExpanded = student.id == expandedStudentId
         holder.expandableBody.visibility = if (isExpanded) View.VISIBLE else View.GONE
         holder.imgExpandArrow.rotation = if (isExpanded) 180f else 0f
 
-        // هندل کردن باز و بسته شدن کشو
         holder.headerLayout.setOnClickListener {
-            val previousExpandedPosition = expandedPosition
-
-            if (isExpanded) {
-                expandedPosition = -1
-            } else {
-                expandedPosition = holder.adapterPosition
+            val previousId = expandedStudentId
+            expandedStudentId = if (isExpanded) null else student.id
+            previousId?.let { id ->
+                val previousIndex = students.indexOfFirst { it.id == id }
+                if (previousIndex >= 0) notifyItemChanged(previousIndex)
             }
-
-            notifyItemChanged(previousExpandedPosition)
-            notifyItemChanged(expandedPosition)
+            val newIndex = students.indexOfFirst { it.id == expandedStudentId }
+            if (newIndex >= 0) notifyItemChanged(newIndex)
         }
 
-        // ====== منطق دکمه پیش‌نمایش (چشم) ======
         holder.btnPreviewCard.setOnClickListener {
             val context = holder.itemView.context
-            val intent = Intent(context, ReportCardViewActivity::class.java)
-
-            // Pass Student ID and Full Name
-            intent.putExtra("STUDENT_ID", student.id)
-            intent.putExtra("STUDENT_NAME", student.name)
-
             val criteriaNames = ArrayList<String>()
             val scoresList = ArrayList<Int>()
             val maxScoresList = ArrayList<Int>()
 
-            for (criteria in activeCriteria) {
-                criteriaNames.add(criteria.name)
-                scoresList.add(student.scores[criteria.id] ?: 0)
-                maxScoresList.add(criteria.maxScore) // Pass max value for "Out of" column
+            activeCriteria.forEach { criterion ->
+                criteriaNames += criterion.name
+                scoresList += student.scores[criterion.id] ?: 0
+                maxScoresList += criterion.maxScore
             }
 
-            intent.putStringArrayListExtra("CRITERIA_NAMES", criteriaNames)
-            intent.putIntegerArrayListExtra("SCORES_LIST", scoresList)
-            intent.putIntegerArrayListExtra("MAX_SCORES_LIST", maxScoresList)
-
-            context.startActivity(intent)
+            context.startActivity(
+                Intent(context, ReportCardViewActivity::class.java)
+                    .putExtra("STUDENT_ID", student.studentCode)
+                    .putExtra("STUDENT_NAME", student.name)
+                    .putExtra("CLASS_NAME", className)
+                    .putExtra("REPORT_DATE", AppDatabase.today())
+                    .putStringArrayListExtra("CRITERIA_NAMES", criteriaNames)
+                    .putIntegerArrayListExtra("SCORES_LIST", scoresList)
+                    .putIntegerArrayListExtra("MAX_SCORES_LIST", maxScoresList)
+            )
         }
 
-        // پاکسازی و تزریق داینامیک فیلدهای نمره
         holder.containerGrades.removeAllViews()
         val inflater = LayoutInflater.from(holder.itemView.context)
 
-        for (criteria in activeCriteria) {
-            val gradeView = inflater.inflate(R.layout.item_grade_input, holder.containerGrades, false)
+        activeCriteria.forEach { criterion ->
+            val gradeView = inflater.inflate(
+                R.layout.item_grade_input,
+                holder.containerGrades,
+                false
+            )
 
             val txtName = gradeView.findViewById<TextView>(R.id.txtCriteriaName)
             val etInput = gradeView.findViewById<TextInputEditText>(R.id.etScoreInput)
             val inputLayout = gradeView.findViewById<TextInputLayout>(R.id.textInputLayoutScore)
             val btnAbsent = gradeView.findViewById<Button>(R.id.btnAbsent)
 
-            txtName.text = criteria.name
-            inputLayout.hint = "از ${criteria.maxScore}"
-
-            student.scores[criteria.id]?.let { etInput.setText(it.toString()) }
+            txtName.text = criterion.name
+            inputLayout.hint = "از ${criterion.maxScore}"
+            val currentScore = student.scores[criterion.id]
+            etInput.setText(currentScore?.toString() ?: "")
+            etInput.setSelectAllOnFocus(true)
 
             btnAbsent.setOnClickListener {
                 etInput.setText("0")
+                etInput.setSelection(etInput.text?.length ?: 0)
             }
 
             etInput.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
                 override fun afterTextChanged(s: Editable?) {
-                    val inputText = s.toString()
-                    val score = inputText.toIntOrNull()
-
-                    // اعتبارسنجی نمره
-                    if (score != null && (score > criteria.maxScore || score < 0)) {
-                        inputLayout.error = "حداکثر: ${criteria.maxScore}"
-                        student.scores[criteria.id] = null
-                    } else {
-                        inputLayout.error = null
-                        student.scores[criteria.id] = score
+                    val score = s?.toString()?.toIntOrNull()
+                    when {
+                        score == null -> {
+                            inputLayout.error = "نمره را وارد کنید"
+                            student.scores[criterion.id] = null
+                        }
+                        score !in 0..criterion.maxScore -> {
+                            inputLayout.error = "بین ۰ تا ${criterion.maxScore}"
+                            student.scores[criterion.id] = null
+                        }
+                        else -> {
+                            inputLayout.error = null
+                            student.scores[criterion.id] = score
+                        }
                     }
 
                     recalculateStudentStatus(student)
-
-                    if (holder.adapterPosition != RecyclerView.NO_POSITION) {
-                        updateStatusUI(holder, student)
-                        onStatusChanged()
-                    }
+                    updateStatusUI(holder, student)
+                    onStatusChanged()
                 }
             })
 
@@ -135,9 +143,18 @@ class StudentGradeAdapter(
         }
     }
 
+    fun updateStudents(newStudents: List<StudentGrade>) {
+        students.clear()
+        students.addAll(newStudents)
+        if (expandedStudentId != null && students.none { it.id == expandedStudentId }) {
+            expandedStudentId = null
+        }
+        notifyDataSetChanged()
+    }
+
     private fun recalculateStudentStatus(student: StudentGrade) {
-        val filledCount = activeCriteria.count { student.scores[it.id] != null }
-        student.status = when (filledCount) {
+        val validCount = activeCriteria.count { student.scores[it.id] != null }
+        student.status = when (validCount) {
             0 -> EntryStatus.NOT_STARTED
             activeCriteria.size -> EntryStatus.COMPLETED
             else -> EntryStatus.IN_PROGRESS
@@ -147,22 +164,22 @@ class StudentGradeAdapter(
     private fun updateStatusUI(holder: ViewHolder, student: StudentGrade) {
         when (student.status) {
             EntryStatus.NOT_STARTED -> {
-                holder.txtStatusBadge.text = "شروع نشده"
+                holder.txtStatusBadge.text = "خالی"
                 holder.txtStatusBadge.setTextColor(0xFFEF4444.toInt())
                 holder.btnPreviewCard.visibility = View.GONE
             }
             EntryStatus.IN_PROGRESS -> {
-                holder.txtStatusBadge.text = "در حال ثبت"
+                holder.txtStatusBadge.text = "نیازمند اصلاح"
                 holder.txtStatusBadge.setTextColor(0xFFF59E0B.toInt())
                 holder.btnPreviewCard.visibility = View.GONE
             }
             EntryStatus.COMPLETED -> {
-                holder.txtStatusBadge.text = "تکمیل شده"
+                holder.txtStatusBadge.text = "آماده"
                 holder.txtStatusBadge.setTextColor(0xFF10B981.toInt())
                 holder.btnPreviewCard.visibility = View.VISIBLE
             }
         }
     }
 
-    override fun getItemCount() = students.size
+    override fun getItemCount(): Int = students.size
 }

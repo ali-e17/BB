@@ -31,7 +31,7 @@
                 android:id="@+id/btnFormBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentStart="true"
+                android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
                 android:padding="12dp"
                 android:src="@android:drawable/ic_menu_revert"

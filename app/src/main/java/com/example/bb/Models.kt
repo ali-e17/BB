@@ -110,7 +110,16 @@ data class ReportCardModel(
     val studentId: String,
     val criteria: List<GradeComponent>,
     val scores: Map<String, Int>,
-    val publishedAt: String
+    val publishedAt: String,
+    val updatedAt: String = publishedAt,
+    val revision: Int = 1
+)
+
+data class ReportCardDraftModel(
+    val classId: String,
+    val criteria: List<GradeComponent>,
+    val scoresByStudent: Map<String, Map<String, Int?>>,
+    val updatedAt: String
 )
 
 object AppDatabase {
@@ -126,6 +135,7 @@ object AppDatabase {
     private val attendanceSessions = mutableListOf<AttendanceSession>()
     private val announcements = mutableListOf<Announcement>()
     private val reportCards = mutableListOf<ReportCardModel>()
+    private val reportCardDrafts = mutableListOf<ReportCardDraftModel>()
 
     fun init(context: Context) {
         appContext = context.applicationContext
@@ -181,6 +191,13 @@ object AppDatabase {
     }
 
     fun getAllStudents(): List<StudentModel> = students.toList()
+
+    fun replaceStudents(serverStudents: List<StudentModel>) {
+        students.clear()
+        students.addAll(serverStudents.distinctBy { it.id })
+        save()
+    }
+
     fun getStudentById(id: String): StudentModel? = students.find { it.id == id }
     fun getStudentByUsername(phone: String): StudentModel? = students.find { it.phone == phone }
     fun searchStudents(query: String): List<StudentModel> = students.filter {
@@ -230,7 +247,24 @@ object AppDatabase {
     fun getClassNameById(id: String?): String? = classes.find { it.id == id }?.className
 
     fun addClass(model: ClassModel, context: Context? = null) {
-        classes += model
+        upsertClass(model)
+    }
+
+    fun upsertClass(model: ClassModel) {
+        val index = classes.indexOfFirst { it.id == model.id }
+        if (index >= 0) classes[index] = model else classes += model
+        syncTeacherClassIds()
+        save()
+    }
+
+    /**
+     * کش محلی کلاس‌ها را با آخرین پاسخ سرور همگام می‌کند.
+     * داده‌های دانش‌آموزان و سوابق محلی دست‌نخورده می‌مانند.
+     */
+    fun replaceClasses(serverClasses: List<ClassModel>) {
+        classes.clear()
+        classes.addAll(serverClasses.distinctBy { it.id })
+        syncTeacherClassIds()
         save()
     }
 
@@ -362,19 +396,75 @@ object AppDatabase {
         return visible.sortedByDescending { it.date }
     }
 
+    fun saveReportCardDraft(classId: String, criteria: List<GradeComponent>, grades: List<StudentGrade>) {
+        val draft = ReportCardDraftModel(
+            classId = classId,
+            criteria = criteria.map { it.copy() },
+            scoresByStudent = grades.associate { grade ->
+                grade.id to criteria.associate { criterion ->
+                    criterion.id to grade.scores[criterion.id]
+                }
+            },
+            updatedAt = now()
+        )
+        val index = reportCardDrafts.indexOfFirst { it.classId == classId }
+        if (index >= 0) reportCardDrafts[index] = draft else reportCardDrafts += draft
+        save()
+    }
+
+    fun getReportCardDraft(classId: String): ReportCardDraftModel? =
+        reportCardDrafts.find { it.classId == classId }
+
+    fun getPublishedReportCardsForClass(classId: String): List<ReportCardModel> =
+        reportCards.filter { it.classId == classId }
+
+    fun hasPublishedReportCards(classId: String): Boolean =
+        reportCards.any { it.classId == classId }
+
+    fun getSavedReportCardCriteria(classId: String): List<GradeComponent>? {
+        val draftCriteria = getReportCardDraft(classId)?.criteria
+        if (!draftCriteria.isNullOrEmpty()) return draftCriteria.map { it.copy() }
+        return reportCards.firstOrNull { it.classId == classId }?.criteria?.map { it.copy() }
+    }
+
     fun publishReportCards(classId: String, criteria: List<GradeComponent>, grades: List<StudentGrade>) {
-        val publishedAt = now()
+        val timestamp = now()
         grades.forEach { grade ->
-            reportCards += ReportCardModel(
-                UUID.randomUUID().toString(), classId, grade.id,
-                criteria.map { it.copy() }, grade.scores.mapValues { it.value ?: 0 }, publishedAt
-            )
+            val normalizedScores = criteria.associate { criterion ->
+                criterion.id to (grade.scores[criterion.id] ?: 0)
+            }
+            val index = reportCards.indexOfFirst {
+                it.classId == classId && it.studentId == grade.id
+            }
+
+            if (index >= 0) {
+                val previous = reportCards[index]
+                reportCards[index] = previous.copy(
+                    criteria = criteria.map { it.copy() },
+                    scores = normalizedScores,
+                    updatedAt = timestamp,
+                    revision = previous.revision + 1
+                )
+            } else {
+                reportCards += ReportCardModel(
+                    id = UUID.randomUUID().toString(),
+                    classId = classId,
+                    studentId = grade.id,
+                    criteria = criteria.map { it.copy() },
+                    scores = normalizedScores,
+                    publishedAt = timestamp,
+                    updatedAt = timestamp,
+                    revision = 1
+                )
+            }
         }
+        reportCardDrafts.removeAll { it.classId == classId }
         save()
     }
 
     fun getReportCardsForStudent(studentId: String): List<ReportCardModel> =
-        reportCards.filter { it.studentId == studentId }.sortedByDescending { it.publishedAt }
+        reportCards.filter { it.studentId == studentId }
+            .sortedByDescending { it.updatedAt }
 
     private fun migrateLegacyData() {
         val old = prefs()
@@ -431,12 +521,65 @@ object AppDatabase {
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
         root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
         root.put("announcements", JSONArray().apply { announcements.forEach { a -> put(JSONObject().put("id", a.id).put("title", a.title).put("body", a.body).put("senderName", a.senderName).put("senderPhone", a.senderPhone).put("date", a.date).put("type", a.type.name).put("audienceType", a.audienceType.name).put("targetId", a.targetId).put("attachmentName", a.attachmentName).put("attachmentUrl", a.attachmentUrl)) } })
-        root.put("reportCards", JSONArray().apply { reportCards.forEach { r -> put(JSONObject().put("id", r.id).put("classId", r.classId).put("studentId", r.studentId).put("publishedAt", r.publishedAt).put("criteria", JSONArray().apply { r.criteria.forEach { c -> put(JSONObject().put("id", c.id).put("name", c.name).put("maxScore", c.maxScore).put("isSelected", c.isSelected)) } }).put("scores", JSONObject(r.scores))) } })
+        root.put("reportCards", JSONArray().apply {
+            reportCards.forEach { r ->
+                put(
+                    JSONObject()
+                        .put("id", r.id)
+                        .put("classId", r.classId)
+                        .put("studentId", r.studentId)
+                        .put("publishedAt", r.publishedAt)
+                        .put("updatedAt", r.updatedAt)
+                        .put("revision", r.revision)
+                        .put("criteria", JSONArray().apply {
+                            r.criteria.forEach { c ->
+                                put(
+                                    JSONObject()
+                                        .put("id", c.id)
+                                        .put("name", c.name)
+                                        .put("maxScore", c.maxScore)
+                                        .put("isSelected", c.isSelected)
+                                )
+                            }
+                        })
+                        .put("scores", JSONObject(r.scores))
+                )
+            }
+        })
+        root.put("reportCardDrafts", JSONArray().apply {
+            reportCardDrafts.forEach { draft ->
+                put(
+                    JSONObject()
+                        .put("classId", draft.classId)
+                        .put("updatedAt", draft.updatedAt)
+                        .put("criteria", JSONArray().apply {
+                            draft.criteria.forEach { c ->
+                                put(
+                                    JSONObject()
+                                        .put("id", c.id)
+                                        .put("name", c.name)
+                                        .put("maxScore", c.maxScore)
+                                        .put("isSelected", c.isSelected)
+                                )
+                            }
+                        })
+                        .put("scoresByStudent", JSONObject().apply {
+                            draft.scoresByStudent.forEach { (studentId, scores) ->
+                                put(studentId, JSONObject().apply {
+                                    scores.forEach { (criterionId, score) ->
+                                        put(criterionId, score ?: JSONObject.NULL)
+                                    }
+                                })
+                            }
+                        })
+                )
+            }
+        })
         prefs().edit().putString(DATA_KEY, root.toString()).apply()
     }
 
     private fun load(root: JSONObject) {
-        students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); reportCards.clear()
+        students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); reportCards.clear(); reportCardDrafts.clear()
         root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), it.optString("password")) }
 
         root.optJSONArray("students").forEachObject { o ->
@@ -468,10 +611,53 @@ object AppDatabase {
         root.optJSONArray("announcements").forEachObject { o -> announcements += Announcement(o.optString("id"), o.optString("title"), o.optString("body"), o.optString("senderName"), o.optString("senderPhone"), o.optString("date"), MessageType.valueOf(o.optString("type")), AudienceType.valueOf(o.optString("audienceType")), o.optNullableString("targetId"), o.optNullableString("attachmentName"), o.optNullableString("attachmentUrl")) }
         root.optJSONArray("reportCards").forEachObject { o ->
             val criteria = mutableListOf<GradeComponent>()
-            o.optJSONArray("criteria").forEachObject { c -> criteria += GradeComponent(c.optString("id"), c.optString("name"), c.optInt("maxScore"), c.optBoolean("isSelected", true)) }
+            o.optJSONArray("criteria").forEachObject { c ->
+                criteria += GradeComponent(
+                    c.optString("id"),
+                    c.optString("name"),
+                    c.optInt("maxScore"),
+                    c.optBoolean("isSelected", true)
+                )
+            }
             val scoresObject = o.optJSONObject("scores") ?: JSONObject()
             val scores = scoresObject.keys().asSequence().associateWith { scoresObject.optInt(it) }
-            reportCards += ReportCardModel(o.optString("id"), o.optString("classId"), o.optString("studentId"), criteria, scores, o.optString("publishedAt"))
+            val publishedAt = o.optString("publishedAt")
+            reportCards += ReportCardModel(
+                id = o.optString("id"),
+                classId = o.optString("classId"),
+                studentId = o.optString("studentId"),
+                criteria = criteria,
+                scores = scores,
+                publishedAt = publishedAt,
+                updatedAt = o.optString("updatedAt", publishedAt),
+                revision = o.optInt("revision", 1)
+            )
+        }
+        root.optJSONArray("reportCardDrafts").forEachObject { o ->
+            val criteria = mutableListOf<GradeComponent>()
+            o.optJSONArray("criteria").forEachObject { c ->
+                criteria += GradeComponent(
+                    c.optString("id"),
+                    c.optString("name"),
+                    c.optInt("maxScore"),
+                    c.optBoolean("isSelected", true)
+                )
+            }
+
+            val scoresByStudentObject = o.optJSONObject("scoresByStudent") ?: JSONObject()
+            val scoresByStudent = scoresByStudentObject.keys().asSequence().associateWith { studentId ->
+                val scoreObject = scoresByStudentObject.optJSONObject(studentId) ?: JSONObject()
+                scoreObject.keys().asSequence().associateWith { criterionId ->
+                    if (scoreObject.isNull(criterionId)) null else scoreObject.optInt(criterionId)
+                }
+            }
+
+            reportCardDrafts += ReportCardDraftModel(
+                classId = o.optString("classId"),
+                criteria = criteria,
+                scoresByStudent = scoresByStudent,
+                updatedAt = o.optString("updatedAt")
+            )
         }
         syncTeacherClassIds()
     }

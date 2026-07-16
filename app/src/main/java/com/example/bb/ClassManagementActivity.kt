@@ -5,105 +5,193 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ClassManagementActivity : AppCompatActivity() {
 
-    private lateinit var rvLevels: RecyclerView
-    private val classesList = ArrayList<ClassModel>()
+    private val activeClasses = arrayListOf<ClassModel>()
+    private lateinit var rvClasses: RecyclerView
+    private lateinit var progressLoading: View
+    private lateinit var tvEmpty: TextView
+    private lateinit var adapter: ClassAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_class_management)
 
-        // 🔙 دکمه بازگشت به صفحه قبل
         findViewById<ImageView>(R.id.btnClassMgmtBack).setOnClickListener { finish() }
-
-        rvLevels = findViewById(R.id.rvLevels)
-        rvLevels.layoutManager = LinearLayoutManager(this)
-
-        setupAdapter()
-
-        // ➕ کلیک روی دکمه افزودن کلاس (انتقال به اکتیویتی جدید)
         findViewById<FloatingActionButton>(R.id.fabAddClass).setOnClickListener {
-            val intent = Intent(this, AddEditClassActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, AddEditClassActivity::class.java))
         }
+
+        rvClasses = findViewById(R.id.rvLevels)
+        progressLoading = findViewById(R.id.progressClasses)
+        tvEmpty = findViewById(R.id.tvClassesEmpty)
+
+        rvClasses.layoutManager = LinearLayoutManager(this)
+        adapter = ClassAdapter()
+        rvClasses.adapter = adapter
     }
 
-    // این متد باعث میشه هربار که از صفحه ویرایش برمی‌گردیم، لیست کلاس‌ها اتوماتیک آپدیت بشه
     override fun onResume() {
         super.onResume()
-        refreshClassesList()
+        fetchClasses()
     }
 
-    private fun setupAdapter() {
-        rvLevels.adapter = object : RecyclerView.Adapter<ClassViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ClassViewHolder {
-                val view = LayoutInflater.from(parent.context).inflate(R.layout.item_class_manage, parent, false)
-                return ClassViewHolder(view)
-            }
-
-            override fun onBindViewHolder(holder: ClassViewHolder, position: Int) {
-                val classModel = classesList[position]
-
-                holder.tvName.text = classModel.className
-                holder.tvTime.text = "${classModel.daysOfWeek} | ساعت: ${classModel.classTime}"
-
-                // ✏️ رفتن به صفحه ویرایش با کلیک روی مشخصات کلاس
-                holder.layoutText.setOnClickListener {
-                    val intent = Intent(this@ClassManagementActivity, AddEditClassActivity::class.java)
-                    intent.putExtra("CLASS_ID", classModel.id)
-                    startActivity(intent)
+    private fun fetchClasses() {
+        setLoading(true)
+        RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
+            override fun onResponse(
+                call: Call<List<ClassModel>>,
+                response: Response<List<ClassModel>>
+            ) {
+                setLoading(false)
+                if (!response.isSuccessful) {
+                    showLocalClasses("سرور لیست کلاس‌ها را برنگرداند")
+                    return
                 }
 
-                // 🗑️ حذف کلاس با کلیک روی دکمه ضربدر
-                holder.btnDelete.setOnClickListener {
-                    AlertDialog.Builder(this@ClassManagementActivity)
-                        .setTitle("حذف کلاس")
-                        .setMessage("آیا از حذف کلاس «${classModel.className}» مطمئن هستید؟ این عملیات دانش‌آموزان را از کلاس خارج می‌کند.")
-                        .setPositiveButton("بله، حذف شود") { _, _ ->
-                            // TODO: اگر از Retrofit استفاده می‌کنید، متد حذف آنلاین را اینجا فراخوانی کنید
-                            // RetrofitClient.instance.deleteClass(DeleteClassRequest(classModel.id)).enqueue(...)
-
-                            AppDatabase.deleteClass(classModel.id) // حذف از دیتابیس لوکال
-                            Toast.makeText(this@ClassManagementActivity, "کلاس با موفقیت حذف شد", Toast.LENGTH_SHORT).show()
-                            refreshClassesList()
-                        }
-                        .setNegativeButton("انصراف", null)
-                        .show()
-                }
+                val serverClasses = response.body().orEmpty()
+                AppDatabase.replaceClasses(serverClasses)
+                renderClasses(serverClasses)
             }
 
-            override fun getItemCount() = classesList.size
+            override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
+                setLoading(false)
+                showLocalClasses("اتصال به سرور برقرار نشد؛ اطلاعات محلی نمایش داده شد")
+            }
+        })
+    }
+
+    private fun showLocalClasses(message: String) {
+        renderClasses(AppDatabase.getAllClasses(false))
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun renderClasses(classes: List<ClassModel>) {
+        activeClasses.clear()
+        activeClasses.addAll(
+            classes
+                .filter { it.status == ClassStatus.ACTIVE }
+                .sortedWith(compareBy<ClassModel> { it.className }.thenBy { it.startTime })
+        )
+        adapter.notifyDataSetChanged()
+        tvEmpty.visibility = if (activeClasses.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    private fun openEditClass(model: ClassModel) {
+        startActivity(
+            Intent(this, AddEditClassActivity::class.java)
+                .putExtra(AddEditClassActivity.EXTRA_CLASS_ID, model.id)
+        )
+    }
+
+    private fun openClassMembers(model: ClassModel) {
+        startActivity(
+            Intent(this, ClassDetailsActivity::class.java)
+                .putExtra(ClassDetailsActivity.EXTRA_CLASS_ID, model.id)
+                .putExtra(ClassDetailsActivity.EXTRA_CLASS_NAME, model.className)
+        )
+    }
+
+    private fun confirmCompleteClass(model: ClassModel) {
+        AlertDialog.Builder(this)
+            .setTitle("پایان ترم")
+            .setMessage(
+                "ترم «${model.className}» پایان یابد؟\n\n" +
+                    "سوابق دانش‌آموزان، حضور و غیاب و کارنامه‌ها حذف نمی‌شوند؛ " +
+                    "کلاس فقط از فهرست کلاس‌های فعال خارج می‌شود."
+            )
+            .setPositiveButton("پایان ترم") { _, _ -> completeClass(model) }
+            .setNegativeButton("انصراف", null)
+            .show()
+    }
+
+    private fun completeClass(model: ClassModel) {
+        setLoading(true)
+        RetrofitClient.instance.completeClass(CompleteClassRequest(model.id))
+            .enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(
+                    call: Call<ApiResponse>,
+                    response: Response<ApiResponse>
+                ) {
+                    setLoading(false)
+                    val result = response.body()
+                    if (response.isSuccessful && result?.status == "success") {
+                        AppDatabase.completeClass(model.id)
+                        Toast.makeText(
+                            this@ClassManagementActivity,
+                            result.message.ifBlank { "ترم کلاس پایان یافت" },
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        fetchClasses()
+                    } else {
+                        Toast.makeText(
+                            this@ClassManagementActivity,
+                            result?.message?.takeIf { it.isNotBlank() } ?: "پایان ترم در سرور ثبت نشد",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                    setLoading(false)
+                    Toast.makeText(
+                        this@ClassManagementActivity,
+                        "اتصال به complete_class.php برقرار نشد",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            })
+    }
+
+    private fun setLoading(loading: Boolean) {
+        progressLoading.visibility = if (loading) View.VISIBLE else View.GONE
+    }
+
+    private inner class ClassAdapter : RecyclerView.Adapter<ClassViewHolder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ClassViewHolder {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_class_manage, parent, false)
+            return ClassViewHolder(view)
         }
+
+        override fun onBindViewHolder(holder: ClassViewHolder, position: Int) {
+            val model = activeClasses[position]
+            holder.tvName.text = model.className
+            holder.tvSchedule.text = model.classTime
+            holder.tvTeacher.text = if (model.teacherPhone.isNullOrBlank()) {
+                "استاد: تعیین نشده"
+            } else {
+                val teacherName = AppDatabase.getTeacherByUsername(model.teacherPhone.orEmpty())?.name
+                "استاد: ${teacherName ?: model.teacherPhone}"
+            }
+
+            holder.btnMembers.setOnClickListener { openClassMembers(model) }
+            holder.btnEdit.setOnClickListener { openEditClass(model) }
+            holder.btnComplete.setOnClickListener { confirmCompleteClass(model) }
+        }
+
+        override fun getItemCount(): Int = activeClasses.size
     }
 
-    private fun refreshClassesList() {
-        classesList.clear()
-
-        // دریافت لیست کلاس‌ها از دیتابیس لوکال
-        val localClasses = AppDatabase.getAllClasses(false)
-        classesList.addAll(localClasses)
-
-        rvLevels.adapter?.notifyDataSetChanged()
-
-        // 🌐 TODO: در صورت نیاز به همگام‌سازی با سرور، کد RetrofitClient.instance.getClasses() را اینجا قرار دهید
-    }
-
-    class ClassViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    private class ClassViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvName: TextView = view.findViewById(R.id.txtManageClassName)
-        val tvTime: TextView = view.findViewById(R.id.txtManageClassTime)
-        val btnDelete: Button = view.findViewById(R.id.btnDeleteClass)
-        val layoutText: LinearLayout = view.findViewById(R.id.layoutClassText)
+        val tvSchedule: TextView = view.findViewById(R.id.txtManageClassTime)
+        val tvTeacher: TextView = view.findViewById(R.id.txtManageClassTeacher)
+        val btnMembers: MaterialButton = view.findViewById(R.id.btnManageMembers)
+        val btnEdit: MaterialButton = view.findViewById(R.id.btnEditClass)
+        val btnComplete: MaterialButton = view.findViewById(R.id.btnCompleteClass)
     }
 }

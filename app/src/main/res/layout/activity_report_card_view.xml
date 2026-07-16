@@ -5,8 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="#D1D5DB"> <RelativeLayout
-    android:id="@+id/viewToolbar"
+    android:background="#D1D5DB">
+
+    <RelativeLayout
+        android:id="@+id/viewToolbar"
+        android:layoutDirection="ltr"
     android:layout_width="match_parent"
     android:layout_height="64dp"
     android:background="#FFFFFF"
@@ -17,7 +20,8 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_centerVertical="true"
-        android:layout_marginStart="8dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="8dp"
         android:padding="12dp"
         android:src="@android:drawable/ic_menu_revert"
         app:tint="#2B4E78" />
@@ -219,8 +223,8 @@
                                     <TextView android:layout_weight="1.5" android:padding="4dp" android:text="Level:" android:textColor="#FFFFFF" android:gravity="center" android:textSize="11sp" android:textStyle="bold"/>
                                 </TableRow>
                                 <TableRow>
-                                    <TextView android:layout_weight="1" android:padding="6dp" android:text="1404" android:gravity="center" android:textColor="#000000" android:textSize="11sp"/>
-                                    <TextView android:layout_weight="1.5" android:padding="6dp" android:text="FF1" android:gravity="center" android:textColor="#000000" android:textSize="11sp"/>
+                                    <TextView android:id="@+id/txtReportTerm" android:layout_weight="1" android:padding="6dp" android:text="-" android:gravity="center" android:textColor="#000000" android:textSize="11sp"/>
+                                    <TextView android:id="@+id/txtReportLevel" android:layout_weight="1.5" android:padding="6dp" android:text="-" android:gravity="center" android:textColor="#000000" android:textSize="11sp"/>
                                 </TableRow>
                             </TableLayout>
                         </com.google.android.material.card.MaterialCardView>
@@ -240,17 +244,17 @@
                                 android:padding="8dp"
                                 android:gravity="center">
                                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Total Score:" android:textStyle="bold" android:textColor="#4B5563" android:textSize="12sp" android:gravity="center"/>
-                                <TextView android:id="@+id/txtReportTotalScore" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="95.75" android:textSize="24sp" android:textStyle="bold" android:textColor="#FF6B00" android:gravity="center"/>
+                                <TextView android:id="@+id/txtReportTotalScore" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0 / 100" android:textSize="24sp" android:textStyle="bold" android:textColor="#FF6B00" android:gravity="center"/>
                             </LinearLayout>
 
                             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp">
                                 <TableRow>
                                     <TextView android:layout_weight="1" android:text="Status:" android:textStyle="bold" android:textColor="#2B4E78" android:paddingEnd="8dp" android:gravity="center_vertical|end"/>
-                                    <TextView android:layout_weight="1" android:text="Pass" android:textColor="#10B981" android:textStyle="bold" android:gravity="center_vertical|start"/>
+                                    <TextView android:id="@+id/txtReportStatus" android:layout_weight="1" android:text="-" android:textColor="#10B981" android:textStyle="bold" android:gravity="center_vertical|start"/>
                                 </TableRow>
                                 <TableRow android:layout_marginTop="4dp">
                                     <TextView android:layout_weight="1" android:text="Rank:" android:textStyle="bold" android:textColor="#2B4E78" android:paddingEnd="8dp" android:gravity="center_vertical|end"/>
-                                    <TextView android:layout_weight="1" android:text="★★★★" android:textColor="#FF6B00" android:textStyle="bold" android:gravity="center_vertical|start"/>
+                                    <TextView android:id="@+id/txtReportRank" android:layout_weight="1" android:text="☆☆☆☆☆" android:textColor="#FF6B00" android:textStyle="bold" android:gravity="center_vertical|start"/>
                                 </TableRow>
                             </TableLayout>
                         </LinearLayout>

@@ -1,0 +1,57 @@
+package com.example.bb
+
+object SchoolClassCatalog {
+    val classNames: List<String> = listOf(
+        "Kids: Pockets 1A",
+        "Kids: Pockets 1B",
+        "Kids: Pockets 1C",
+        "Kids: Pockets 2A",
+        "Kids: Pockets 2B",
+        "Kids: Pockets 2C",
+        "Kids: Pockets 3A",
+        "Kids: Pockets 3B",
+        "Kids: Pockets 3C",
+
+        "Elementary: FF1",
+        "Elementary: FF2",
+        "Elementary: FF3",
+        "Elementary: F&F 1A",
+        "Elementary: F&F 1B",
+        "Elementary: F&F 1C",
+        "Elementary: F&F 2A",
+        "Elementary: F&F 2B",
+        "Elementary: F&F 2C",
+        "Elementary: F&F 3A",
+        "Elementary: F&F 3B",
+        "Elementary: F&F 3C",
+
+        "Intermediate: F&F 4A",
+        "Intermediate: F&F 4B",
+        "Intermediate: F&F 4C",
+        "Intermediate: Got it 1A",
+        "Intermediate: Got it 1B",
+        "Intermediate: Got it 1C",
+        "Intermediate: Got it 2A",
+        "Intermediate: Got it 2B",
+        "Intermediate: Got it 2C",
+        "Intermediate: Got it 3A",
+        "Intermediate: Got it 3B",
+        "Intermediate: Got it 3C",
+
+        "Advanced: AEF 1A",
+        "Advanced: AEF 1B",
+        "Advanced: AEF 1C",
+        "Advanced: AEF 2A",
+        "Advanced: AEF 2B",
+        "Advanced: AEF 2C",
+        "Advanced: AEF 3A",
+        "Advanced: AEF 3B",
+        "Advanced: AEF 3C",
+        "Advanced: AEF 4A",
+        "Advanced: AEF 4B",
+        "Advanced: AEF 4C",
+        "Advanced: AEF 5A",
+        "Advanced: AEF 5B",
+        "Advanced: AEF 5C"
+    )
+}

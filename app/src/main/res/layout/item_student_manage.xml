@@ -1,41 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:padding="12dp"
-    android:layout_marginBottom="8dp"
-    android:background="@android:drawable/dialog_holo_light_frame">
-
-    <Button
-        android:id="@+id/btnAction"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:text="+"
-        android:textSize="20sp" />
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginVertical="5dp"
+    android:layoutDirection="rtl"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="1dp"
+    app:strokeColor="#1A64748B"
+    app:strokeWidth="1dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="right"
-        android:layout_marginRight="16dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
 
-        <TextView
-            android:id="@+id/tvStudentName"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#000" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingEnd="8dp">
 
-        <TextView
-            android:id="@+id/tvStudentPhone"
+            <TextView
+                android:id="@+id/tvStudentName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:text="نام دانش‌آموز"
+                android:textColor="@color/main_text"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvStudentPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxLines="3"
+                android:text="اطلاعات دانش‌آموز"
+                android:textColor="@color/sub_text"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAction"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="#555" />
+            android:layout_height="44dp"
+            android:minWidth="76dp"
+            android:text="افزودن"
+            android:textSize="12sp"
+            app:cornerRadius="11dp"
+            app:strokeColor="@color/brand_orange" />
     </LinearLayout>
-</LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

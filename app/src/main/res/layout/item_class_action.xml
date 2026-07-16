@@ -3,31 +3,34 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginVertical="5dp"
+    android:layoutDirection="rtl"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="12dp"
+    app:cardCornerRadius="14dp"
     app:cardElevation="1dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="#E5E7EB"
-    android:layoutDirection="rtl">
+    app:strokeColor="#1A64748B"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="12dp"
-        android:gravity="center_vertical">
+        android:padding="12dp">
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingEnd="8dp">
 
             <TextView
                 android:id="@+id/tvClassName"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:maxLines="2"
                 android:text="نام کلاس"
                 android:textColor="@color/main_text"
                 android:textSize="15sp"
@@ -35,24 +38,25 @@
 
             <TextView
                 android:id="@+id/tvClassTime"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ساعت کلاس"
+                android:layout_marginTop="4dp"
+                android:maxLines="3"
+                android:text="برنامه کلاس"
                 android:textColor="@color/sub_text"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAction"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            app:cornerRadius="12dp"
-            android:text="+"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:minWidth="76dp"
+            android:text="افزودن"
+            android:textSize="12sp"
+            app:cornerRadius="11dp"
+            app:strokeColor="@color/brand_orange" />
     </LinearLayout>
+
 </com.google.android.material.card.MaterialCardView>

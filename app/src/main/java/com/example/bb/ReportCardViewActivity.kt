@@ -3,7 +3,6 @@ package com.example.bb
 import android.graphics.Canvas
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -12,6 +11,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ReportCardViewActivity : AppCompatActivity() {
 
@@ -21,70 +23,117 @@ class ReportCardViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report_card_view)
 
-        // ۱. اتصال ویوهای اصلی
         findViewById<ImageView>(R.id.btnViewBack).setOnClickListener { finish() }
 
         val txtReportID = findViewById<TextView>(R.id.txtReportID)
         val txtReportFirstName = findViewById<TextView>(R.id.txtReportFirstName)
         val txtReportLastName = findViewById<TextView>(R.id.txtReportLastName)
         val txtReportTotalScore = findViewById<TextView>(R.id.txtReportTotalScore)
+        val txtReportTerm = findViewById<TextView>(R.id.txtReportTerm)
+        val txtReportLevel = findViewById<TextView>(R.id.txtReportLevel)
+        val txtReportStatus = findViewById<TextView>(R.id.txtReportStatus)
+        val txtReportRank = findViewById<TextView>(R.id.txtReportRank)
+        val txtReportDate = findViewById<TextView>(R.id.txtReportDate)
         val rowsContainer = findViewById<LinearLayout>(R.id.rowsContainer)
         val btnDownloadPdf = findViewById<Button>(R.id.btnDownloadPdf)
         val reportCardContainer = findViewById<LinearLayout>(R.id.reportCardContainer)
 
-        // ۲. دریافت دیتا
         studentId = intent.getStringExtra("STUDENT_ID") ?: "0000"
         val fullName = intent.getStringExtra("STUDENT_NAME") ?: "Unknown"
+        val className = intent.getStringExtra("CLASS_NAME") ?: "نامشخص"
+        val reportDate = intent.getStringExtra("REPORT_DATE") ?: AppDatabase.today()
         val criteriaNames = intent.getStringArrayListExtra("CRITERIA_NAMES") ?: arrayListOf()
         val scoresList = intent.getIntegerArrayListExtra("SCORES_LIST") ?: arrayListOf()
         val maxScoresList = intent.getIntegerArrayListExtra("MAX_SCORES_LIST") ?: arrayListOf()
 
-        // ۳. پر کردن اطلاعات دانش‌آموز
-        val nameParts = fullName.split(" ")
+        val nameParts = fullName.trim().split(Regex("\\s+"))
         txtReportFirstName.text = nameParts.firstOrNull() ?: fullName
         txtReportLastName.text = if (nameParts.size > 1) nameParts.drop(1).joinToString(" ") else ""
         txtReportID.text = studentId
+        txtReportLevel.text = className
+        txtReportTerm.text = reportDate
+        txtReportDate.text = "Date: $reportDate"
 
-        // ۴. پر کردن داینامیک جدول نمرات
         rowsContainer.removeAllViews()
-        val inflater = LayoutInflater.from(this)
-        var totalStudentScore = 0.0
+        var totalStudentScore = 0
+        var totalMaxScore = 0
+        val itemCount = minOf(criteriaNames.size, scoresList.size, maxScoresList.size)
 
-        for (i in criteriaNames.indices) {
-            val rowView = inflater.inflate(R.layout.item_report_card_table_row, rowsContainer, false)
+        for (i in 0 until itemCount) {
+            val rowView = layoutInflater.inflate(
+                R.layout.item_report_card_table_row,
+                rowsContainer,
+                false
+            )
             rowView.findViewById<TextView>(R.id.txtTableSubject).text = criteriaNames[i]
             rowView.findViewById<TextView>(R.id.txtTableScore).text = scoresList[i].toString()
             rowView.findViewById<TextView>(R.id.txtTableOutOf).text = maxScoresList[i].toString()
 
             totalStudentScore += scoresList[i]
+            totalMaxScore += maxScoresList[i]
             rowsContainer.addView(rowView)
         }
-        txtReportTotalScore.text = totalStudentScore.toString()
 
-        // ۵. لاجیک PDF
+        val percentage = if (totalMaxScore > 0) {
+            (totalStudentScore * 100.0) / totalMaxScore
+        } else {
+            0.0
+        }
+
+        txtReportTotalScore.text = "$totalStudentScore / $totalMaxScore"
+        txtReportStatus.text = if (percentage >= 60.0) "Pass" else "Needs Improvement"
+        txtReportStatus.setTextColor(
+            if (percentage >= 60.0) 0xFF10B981.toInt() else 0xFFEF4444.toInt()
+        )
+        txtReportRank.text = rankStars(percentage)
+
         btnDownloadPdf.setOnClickListener {
             createPdfFromView(reportCardContainer)
         }
     }
 
+    private fun rankStars(percentage: Double): String {
+        val count = when {
+            percentage >= 90 -> 5
+            percentage >= 80 -> 4
+            percentage >= 70 -> 3
+            percentage >= 60 -> 2
+            else -> 1
+        }
+        return "★".repeat(count) + "☆".repeat(5 - count)
+    }
+
     private fun createPdfFromView(view: LinearLayout) {
+        if (view.width <= 0 || view.height <= 0) {
+            Toast.makeText(this, "نمای کارنامه هنوز آماده نشده است", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val pdfDocument = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(view.width, view.height, 1).create()
         val page = pdfDocument.startPage(pageInfo)
-
         val canvas: Canvas = page.canvas
         view.draw(canvas)
-
         pdfDocument.finishPage(page)
 
-        // ذخیره در مسیر فایل‌های اپلیکیشن
-        val file = File(getExternalFilesDir(null), "ReportCard_${studentId}.pdf")
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val safeStudentId = studentId.replace(Regex("[^A-Za-z0-9_-]"), "_")
+        val file = File(
+            getExternalFilesDir(null),
+            "ReportCard_${safeStudentId}_$timestamp.pdf"
+        )
+
         try {
             pdfDocument.writeTo(FileOutputStream(file))
-            Toast.makeText(this, "فایل PDF ساخته شد:\n${file.absolutePath}", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "فایل PDF ساخته شد:\n${file.absolutePath}",
+                Toast.LENGTH_LONG
+            ).show()
         } catch (e: Exception) {
             Toast.makeText(this, "خطا در ساخت PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+        } finally {
+            pdfDocument.close()
         }
-        pdfDocument.close()
     }
 }
