@@ -110,6 +110,7 @@ class LoginActivity : AppCompatActivity() {
                             putBoolean("IS_LOGGED_IN", true)
                             putString("CURRENT_USER_ROLE", body.role ?: "STUDENT")
                             putString("CURRENT_USERNAME", username)
+                            putString("CURRENT_USER_ID", body.userId ?: "") // 🌟 ذخیره آیدی منحصر به فرد کاربر
                             putString("CURRENT_DISPLAY_NAME", body.displayName ?: "کاربر")
                             apply()
                         }

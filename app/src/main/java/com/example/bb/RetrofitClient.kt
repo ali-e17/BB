@@ -68,6 +68,7 @@ data class LoginRequest(val username: String, val password: String)
 data class LoginResponse(
     val status: String = "",
     val role: String? = null,
+    val userId: String? = null, // 🌟 این خط اضافه شد
     val displayName: String? = null,
     val message: String? = null
 )
