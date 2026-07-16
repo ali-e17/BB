@@ -60,6 +60,9 @@ class AddEditStudentActivity : AppCompatActivity() {
 
             val old = editing
 
+            // 🌟 ساخت یک نام رندوم بین 1 تا 9 برای دانش‌آموز جدید
+            val randomAvatar = "avatar_student_${(1..9).random()}"
+
             val model = StudentModel(
                 id = old?.id ?: UUID.randomUUID().toString(),
                 firstName = fname,
@@ -68,10 +71,10 @@ class AddEditStudentActivity : AppCompatActivity() {
                 phone = phoneValue,
                 nationalId = nationalIdValue,
                 password = old?.password ?: nationalIdValue,
-                classId = old?.classId, // کلاس اگر قبلاً داشته حفظ میشه، وگرنه null میمونه
+                classId = old?.classId,
                 registrationDate = old?.registrationDate ?: AppDatabase.today(),
                 isActive = old?.isActive ?: true,
-                avatarResId = old?.avatarResId ?: R.drawable.avatar_student_1
+                avatarName = old?.avatarName ?: randomAvatar // 🌟 اعمال عکس رندوم
             )
 
             // 🌐 ارسال آنلاین به سرور با Retrofit

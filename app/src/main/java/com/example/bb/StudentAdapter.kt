@@ -28,13 +28,24 @@ class StudentAdapter(
 
     override fun onBindViewHolder(holder: StudentViewHolder, position: Int) {
         val student = studentList[position]
+        val context = holder.itemView.context
 
         holder.tvName.text = student.name
         holder.tvId.text = "کد: ${student.studentCode}"
         holder.tvLevel.text = AppDatabase.getClassNameById(student.classId) ?: "بدون کلاس فعال"
-        holder.ivAvatar.setImageResource(student.avatarResId)
 
-        // اگر بایگانی شده بود، رنگش رو خاکستری کنیم (جلوه بصری خفن)
+        // 🌟 اختصاص عکس رندوم ثابت بر اساس آیدی کاربر
+        val randomNum = (Math.abs(student.id.hashCode()) % 9) + 1
+        val fallback = "avatar_student_$randomNum"
+
+        val avatar = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
+        val resId = context.resources.getIdentifier(avatar, "drawable", context.packageName)
+        if (resId != 0) {
+            holder.ivAvatar.setImageResource(resId)
+        } else {
+            holder.ivAvatar.setImageResource(R.drawable.avatar_student_1)
+        }
+
         if (!student.isActive) {
             holder.itemView.alpha = 0.5f
             holder.btnDetails.text = "بایگانی شده"
@@ -50,7 +61,6 @@ class StudentAdapter(
 
     override fun getItemCount(): Int = studentList.size
 
-    // این تابع برای سرچ زنده استفاده میشه
     fun updateList(newList: List<StudentModel>) {
         studentList = newList
         notifyDataSetChanged()

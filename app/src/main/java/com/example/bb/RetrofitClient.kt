@@ -14,6 +14,9 @@ data class ApiResponse(
 
 interface ApiService {
 
+    @POST("update_avatar.php")
+    fun updateAvatar(@Body request: UpdateAvatarRequest): Call<ApiResponse>
+
     @POST("toggle_student_active.php")
     fun toggleStudentActive(@Body request: ToggleActiveRequest): Call<ApiResponse>
 
@@ -85,3 +88,5 @@ object RetrofitClient {
             .create(ApiService::class.java)
     }
 }
+
+data class UpdateAvatarRequest(val studentId: String, val avatarName: String)

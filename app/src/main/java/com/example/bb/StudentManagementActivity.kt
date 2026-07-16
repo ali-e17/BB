@@ -171,9 +171,9 @@ class StudentManagementActivity : AppCompatActivity() {
 
                 val filtered = allStudents.filter { student ->
                     val matchesSearch = search.isBlank() ||
-                        student.name.contains(search, true) ||
-                        student.studentCode.contains(search, true) ||
-                        student.phone.contains(search)
+                            student.name.contains(search, true) ||
+                            student.studentCode.contains(search, true) ||
+                            student.phone.contains(search)
 
                     val matchesClass = when (selectedClassId) {
                         null -> true
@@ -212,7 +212,19 @@ class StudentManagementActivity : AppCompatActivity() {
         view.findViewById<TextView>(R.id.dialogPhone).text =
             "${student.phone} | کد ملی: ${student.nationalId}"
         view.findViewById<TextView>(R.id.dialogRegDate).text = student.registrationDate
-        view.findViewById<ImageView>(R.id.dialogAvatar).setImageResource(student.avatarResId)
+
+        // 🌟 اختصاص عکس رندوم ثابت برای دیالوگ جزئیات
+        val avatarView = view.findViewById<ImageView>(R.id.dialogAvatar)
+        val randomNum = (Math.abs(student.id.hashCode()) % 9) + 1
+        val fallback = "avatar_student_$randomNum"
+
+        val avatar = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
+        val resId = resources.getIdentifier(avatar, "drawable", packageName)
+        if (resId != 0) {
+            avatarView.setImageResource(resId)
+        } else {
+            avatarView.setImageResource(R.drawable.avatar_student_1)
+        }
 
         val status = view.findViewById<TextView>(R.id.dialogStatus)
         val archive = view.findViewById<MaterialButton>(R.id.btnDialogArchive)
