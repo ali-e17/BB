@@ -4,164 +4,255 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"> <com.google.android.material.card.MaterialCardView
-    android:id="@+id/topBar"
-    android:layout_width="match_parent"
-    android:layout_height="64dp"
-    android:layout_marginHorizontal="20dp"
-    android:layout_marginTop="16dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="16dp"
-    app:strokeWidth="0dp"
-    android:outlineSpotShadowColor="#1A1040D1"
-    android:outlineAmbientShadowColor="#20000000"
-    app:cardBackgroundColor="@color/card_background" app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent">
+    android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true"
+    android:layoutDirection="ltr">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/btnDetailBack"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:padding="12dp"
-            android:src="@android:drawable/ic_menu_revert"
-            app:tint="@color/main_text" /> <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:gravity="center"
-        android:orientation="horizontal">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/txtDetailTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/main_text" android:textSize="22sp"
-            android:textStyle="bold"
-            android:text="عنوان کامل پیام" />
+            <ImageView
+                android:id="@+id/btnDetailBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="بازگشت"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/main_text" />
 
-    </LinearLayout>
-    </RelativeLayout>
-</com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/txtDetailToolbarTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="56dp"
+                android:layout_marginEnd="56dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:textColor="@color/title_blue"
+                android:textDirection="firstStrong"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-    <ScrollView
-        android:layout_width="match_parent"
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="20dp"
-        android:layout_marginTop="8dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBar">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layoutDirection="rtl"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
 
-            <RelativeLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="24dp">
-
-                <FrameLayout
-                    android:id="@+id/detailAvatar"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/bg_circle_icon"
-                    android:backgroundTint="@color/card_background" android:backgroundTintMode="src_atop">
-                    <TextView
-                        android:id="@+id/txtDetailAvatar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:textColor="#FF6E14"
-                        android:textStyle="bold"
-                        android:text="B" />
-                </FrameLayout>
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#182B4E78"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_toStartOf="@id/detailAvatar"
-                    android:layout_marginEnd="12dp"
-                    android:gravity="end"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/txtDetailSender"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/main_text" android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:text="فرستنده" />
-                    <TextView
-                        android:id="@+id/txtDetailDate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/sub_text" android:textSize="12sp"
-                        android:text="تاریخ" />
-                </LinearLayout>
-            </RelativeLayout>
+                    android:layoutDirection="rtl"
+                    android:orientation="vertical"
+                    android:padding="14dp">
 
-            <TextView
-                android:id="@+id/txtDetailBody"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layoutDirection="rtl"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/txtDetailSender"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:gravity="right"
+                            android:maxEms="15"
+                            android:maxLines="1"
+                            android:textColor="@color/main_text"
+                            android:textDirection="rtl"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtDetailRole"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_role_badge"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:textColor="@color/title_blue"
+                            android:textDirection="rtl"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <Space
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/txtDetailDate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="18dp"
+                            android:maxLines="1"
+                            android:textColor="@color/sub_text"
+                            android:textDirection="ltr"
+                            android:textSize="11sp" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/txtDetailTarget"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:gravity="right"
+                        android:maxLines="2"
+                        android:textColor="@color/sub_text"
+                        android:textDirection="rtl"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="right"
-                android:lineSpacingMultiplier="1.4"
-                android:textColor="@color/main_text" android:textSize="15sp"
-                android:text="متن کامل پیام..." />
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#182B4E78"
+                app:strokeWidth="1dp">
+
+                <TextView
+                    android:id="@+id/txtDetailBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right|top"
+                    android:lineSpacingExtra="5dp"
+                    android:minHeight="120dp"
+                    android:padding="18dp"
+                    android:textColor="@color/main_text"
+                    android:textDirection="firstStrong"
+                    android:textIsSelectable="true"
+                    android:textSize="15sp" />
+
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAttachment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
-                android:layout_marginBottom="20dp"
-                android:clickable="true"
-                android:focusable="true"
+                android:layout_marginTop="12dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="12dp"
-                app:strokeWidth="0dp">
-                <RelativeLayout
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#332B4E78"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="16dp">
-                    <ImageView
-                        android:id="@+id/imgDownloadIcon"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
-                        android:src="@android:drawable/stat_sys_download"
-                        app:tint="@color/title_blue" /> <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:gravity="end"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/txtFileName"
-                        android:layout_width="wrap_content"
+                    android:layoutDirection="rtl"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/main_text" android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:text="filename.pdf" />
-                    <TextView
-                        android:id="@+id/txtFileTypeLabel"
+                        android:layout_weight="1"
+                        android:gravity="right"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtFileName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="middle"
+                            android:gravity="right"
+                            android:maxLines="1"
+                            android:textColor="@color/main_text"
+                            android:textDirection="firstStrong"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtFileTypeLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:gravity="right"
+                            android:textColor="@color/sub_text"
+                            android:textDirection="rtl"
+                            android:textSize="11sp" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDownloadAttachment"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/sub_text" android:textSize="12sp"
-                        android:text="جزوه آموزشی" />
+                        android:layout_height="44dp"
+                        android:layout_marginStart="12dp"
+                        android:text="دانلود پیوست"
+                        android:textAllCaps="false"
+                        android:textDirection="rtl"
+                        app:cornerRadius="10dp"
+                        app:icon="@android:drawable/ic_menu_save"
+                        app:iconGravity="textStart" />
+
                 </LinearLayout>
-                </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

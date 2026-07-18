@@ -2,84 +2,117 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardAnnouncement"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
+    android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="6dp"
-    app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="16dp"
-    app:strokeWidth="0dp"
-    app:cardElevation="2dp">
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/sub_text"
+    app:strokeWidth="1dp">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layoutDirection="ltr"
+        android:minHeight="94dp"
+        android:paddingStart="16dp"
+        android:paddingTop="13dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="13dp">
 
-        <FrameLayout
-            android:id="@+id/avatarContainer"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_alignParentEnd="true"
-            android:background="@drawable/bg_circle_icon"
-            android:backgroundTint="@color/card_background" android:backgroundTintMode="src_atop">
-            <TextView
-                android:id="@+id/txtAvatar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textColor="@color/title_blue" android:textSize="16sp"
-                android:textStyle="bold"
-                android:text="B" />
-        </FrameLayout>
+        <TextView
+            android:id="@+id/txtMsgSender"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:layout_marginStart="12dp"
+            android:gravity="right|center_vertical"
+            android:maxLines="1"
+            android:textColor="@color/main_text"
+            android:textDirection="rtl"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/messageMetaRow"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/messageMetaRow"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toStartOf="@id/avatarContainer"
-            android:layout_alignParentStart="true"
-            android:layout_marginEnd="12dp"
-            android:orientation="vertical">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <TextView
-                    android:id="@+id/txtMsgDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:textColor="@color/sub_text" android:textSize="11sp"
-                    android:text="امروز" />
-                <TextView
-                    android:id="@+id/txtMsgSender"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:textColor="@color/main_text" android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:text="فرستنده" />
-            </RelativeLayout>
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/txtMsgTitle"
-                android:layout_width="match_parent"
+                android:id="@+id/txtMsgDate"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="right"
-                android:textColor="@color/title_blue" android:textSize="14sp"
-                android:textStyle="bold"
-                android:text="عنوان" />
-
-            <TextView
-                android:id="@+id/txtMsgSnippet"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:gravity="right"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:textColor="@color/sub_text" android:textSize="12sp"
-                android:text="خلاصه پیام..." />
+                android:textColor="@color/sub_text"
+                android:textDirection="ltr"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/txtReadState"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="7dp"
+                android:gravity="center"
+                android:text="●"
+                android:textColor="@color/title_blue"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
         </LinearLayout>
-    </RelativeLayout>
+
+        <View
+            android:id="@+id/messageDivider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="11dp"
+            android:alpha="0.18"
+            android:background="@color/sub_text"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/messageMetaRow" />
+
+        <TextView
+            android:id="@+id/txtSubjectLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="right|center_vertical"
+            android:text="موضوع"
+            android:textColor="@color/sub_text"
+            android:textDirection="rtl"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/messageDivider" />
+
+        <TextView
+            android:id="@+id/txtMsgTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:ellipsize="end"
+            android:gravity="right|center_vertical"
+            android:maxLines="1"
+            android:textColor="@color/title_blue"
+            android:textDirection="firstStrong"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@id/txtSubjectLabel"
+            app:layout_constraintEnd_toStartOf="@id/txtSubjectLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/txtSubjectLabel" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

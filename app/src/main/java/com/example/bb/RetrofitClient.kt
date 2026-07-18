@@ -6,6 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 data class ApiResponse(
     val status: String = "",
@@ -69,6 +70,24 @@ interface ApiService {
     // برای سازگاری با نسخه‌های قبلی نگه داشته شده؛ در رابط جدید حذف واقعی نداریم.
     @POST("delete_class.php")
     fun deleteClass(@Body request: DeleteClassRequest): Call<ApiResponse>
+
+    @GET("get_announcements.php")
+    fun getAnnouncements(
+        @Query("role") role: String,
+        @Query("username") username: String
+    ): Call<List<Announcement>>
+
+    @POST("create_announcement.php")
+    fun createAnnouncement(
+        @Body request: CreateAnnouncementRequest
+    ): Call<ApiResponse>
+
+    @POST("mark_announcement_read.php")
+    fun markAnnouncementRead(
+        @Body request: MarkAnnouncementReadRequest
+    ): Call<ApiResponse>
+
+
 }
 
 data class DeleteClassRequest(val id: String)
@@ -84,6 +103,29 @@ data class LoginResponse(
     val message: String? = null
 )
 data class ToggleActiveRequest(val studentId: String, val isActive: Boolean)
+
+data class CreateAnnouncementRequest(
+    val id: String,
+    val title: String,
+    val body: String,
+    val senderName: String,
+    val senderPhone: String,
+    val senderRole: String,
+    val scope: String,
+    val targetClassIds: List<String>,
+    val attachmentName: String? = null,
+    val attachmentUrl: String? = null,
+    val attachmentMimeType: String? = null,
+    val attachmentSizeBytes: Long? = null
+)
+
+data class MarkAnnouncementReadRequest(
+    val announcementId: String,
+    val readerRole: String,
+    val readerIdentifier: String
+)
+
+
 
 object RetrofitClient {
     private const val BASE_URL = "http://5.144.129.239/~bayaneba/api/"
