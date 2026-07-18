@@ -41,7 +41,19 @@ class AttendanceAdapter(
         val record = records[position]
         holder.name.text = record.student.name
         holder.code.text = "کد: ${record.student.studentCode}"
-        holder.avatar.setImageResource(record.student.avatarResId)
+
+        // 🌟 اختصاص عکس رندوم ثابت برای لیست حضور و غیاب
+        val context = holder.itemView.context
+        val randomNum = (Math.abs(record.student.id.hashCode()) % 9) + 1
+        val fallback = "avatar_student_$randomNum"
+
+        val avatar = record.student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
+        val resId = context.resources.getIdentifier(avatar, "drawable", context.packageName)
+        if (resId != 0) {
+            holder.avatar.setImageResource(resId)
+        } else {
+            holder.avatar.setImageResource(R.drawable.avatar_student_1)
+        }
 
         fun render() {
             arrayOf(holder.present, holder.late, holder.absent).forEach {

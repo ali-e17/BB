@@ -26,8 +26,8 @@ data class AdminModel(
 
 data class StudentModel(
     val id: String,
-    var firstName: String, // 🌟 نام به صورت جداگانه
-    var lastName: String,  // 🌟 نام خانوادگی به صورت جداگانه
+    var firstName: String,
+    var lastName: String,
     var studentCode: String = "",
     var phone: String,
     var nationalId: String,
@@ -35,9 +35,8 @@ data class StudentModel(
     var classId: String? = null,
     var registrationDate: String = AppDatabase.today(),
     var isActive: Boolean = true,
-    var avatarResId: Int = R.drawable.avatar_student_1
+    var avatarName: String? = "avatar_student_1" // 🌟 اضافه شدن علامت سوال برای ایمنی در برابر نال
 ) : Serializable {
-    // 🌟 ترفند اصلی: یک Property مجازی تعریف می‌کنیم که نام و فامیل را می‌چسباند.
     val name: String
         get() = "$firstName $lastName"
 }
@@ -257,10 +256,6 @@ object AppDatabase {
         save()
     }
 
-    /**
-     * کش محلی کلاس‌ها را با آخرین پاسخ سرور همگام می‌کند.
-     * داده‌های دانش‌آموزان و سوابق محلی دست‌نخورده می‌مانند.
-     */
     fun replaceClasses(serverClasses: List<ClassModel>) {
         classes.clear()
         classes.addAll(serverClasses.distinctBy { it.id })
@@ -278,7 +273,7 @@ object AppDatabase {
         return true
     }
 
-    @Deprecated("کلاس تاریخی نباید حذف شود؛ از completeClass استفاده کنید")
+    @Deprecated("کلاس تاریخی نباید حذف شود")
     fun deleteClass(classId: String, context: Context? = null) { completeClass(classId) }
 
     fun getAllTeachers(): List<TeacherModel> = teachers.toList()
@@ -480,7 +475,8 @@ object AppDatabase {
                     studentCode = "S${i + 1}", phone = phone,
                     nationalId = old.getString("student_${i}_nationalId", "").orEmpty(),
                     password = old.getString("student_${i}_password", "").orEmpty(),
-                    classId = old.getString("student_${i}_classId", null)
+                    classId = old.getString("student_${i}_classId", null),
+                    avatarName = "avatar_student_1"
                 )
             }
         }
@@ -515,7 +511,7 @@ object AppDatabase {
         if (!::appContext.isInitialized) return
         val root = JSONObject()
         root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("password", admin.password))
-        root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("password", s.password).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarResId", s.avatarResId)) } })
+        root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("password", s.password).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_student_1")) } })
         root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("name", t.name).put("username", t.username).put("nationalId", t.nationalId).put("password", t.password).put("classIds", t.classIds).put("isActive", t.isActive)) } })
         root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt)) } })
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
@@ -596,7 +592,7 @@ object AppDatabase {
                 classId = o.optNullableString("classId"),
                 registrationDate = o.optString("registrationDate", AppDatabase.today()),
                 isActive = o.optBoolean("isActive", true),
-                avatarResId = o.optInt("avatarResId", R.drawable.avatar_student_1)
+                avatarName = o.optString("avatarName", "avatar_student_1") // 🌟 تغییر به متن
             )
         }
 
