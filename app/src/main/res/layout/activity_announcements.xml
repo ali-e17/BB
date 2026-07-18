@@ -4,36 +4,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"> <com.google.android.material.floatingactionbutton.FloatingActionButton
-    android:id="@+id/fabCreateMessage"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginEnd="24dp"
-    android:layout_marginBottom="24dp"
-    android:src="@android:drawable/ic_input_add"
-    app:backgroundTint="#FF6B00"
-    app:tint="#FFFFFF"
-    app:elevation="6dp"
-    android:visibility="gone"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
+    android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true"
+    android:layoutDirection="ltr">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/topBar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="16dp"
-        app:strokeWidth="0dp"
-        android:outlineSpotShadowColor="#1A1040D1"
-        android:outlineAmbientShadowColor="#20000000"
-        app:cardBackgroundColor="@color/card_background" app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -41,36 +30,115 @@
                 android:id="@+id/btnBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
+                android:contentDescription="بازگشت"
                 android:padding="12dp"
                 android:src="@android:drawable/ic_menu_revert"
-                app:tint="@color/main_text" /> <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:gravity="center"
-            android:orientation="horizontal">
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/main_text" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="پیام ها"
-                android:textColor="@color/title_blue" android:textSize="18sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-        </RelativeLayout>
+                android:text="اعلانات"
+                android:textColor="@color/title_blue"
+                android:textDirection="rtl"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/txtAnnouncementsHint"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="22dp"
+        android:gravity="center"
+        android:layoutDirection="rtl"
+        android:text="جدیدترین اعلان‌ها در ابتدای فهرست قرار دارند"
+        android:textAlignment="center"
+        android:textColor="@color/sub_text"
+        android:textDirection="rtl"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topBar" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewAnnouncements"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:padding="8dp"
-        android:layout_marginTop="8dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="92dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topBar" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txtAnnouncementsHint" />
+
+    <LinearLayout
+        android:id="@+id/announcementEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topBar">
+
+        <TextView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:gravity="center"
+            android:text="✉"
+            android:textColor="@color/title_blue"
+            android:textSize="34sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="اعلانی وجود ندارد"
+            android:textColor="@color/main_text"
+            android:textDirection="rtl"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="اعلان‌های جدید در این بخش نمایش داده می‌شوند."
+            android:textColor="@color/sub_text"
+            android:textDirection="rtl"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabCreateMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        android:contentDescription="ایجاد اعلان"
+        android:src="@android:drawable/ic_input_add"
+        android:visibility="gone"
+        app:backgroundTint="#FF6B00"
+        app:elevation="6dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@android:color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

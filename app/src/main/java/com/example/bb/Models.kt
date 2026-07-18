@@ -12,8 +12,9 @@ import java.util.UUID
 enum class UserRole { STUDENT, TEACHER, ADMIN }
 enum class ClassStatus { ACTIVE, COMPLETED }
 enum class AttendanceStatus { PRESENT, LATE, ABSENT }
-enum class AudienceType { ALL_STUDENTS, ALL_TEACHERS, CLASS, STUDENT }
-enum class MessageType { TEXT_ONLY, FILE_UPLOAD, ASSIGNMENT }
+enum class AnnouncementScope { ALL_CLASSES, SELECTED_CLASSES, DIRECT_STUDENT }
+enum class AnnouncementSenderRole { ADMIN, TEACHER, SYSTEM }
+enum class MessageType { TEXT_ONLY, ATTACHMENT }
 
 data class AuthenticatedUser(val role: UserRole, val phone: String, val displayName: String)
 
@@ -96,12 +97,26 @@ data class Announcement(
     val body: String,
     val senderName: String,
     val senderPhone: String,
-    val date: String,
+    val senderRole: AnnouncementSenderRole,
+    val createdAt: String,
+    val scope: AnnouncementScope,
+    val targetClassIds: List<String> = emptyList(),
+    val directStudentId: String? = null,
     val type: MessageType = MessageType.TEXT_ONLY,
-    val audienceType: AudienceType,
-    val targetId: String? = null,
     val attachmentName: String? = null,
-    val attachmentUrl: String? = null
+    val attachmentUrl: String? = null,
+    val attachmentMimeType: String? = null,
+    val attachmentSizeBytes: Long? = null
+) : Serializable {
+    val date: String get() = createdAt
+    val hasAttachment: Boolean
+        get() = type == MessageType.ATTACHMENT && !attachmentUrl.isNullOrBlank()
+}
+
+data class AnnouncementReadModel(
+    val announcementId: String,
+    val readerKey: String,
+    val readAt: String
 )
 
 data class ReportCardModel(
@@ -134,6 +149,7 @@ object AppDatabase {
     private val enrollments = mutableListOf<EnrollmentModel>()
     private val attendanceSessions = mutableListOf<AttendanceSession>()
     private val announcements = mutableListOf<Announcement>()
+    private val announcementReads = mutableListOf<AnnouncementReadModel>()
     private val reportCards = mutableListOf<ReportCardModel>()
     private val reportCardDrafts = mutableListOf<ReportCardDraftModel>()
 
@@ -152,6 +168,7 @@ object AppDatabase {
     }
 
     fun today(): String = SimpleDateFormat("yyyy/MM/dd", Locale.US).format(Date())
+    fun currentTimestamp(): String = now()
     private fun now(): String = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.US).format(Date())
     private fun prefs() = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -360,9 +377,10 @@ object AppDatabase {
                 else "برای ${student.name} در $className غیبت ثبت شد.",
                 senderName = "سامانه حضور و غیاب",
                 senderPhone = teacherPhone,
-                date = now(),
-                audienceType = AudienceType.STUDENT,
-                targetId = student.id
+                senderRole = AnnouncementSenderRole.SYSTEM,
+                createdAt = now(),
+                scope = AnnouncementScope.DIRECT_STUDENT,
+                directStudentId = student.id
             )
         }
         save()
@@ -370,8 +388,41 @@ object AppDatabase {
     }
 
     fun addAnnouncement(announcement: Announcement) {
+        announcements.removeAll { it.id == announcement.id }
         announcements.add(0, announcement)
         save()
+    }
+
+    fun getAnnouncementById(id: String): Announcement? = announcements.find { it.id == id }
+
+    private fun announcementReaderKey(role: UserRole, phone: String): String =
+        "${role.name}:$phone"
+
+    fun isAnnouncementRead(id: String, role: UserRole, phone: String): Boolean {
+        val key = announcementReaderKey(role, phone)
+        return announcementReads.any { it.announcementId == id && it.readerKey == key }
+    }
+
+    fun markAnnouncementRead(id: String, role: UserRole, phone: String) {
+        if (isAnnouncementRead(id, role, phone)) return
+        announcementReads += AnnouncementReadModel(id, announcementReaderKey(role, phone), now())
+        save()
+    }
+
+    fun getUnreadAnnouncementCount(role: UserRole, phone: String): Int =
+        getAnnouncementsFor(role, phone).count { !isAnnouncementRead(it.id, role, phone) }
+
+    fun getAnnouncementTargetSummary(announcement: Announcement): String = when (announcement.scope) {
+        AnnouncementScope.ALL_CLASSES -> "همه کلاس‌ها"
+        AnnouncementScope.DIRECT_STUDENT -> "پیام شخصی سیستمی"
+        AnnouncementScope.SELECTED_CLASSES -> {
+            val names = announcement.targetClassIds.mapNotNull { getClassNameById(it) }
+            when {
+                names.isEmpty() -> "کلاس انتخاب‌شده"
+                names.size <= 2 -> names.joinToString("، ")
+                else -> "${names.take(2).joinToString("، ")} و ${names.size - 2} کلاس دیگر"
+            }
+        }
     }
 
     fun getAnnouncementsFor(role: UserRole, phone: String): List<Announcement> {
@@ -379,21 +430,27 @@ object AppDatabase {
             UserRole.ADMIN -> announcements
             UserRole.TEACHER -> {
                 val classIds = getTeacherClasses(phone).map { it.id }.toSet()
-                announcements.filter {
-                    (it.audienceType == AudienceType.ALL_TEACHERS) ||
-                            (it.audienceType == AudienceType.CLASS && it.targetId != null && it.targetId in classIds) || it.senderPhone == phone
+                announcements.filter { announcement ->
+                    announcement.senderPhone == phone ||
+                            (announcement.scope == AnnouncementScope.ALL_CLASSES && classIds.isNotEmpty()) ||
+                            (announcement.scope == AnnouncementScope.SELECTED_CLASSES &&
+                                    announcement.targetClassIds.any { it in classIds })
                 }
             }
             UserRole.STUDENT -> {
                 val student = getStudentByUsername(phone)
-                announcements.filter {
-                    it.audienceType == AudienceType.ALL_STUDENTS ||
-                            (it.audienceType == AudienceType.CLASS && it.targetId == student?.classId) ||
-                            (it.audienceType == AudienceType.STUDENT && it.targetId == student?.id)
+                announcements.filter { announcement ->
+                    when (announcement.scope) {
+                        AnnouncementScope.ALL_CLASSES -> student?.classId != null
+                        AnnouncementScope.SELECTED_CLASSES ->
+                            student?.classId != null && student.classId in announcement.targetClassIds
+                        AnnouncementScope.DIRECT_STUDENT ->
+                            announcement.directStudentId == student?.id
+                    }
                 }
             }
         }
-        return visible.sortedByDescending { it.date }
+        return visible.sortedByDescending { it.createdAt }
     }
 
     fun saveReportCardDraft(classId: String, criteria: List<GradeComponent>, grades: List<StudentGrade>) {
@@ -520,7 +577,38 @@ object AppDatabase {
         root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt)) } })
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
         root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
-        root.put("announcements", JSONArray().apply { announcements.forEach { a -> put(JSONObject().put("id", a.id).put("title", a.title).put("body", a.body).put("senderName", a.senderName).put("senderPhone", a.senderPhone).put("date", a.date).put("type", a.type.name).put("audienceType", a.audienceType.name).put("targetId", a.targetId).put("attachmentName", a.attachmentName).put("attachmentUrl", a.attachmentUrl)) } })
+        root.put("announcements", JSONArray().apply {
+            announcements.forEach { a ->
+                put(
+                    JSONObject()
+                        .put("id", a.id)
+                        .put("title", a.title)
+                        .put("body", a.body)
+                        .put("senderName", a.senderName)
+                        .put("senderPhone", a.senderPhone)
+                        .put("senderRole", a.senderRole.name)
+                        .put("createdAt", a.createdAt)
+                        .put("scope", a.scope.name)
+                        .put("targetClassIds", JSONArray(a.targetClassIds))
+                        .put("directStudentId", a.directStudentId)
+                        .put("type", a.type.name)
+                        .put("attachmentName", a.attachmentName)
+                        .put("attachmentUrl", a.attachmentUrl)
+                        .put("attachmentMimeType", a.attachmentMimeType)
+                        .put("attachmentSizeBytes", a.attachmentSizeBytes)
+                )
+            }
+        })
+        root.put("announcementReads", JSONArray().apply {
+            announcementReads.forEach { read ->
+                put(
+                    JSONObject()
+                        .put("announcementId", read.announcementId)
+                        .put("readerKey", read.readerKey)
+                        .put("readAt", read.readAt)
+                )
+            }
+        })
         root.put("reportCards", JSONArray().apply {
             reportCards.forEach { r ->
                 put(
@@ -579,7 +667,7 @@ object AppDatabase {
     }
 
     private fun load(root: JSONObject) {
-        students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); reportCards.clear(); reportCardDrafts.clear()
+        students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); announcementReads.clear(); reportCards.clear(); reportCardDrafts.clear()
         root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), it.optString("password")) }
 
         root.optJSONArray("students").forEachObject { o ->
@@ -608,7 +696,67 @@ object AppDatabase {
             o.optJSONArray("items").forEachObject { item -> items += AttendanceItem(item.optString("studentId"), AttendanceStatus.valueOf(item.optString("status")), item.optInt("delayMinutes")) }
             attendanceSessions += AttendanceSession(o.optString("id"), o.optString("classId"), o.optString("date"), o.optString("teacherPhone"), items, o.optString("finalizedAt"))
         }
-        root.optJSONArray("announcements").forEachObject { o -> announcements += Announcement(o.optString("id"), o.optString("title"), o.optString("body"), o.optString("senderName"), o.optString("senderPhone"), o.optString("date"), MessageType.valueOf(o.optString("type")), AudienceType.valueOf(o.optString("audienceType")), o.optNullableString("targetId"), o.optNullableString("attachmentName"), o.optNullableString("attachmentUrl")) }
+        root.optJSONArray("announcements").forEachObject { o ->
+            val legacyAudience = o.optString("audienceType")
+            val legacyTarget = o.optNullableString("targetId")
+            val scope = runCatching {
+                AnnouncementScope.valueOf(o.optString("scope"))
+            }.getOrElse {
+                when (legacyAudience) {
+                    "ALL_STUDENTS", "ALL_TEACHERS" -> AnnouncementScope.ALL_CLASSES
+                    "STUDENT" -> AnnouncementScope.DIRECT_STUDENT
+                    else -> AnnouncementScope.SELECTED_CLASSES
+                }
+            }
+            val targetClassIds = mutableListOf<String>()
+            o.optJSONArray("targetClassIds")?.let { array ->
+                for (i in 0 until array.length()) {
+                    array.optString(i).takeIf { it.isNotBlank() }?.let(targetClassIds::add)
+                }
+            }
+            if (targetClassIds.isEmpty() && legacyAudience == "CLASS" && !legacyTarget.isNullOrBlank()) {
+                targetClassIds += legacyTarget
+            }
+            val legacyType = o.optString("type", "TEXT_ONLY")
+            announcements += Announcement(
+                id = o.optString("id"),
+                title = o.optString("title"),
+                body = o.optString("body"),
+                senderName = o.optString("senderName"),
+                senderPhone = o.optString("senderPhone"),
+                senderRole = runCatching {
+                    AnnouncementSenderRole.valueOf(o.optString("senderRole"))
+                }.getOrDefault(
+                    when {
+                        o.optString("senderName").contains("سامانه") ->
+                            AnnouncementSenderRole.SYSTEM
+                        getTeacherByUsername(o.optString("senderPhone")) != null ->
+                            AnnouncementSenderRole.TEACHER
+                        else -> AnnouncementSenderRole.ADMIN
+                    }
+                ),
+                createdAt = o.optString("createdAt", o.optString("date")),
+                scope = scope,
+                targetClassIds = targetClassIds,
+                directStudentId = if (scope == AnnouncementScope.DIRECT_STUDENT) {
+                    o.optNullableString("directStudentId") ?: legacyTarget
+                } else null,
+                type = if (legacyType == "TEXT_ONLY") MessageType.TEXT_ONLY else MessageType.ATTACHMENT,
+                attachmentName = o.optNullableString("attachmentName"),
+                attachmentUrl = o.optNullableString("attachmentUrl"),
+                attachmentMimeType = o.optNullableString("attachmentMimeType"),
+                attachmentSizeBytes = if (o.has("attachmentSizeBytes") && !o.isNull("attachmentSizeBytes")) {
+                    o.optLong("attachmentSizeBytes")
+                } else null
+            )
+        }
+        root.optJSONArray("announcementReads").forEachObject { o ->
+            announcementReads += AnnouncementReadModel(
+                announcementId = o.optString("announcementId"),
+                readerKey = o.optString("readerKey"),
+                readAt = o.optString("readAt")
+            )
+        }
         root.optJSONArray("reportCards").forEachObject { o ->
             val criteria = mutableListOf<GradeComponent>()
             o.optJSONArray("criteria").forEachObject { c ->
