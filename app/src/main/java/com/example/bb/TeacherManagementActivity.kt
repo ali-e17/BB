@@ -1,5 +1,8 @@
 package com.example.bb
 
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -48,7 +51,23 @@ class TeacherManagementActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        teacherAdapter.updateData(AppDatabase.getAllTeachers())
+        // 🌐 دریافت زنده لیست اساتید از سرور
+        RetrofitClient.instance.getTeachers().enqueue(object : Callback<List<TeacherModel>> {
+            override fun onResponse(call: Call<List<TeacherModel>>, response: Response<List<TeacherModel>>) {
+                if (response.isSuccessful) {
+                    val teachers = response.body().orEmpty()
+                    // در صورت نیاز میتونی متد replaceTeachers هم تو AppDatabase بسازی
+                    teacherAdapter.updateData(teachers)
+                } else {
+                    teacherAdapter.updateData(AppDatabase.getAllTeachers())
+                }
+            }
+
+            override fun onFailure(call: Call<List<TeacherModel>>, t: Throwable) {
+                teacherAdapter.updateData(AppDatabase.getAllTeachers())
+                Toast.makeText(this@TeacherManagementActivity, "دریافت آنلاین اساتید ناموفق بود", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     private fun showTeacherDetailsBottomSheet(initialTeacher: TeacherModel) {

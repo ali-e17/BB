@@ -122,10 +122,21 @@ class ClassDetailsActivity : AppCompatActivity() {
 
     private fun updateClassState() {
         val model = classesById[classId] ?: AppDatabase.getClassById(classId)
+        val tvClassTeacherName = findViewById<TextView>(R.id.tvClassTeacherName)
+
         if (model != null) {
             className = model.className
             isEditable = model.status == ClassStatus.ACTIVE
             findViewById<TextView>(R.id.txtClassName).text = className
+
+            // 🌟 فقط نمایش نام استاد (بدون قابلیت تغییر از اینجا)
+            tvClassTeacherName.visibility = View.VISIBLE
+            if (!model.teacherPhone.isNullOrBlank()) {
+                val teacher = AppDatabase.getAllTeachers().find { it.phone == model.teacherPhone }
+                tvClassTeacherName.text = "استاد: ${teacher?.name ?: model.teacherPhone}"
+            } else {
+                tvClassTeacherName.text = "استاد: تعیین نشده"
+            }
         }
 
         btnAddStudentsTab.isEnabled = isEditable

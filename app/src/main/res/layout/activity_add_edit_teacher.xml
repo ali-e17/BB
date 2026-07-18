@@ -67,12 +67,29 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="16dp"
-                android:hint="نام و نام خانوادگی استاد"
+                android:hint="نام استاد"
                 app:boxStrokeColor="@color/brand_orange"
                 app:hintTextColor="@color/brand_orange">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTeacherName"
+                    android:id="@+id/etTeacherFirstName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/main_text"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="نام خانوادگی استاد"
+                app:boxStrokeColor="@color/brand_orange"
+                app:hintTextColor="@color/brand_orange">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTeacherLastName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/main_text"

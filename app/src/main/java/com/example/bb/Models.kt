@@ -42,13 +42,23 @@ data class StudentModel(
 }
 
 data class TeacherModel(
-    var name: String,
-    var username: String,
+    val id: String,
+    var firstName: String,
+    var lastName: String,
+    var phone: String,
     var nationalId: String,
     var password: String,
-    var classIds: String = "",
-    var isActive: Boolean = true
-) : Serializable
+    var isActive: Boolean = true,
+    var classIds: String = ""
+) : java.io.Serializable {
+    val name: String
+        get() = "$firstName $lastName"
+
+    val username: String
+        get() = phone
+}
+
+
 
 data class ClassModel(
     val id: String,
@@ -142,7 +152,7 @@ object AppDatabase {
         if (raw.isNullOrBlank()) {
             migrateLegacyData()
             if (teachers.isEmpty()) {
-                teachers += TeacherModel("استاد علی علوی", "09120000002", "1234567890", "1234567890")
+                teachers += TeacherModel(UUID.randomUUID().toString(), "استاد علی", "علوی", "09120000002", "1234567890", "1234567890")
             }
             save()
         } else {
@@ -482,13 +492,20 @@ object AppDatabase {
         }
         for (i in 0 until old.getInt("teacher_count", 0)) {
             val phone = old.getString("teacher_${i}_username", "").orEmpty()
-            if (phone.isNotBlank()) teachers += TeacherModel(
-                old.getString("teacher_${i}_name", "").orEmpty(), phone,
-                old.getString("teacher_${i}_nationalId", "").orEmpty(),
-                old.getString("teacher_${i}_password", "").orEmpty(),
-                old.getString("teacher_${i}_classIds", "").orEmpty(),
-                old.getBoolean("teacher_${i}_isActive", true)
-            )
+            if (phone.isNotBlank()) {
+                val legacyName = old.getString("teacher_${i}_name", "").orEmpty()
+                val parts = legacyName.trim().split(Regex("\\s+"), limit = 2)
+                teachers += TeacherModel(
+                    id = UUID.randomUUID().toString(),
+                    firstName = parts.firstOrNull().orEmpty(),
+                    lastName = parts.getOrNull(1).orEmpty(),
+                    phone = phone,
+                    nationalId = old.getString("teacher_${i}_nationalId", "").orEmpty(),
+                    password = old.getString("teacher_${i}_password", "").orEmpty(),
+                    classIds = old.getString("teacher_${i}_classIds", "").orEmpty(),
+                    isActive = old.getBoolean("teacher_${i}_isActive", true)
+                )
+            }
         }
         for (i in 0 until old.getInt("class_count", 0)) {
             val id = old.getString("class_${i}_id", "").orEmpty()
@@ -512,7 +529,7 @@ object AppDatabase {
         val root = JSONObject()
         root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("password", admin.password))
         root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("password", s.password).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_student_1")) } })
-        root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("name", t.name).put("username", t.username).put("nationalId", t.nationalId).put("password", t.password).put("classIds", t.classIds).put("isActive", t.isActive)) } })
+        root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("password", t.password).put("classIds", t.classIds).put("isActive", t.isActive)) } })
         root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt)) } })
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
         root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
@@ -596,7 +613,20 @@ object AppDatabase {
             )
         }
 
-        root.optJSONArray("teachers").forEachObject { o -> teachers += TeacherModel(o.optString("name"), o.optString("username"), o.optString("nationalId"), o.optString("password"), o.optString("classIds"), o.optBoolean("isActive", true)) }
+        root.optJSONArray("teachers").forEachObject { o ->
+            val legacyName = o.optString("name")
+            val parts = legacyName.trim().split(Regex("\\s+"), limit = 2)
+            teachers += TeacherModel(
+                id = o.optString("id", UUID.randomUUID().toString()),
+                firstName = o.optString("firstName", parts.firstOrNull().orEmpty()),
+                lastName = o.optString("lastName", parts.getOrNull(1).orEmpty()),
+                phone = o.optString("phone", o.optString("username")),
+                nationalId = o.optString("nationalId"),
+                password = o.optString("password"),
+                classIds = o.optString("classIds"),
+                isActive = o.optBoolean("isActive", true)
+            )
+        }
         root.optJSONArray("classes").forEachObject { o -> classes += ClassModel(o.optString("id"), o.optString("className"), o.optString("startTime"), o.optString("endTime"), o.optString("daysOfWeek"), o.optInt("sessionCount"), o.optNullableString("teacherPhone"), runCatching { ClassStatus.valueOf(o.optString("status")) }.getOrDefault(ClassStatus.ACTIVE), o.optString("createdAt"), o.optNullableString("completedAt")) }
         root.optJSONArray("enrollments").forEachObject { o -> enrollments += EnrollmentModel(o.optString("id"), o.optString("studentId"), o.optString("classId"), o.optString("startedAt"), o.optNullableString("endedAt")) }
         root.optJSONArray("attendance").forEachObject { o ->
