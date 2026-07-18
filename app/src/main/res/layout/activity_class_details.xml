@@ -38,18 +38,35 @@
                 android:src="@android:drawable/ic_menu_revert"
                 app:tint="@color/main_text" />
 
-            <TextView
-                android:id="@+id/txtClassName"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:ellipsize="end"
-                android:maxWidth="250dp"
-                android:maxLines="1"
-                android:text="اعضای کلاس"
-                android:textColor="@color/title_blue"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/txtClassName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxWidth="250dp"
+                    android:maxLines="1"
+                    android:text="اعضای کلاس"
+                    android:textColor="@color/title_blue"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvClassTeacherName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="استاد: تخصیص داده نشده"
+                    android:textColor="@color/sub_text"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp"
+                    android:visibility="gone" />
+            </LinearLayout>
         </RelativeLayout>
     </com.google.android.material.card.MaterialCardView>
 

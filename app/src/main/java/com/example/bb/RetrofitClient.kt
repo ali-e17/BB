@@ -14,6 +14,18 @@ data class ApiResponse(
 )
 
 interface ApiService {
+    @POST("assign_teacher_to_class.php")
+    fun assignTeacherToClass(@Body request: AssignTeacherRequest): Call<ApiResponse>
+
+    @GET("get_teachers.php")
+    fun getTeachers(): Call<List<TeacherModel>>
+
+    @POST("add_teacher.php")
+    fun addTeacher(@Body teacherModel: TeacherModel): Call<ApiResponse>
+
+    @POST("update_avatar.php")
+    fun updateAvatar(@Body request: UpdateAvatarRequest): Call<ApiResponse>
+
 
     @POST("toggle_student_active.php")
     fun toggleStudentActive(@Body request: ToggleActiveRequest): Call<ApiResponse>
@@ -53,8 +65,7 @@ interface ApiService {
      * teacherPhone دارای مقدار: تخصیص کلاس به استاد
      * teacherPhone = null: حذف استاد از کلاس
      */
-    @POST("assign_teacher_to_class.php")
-    fun assignTeacherToClass(@Body request: AssignTeacherRequest): Call<ApiResponse>
+
 
     // برای سازگاری با نسخه‌های قبلی نگه داشته شده؛ در رابط جدید حذف واقعی نداریم.
     @POST("delete_class.php")
@@ -81,12 +92,13 @@ interface ApiService {
 
 data class DeleteClassRequest(val id: String)
 data class CompleteClassRequest(val id: String)
-data class AssignTeacherRequest(val classId: String, val teacherPhone: String?)
+
 data class AssignClassRequest(val studentId: String, val classId: String?)
 data class LoginRequest(val username: String, val password: String)
 data class LoginResponse(
     val status: String = "",
     val role: String? = null,
+    val userId: String? = null, // 🌟 این خط اضافه شد
     val displayName: String? = null,
     val message: String? = null
 )
@@ -126,3 +138,10 @@ object RetrofitClient {
             .create(ApiService::class.java)
     }
 }
+
+data class UpdateAvatarRequest(val studentId: String, val avatarName: String)
+
+data class AssignTeacherRequest(
+    val classId: String,
+    val teacherPhone: String?
+)

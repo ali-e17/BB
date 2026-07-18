@@ -41,7 +41,10 @@ class MainActivity : AppCompatActivity() {
             else -> "شب بخیر،"
         }
 
-        txtUserName.text = AppDatabase.getDisplayName(currentUserRole, usernameString)
+        // 🌟 تغییر مهم: دریافت نام کامل کاربر که در زمان ورود از سرور گرفته شده بود
+        val sharedPrefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        val currentDisplayName = sharedPrefs.getString("CURRENT_DISPLAY_NAME", usernameString) ?: usernameString
+        txtUserName.text = currentDisplayName
 
         txtRoleBadge.text = when (currentUserRole) {
             UserRole.STUDENT -> "دانش‌آموز"
@@ -59,7 +62,6 @@ class MainActivity : AppCompatActivity() {
             btnThemeToggle.setImageResource(R.drawable.ic_moon)
         }
 
-        val sharedPrefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
         var currentLanguage = sharedPrefs.getString("APP_LANGUAGE", "fa") ?: "fa"
 
         btnLanguageToggle.text = if (currentLanguage == "fa") "EN" else "FA"
@@ -111,13 +113,11 @@ class MainActivity : AppCompatActivity() {
 
         when (currentUserRole) {
             UserRole.STUDENT -> {
-                // حذف شد: برنامه کلاسی
                 items.add(DashboardItem("کارنامه و نمرات", "مشاهده کارنامه‌های صادر شده", android.R.drawable.ic_menu_sort_by_size))
                 items.add(DashboardItem("دیکشنری آفلاین", "جستجوی لغات بدون نیاز به نت", android.R.drawable.ic_menu_search))
                 items.add(DashboardItem("اعلانات", "مشاهده پیام‌ها و تکالیف جدید", android.R.drawable.ic_menu_agenda))
             }
             UserRole.TEACHER -> {
-                // حذف شد: ورود نمرات
                 items.add(DashboardItem("حضور و غیاب", "ثبت لیست حضور و غیاب کلاس", android.R.drawable.ic_menu_recent_history))
                 items.add(DashboardItem("اعلانات", "ارسال پیام برای کلاس‌ها", android.R.drawable.ic_dialog_email))
             }
@@ -140,8 +140,7 @@ class MainActivity : AppCompatActivity() {
                 clickedItem.title.contains("کارنامه") || clickedItem.title.contains("نمر") -> {
                     when (currentUserRole) {
                         UserRole.ADMIN -> {
-                            val intent = Intent(this, ReportCardSetupActivity::class.java)
-                            startActivity(intent)
+                            startActivity(Intent(this, ReportCardSetupActivity::class.java))
                         }
                         UserRole.STUDENT -> {
                             showStudentReportCards(usernameString)
@@ -150,24 +149,19 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 clickedItem.title.contains("دانش‌آموزان") -> {
-                    val intent = Intent(this, StudentManagementActivity::class.java)
-                    startActivity(intent)
+                    startActivity(Intent(this, StudentManagementActivity::class.java))
                 }
                 clickedItem.title.contains("حضور") -> {
-                    val intent = Intent(this, AttendanceActivity::class.java)
-                    startActivity(intent)
+                    startActivity(Intent(this, AttendanceActivity::class.java))
                 }
                 clickedItem.title.contains("کلاس‌ها") -> {
-                    val intent = Intent(this, ClassManagementActivity::class.java)
-                    startActivity(intent)
+                    startActivity(Intent(this, ClassManagementActivity::class.java))
                 }
                 clickedItem.title.contains("اساتید") -> {
-                    val intent = Intent(this, TeacherManagementActivity::class.java)
-                    startActivity(intent)
+                    startActivity(Intent(this, TeacherManagementActivity::class.java))
                 }
                 clickedItem.title.contains("دیکشنری") -> {
-                    val intent = Intent(this, DictionaryActivity::class.java)
-                    startActivity(intent)
+                    startActivity(Intent(this, DictionaryActivity::class.java))
                 }
                 else -> {
                     Toast.makeText(this, "این بخش در حال توسعه است: ${clickedItem.title}", Toast.LENGTH_SHORT).show()

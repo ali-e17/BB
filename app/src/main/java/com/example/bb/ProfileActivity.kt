@@ -12,6 +12,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -25,7 +28,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var ivAvatar: ImageView
     private lateinit var btnChangeAvatar: TextView
     private lateinit var btnLogout: LinearLayout
-    private lateinit var btnChangePassword: LinearLayout // متغیر جدید برای دکمه تغییر رمز
+    private lateinit var btnChangePassword: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +37,6 @@ class ProfileActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.btnProfileBack).setOnClickListener { finish() }
 
         val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
         userRole = sharedPreferences.getString("CURRENT_USER_ROLE", "STUDENT") ?: "STUDENT"
 
         tvUserName = findViewById(R.id.tvUserName)
@@ -46,9 +48,8 @@ class ProfileActivity : AppCompatActivity() {
         ivAvatar = findViewById(R.id.ivAvatar)
         btnChangeAvatar = findViewById(R.id.btnChangeAvatar)
         btnLogout = findViewById(R.id.btnLogout)
-        btnChangePassword = findViewById(R.id.btnChangePassword) // حل مشکل Unresolved reference
+        btnChangePassword = findViewById(R.id.btnChangePassword)
 
-        // باز شدن مستقیم صفحه تغییر رمز با کلیک روی دکمه تغییر رمز عبور
         btnChangePassword.setOnClickListener {
             val intent = Intent(this, UpdateProfileActivity::class.java)
             intent.putExtra("USER_ROLE", userRole)
@@ -65,6 +66,7 @@ class ProfileActivity : AppCompatActivity() {
                         putString("CURRENT_USER_ROLE", "STUDENT")
                         putString("CURRENT_USERNAME", "")
                         putString("CURRENT_DISPLAY_NAME", "")
+                        putString("CURRENT_USER_ID", "")
                         apply()
                     }
                     val intent = Intent(this, LoginActivity::class.java)
@@ -80,20 +82,22 @@ class ProfileActivity : AppCompatActivity() {
             showAvatarSelectionDialog()
         }
 
-        // نمایش نام کاربر
         val displayName = sharedPreferences.getString("CURRENT_DISPLAY_NAME", "")
         tvUserName.text = if (!displayName.isNullOrEmpty()) displayName else "کاربر عزیز"
 
-        // ست کردن آواتار بر اساس نام ذخیره شده
-        val savedAvatarName = sharedPreferences.getString("AVATAR_NAME_${currentUsername}", "avatar_student_1")
-        val resId = resources.getIdentifier(savedAvatarName, "drawable", packageName)
-        if (resId != 0) {
-            ivAvatar.setImageResource(resId)
-        } else {
-            ivAvatar.setImageResource(android.R.drawable.sym_def_app_icon)
-        }
+        // تنظیم اولیه نقش‌ها
+        setupProfileData()
+    }
 
-        // مدیریت هوشمند نمایش المان‌ها بر اساس نقش
+    override fun onResume() {
+        super.onResume()
+        setupProfileData()
+    }
+
+    private fun setupProfileData() {
+        val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        val currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
+
         when (userRole.lowercase()) {
             "student" -> {
                 tvUserRole.text = "دانش‌آموز آموزشگاه"
@@ -101,24 +105,64 @@ class ProfileActivity : AppCompatActivity() {
                 layoutTeacherOptions.visibility = View.GONE
                 tvStudentClassStatus.visibility = View.VISIBLE
 
-                val student = AppDatabase.getStudentByUsername(currentUsername)
-                if (student?.classId != null) {
-                    tvStudentClassStatus.text = "کلاس فعلی شما: ${AppDatabase.getClassNameById(student.classId)}"
-                } else {
-                    tvStudentClassStatus.text = "شما هنوز در هیچ کلاسی ثبت‌نام نشده‌اید."
-                }
+                tvStudentClassStatus.text = "در حال بررسی وضعیت کلاس..."
+
+                // 🌐 دریافت زنده اطلاعات دانش‌آموز از سرور
+                RetrofitClient.instance.getStudents().enqueue(object : Callback<List<StudentModel>> {
+                    override fun onResponse(call: Call<List<StudentModel>>, response: Response<List<StudentModel>>) {
+                        if (response.isSuccessful) {
+                            val allStudents = response.body().orEmpty()
+                            val myStudent = allStudents.find { it.id == currentUserId }
+
+                            if (myStudent != null) {
+                                // 🌟 هماهنگ‌سازی کامل آواتار با فرمول رندوم ثابت پنل مدیریت
+                                val randomNum = (Math.abs(myStudent.id.hashCode()) % 9) + 1
+                                val fallback = "avatar_student_$randomNum"
+                                val avatar = myStudent.avatarName?.takeIf { it.isNotBlank() } ?: fallback
+
+                                val resId = resources.getIdentifier(avatar, "drawable", packageName)
+                                if (resId != 0) {
+                                    ivAvatar.setImageResource(resId)
+                                } else {
+                                    ivAvatar.setImageResource(R.drawable.avatar_student_1)
+                                }
+
+                                // لود وضعیت کلاس
+                                if (!myStudent.classId.isNullOrBlank()) {
+                                    RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
+                                        override fun onResponse(call: Call<List<ClassModel>>, response2: Response<List<ClassModel>>) {
+                                            val classes = response2.body().orEmpty()
+                                            val myClass = classes.find { it.id == myStudent.classId }
+                                            tvStudentClassStatus.text = "کلاس فعلی شما: ${myClass?.className ?: "نامشخص"}"
+                                        }
+                                        override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
+                                            tvStudentClassStatus.text = "خطا در دریافت نام کلاس"
+                                        }
+                                    })
+                                } else {
+                                    tvStudentClassStatus.text = "شما هنوز در هیچ کلاسی ثبت‌نام نشده‌اید."
+                                }
+                            }
+                        }
+                    }
+                    override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
+                        tvStudentClassStatus.text = "عدم اتصال به سرور"
+                    }
+                })
             }
             "teacher" -> {
                 tvUserRole.text = "مدرس رسمی بیان برتر"
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.VISIBLE
                 tvStudentClassStatus.visibility = View.GONE
+                ivAvatar.setImageResource(R.drawable.avatar_teacher_1)
             }
             "admin" -> {
                 tvUserRole.text = "دسترسی کامل (مدیر کل)"
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.GONE
                 tvStudentClassStatus.visibility = View.GONE
+                ivAvatar.setImageResource(R.drawable.avatar_admin_1)
             }
         }
     }
@@ -134,7 +178,10 @@ class ProfileActivity : AppCompatActivity() {
             resources.getIdentifier("avatar_student_3", "drawable", packageName),
             resources.getIdentifier("avatar_student_4", "drawable", packageName),
             resources.getIdentifier("avatar_student_5", "drawable", packageName),
-            resources.getIdentifier("avatar_student_6", "drawable", packageName)
+            resources.getIdentifier("avatar_student_6", "drawable", packageName),
+            resources.getIdentifier("avatar_student_7", "drawable", packageName),
+            resources.getIdentifier("avatar_student_8", "drawable", packageName),
+            resources.getIdentifier("avatar_student_9", "drawable", packageName)
         ).filter { it != 0 }
 
         rvAvatars.adapter = AvatarAdapter(avatars) { selectedResId ->
@@ -142,18 +189,25 @@ class ProfileActivity : AppCompatActivity() {
             val avatarName = resources.getResourceEntryName(selectedResId)
 
             val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-            val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
-            sharedPreferences.edit().putString("AVATAR_NAME_${currentUsername}", avatarName).apply()
+            val currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
 
-            if (userRole.lowercase() == "student") {
-                val student = AppDatabase.getStudentByUsername(currentUsername)
-                student?.let {
-                    val updated = it.copy(avatarResId = selectedResId)
-                    AppDatabase.upsertStudent(updated, currentUsername)
-                }
+            if (userRole.lowercase() == "student" && currentUserId.isNotEmpty()) {
+                // 🌐 شلیک و ذخیره قطعی تغییر آواتار روی دیتابیس آنلاین سرور
+                val request = UpdateAvatarRequest(currentUserId, avatarName)
+                RetrofitClient.instance.updateAvatar(request).enqueue(object : Callback<ApiResponse> {
+                    override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                        if (response.isSuccessful && response.body()?.status == "success") {
+                            Toast.makeText(this@ProfileActivity, "عکس پروفایل شما در سرور ذخیره شد", Toast.LENGTH_SHORT).show()
+                            setupProfileData() // بازخوانی دیتا برای تثبیت
+                        } else {
+                            Toast.makeText(this@ProfileActivity, "خطا در ثبت عکس در سرور", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                        Toast.makeText(this@ProfileActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
+                    }
+                })
             }
-
-            Toast.makeText(this, "عکس پروفایل به‌روزرسانی شد", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
         }
         dialog.setContentView(view)
