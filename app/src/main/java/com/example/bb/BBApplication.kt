@@ -5,7 +5,7 @@ import android.app.Application
 class BBApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // راه‌اندازی دیتابیس کاربران
+        RetrofitClient.init(this)
         AppDatabase.init(this)
     }
 }

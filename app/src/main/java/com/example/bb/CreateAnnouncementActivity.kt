@@ -20,6 +20,15 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import com.google.gson.Gson
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.File
 import java.util.UUID
 
 class CreateAnnouncementActivity : AppCompatActivity() {
@@ -27,7 +36,7 @@ class CreateAnnouncementActivity : AppCompatActivity() {
     private lateinit var role: UserRole
     private var phone: String = ""
 
-    private lateinit var availableClasses: List<ClassModel>
+    private var availableClasses: List<ClassModel> = emptyList()
     private val selectedClassIds = linkedSetOf<String>()
 
     private var attachmentUri: Uri? = null
@@ -93,11 +102,7 @@ class CreateAnnouncementActivity : AppCompatActivity() {
             return
         }
 
-        availableClasses = when (role) {
-            UserRole.ADMIN -> AppDatabase.getAllClasses(false)
-            UserRole.TEACHER -> AppDatabase.getTeacherClasses(phone)
-            UserRole.STUDENT -> emptyList()
-        }.sortedBy { it.className }
+        applyAvailableClasses(AppDatabase.getAllClasses(false))
 
         bindViews()
         setupHeader()
@@ -106,6 +111,57 @@ class CreateAnnouncementActivity : AppCompatActivity() {
         setupAttachment()
         setupSend()
         updateSendState()
+        loadAvailableClasses()
+    }
+
+    private fun loadAvailableClasses() {
+        RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
+            override fun onResponse(
+                call: Call<List<ClassModel>>,
+                response: Response<List<ClassModel>>
+            ) {
+                if (response.isSuccessful) {
+                    val classes = response.body().orEmpty()
+                    AppDatabase.replaceClasses(classes)
+                    applyAvailableClasses(classes)
+                } else if (availableClasses.isEmpty()) {
+                    Toast.makeText(
+                        this@CreateAnnouncementActivity,
+                        "فهرست کلاس‌ها از سرور دریافت نشد",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
+                if (availableClasses.isEmpty()) {
+                    Toast.makeText(
+                        this@CreateAnnouncementActivity,
+                        "اتصال به سرور برقرار نشد؛ کلاس ذخیره‌شده‌ای وجود ندارد",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        })
+    }
+
+    private fun applyAvailableClasses(source: List<ClassModel>) {
+        availableClasses = source
+            .asSequence()
+            .filter { it.status == ClassStatus.ACTIVE }
+            .filter {
+                role == UserRole.ADMIN ||
+                    (role == UserRole.TEACHER && it.teacherPhone == phone)
+            }
+            .distinctBy { it.id }
+            .sortedBy { it.className.lowercase() }
+            .toList()
+
+        selectedClassIds.retainAll(availableClasses.map { it.id }.toSet())
+        if (::txtSelectedClassesSummary.isInitialized) {
+            renderSelectedClasses()
+            updateSendState()
+        }
     }
 
     private fun bindViews() {
@@ -332,11 +388,13 @@ class CreateAnnouncementActivity : AppCompatActivity() {
         btnSend.setOnClickListener {
             val title = etTitle.text?.toString()?.trim().orEmpty()
             val body = etBody.text?.toString()?.trim().orEmpty()
-
-            val scope = when {
-                role == UserRole.ADMIN && audienceToggle.checkedButtonId == R.id.btnAudienceAll ->
-                    AnnouncementScope.ALL_CLASSES
-                else -> AnnouncementScope.SELECTED_CLASSES
+            val scope = if (
+                role == UserRole.ADMIN &&
+                audienceToggle.checkedButtonId == R.id.btnAudienceAll
+            ) {
+                AnnouncementScope.ALL_CLASSES
+            } else {
+                AnnouncementScope.SELECTED_CLASSES
             }
 
             if (title.isBlank() || body.isBlank()) {
@@ -348,37 +406,102 @@ class CreateAnnouncementActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val announcement = Announcement(
-                id = UUID.randomUUID().toString(),
-                title = title,
-                body = body,
-                senderName = AppDatabase.getDisplayName(role, phone),
-                senderPhone = phone,
-                senderRole = if (role == UserRole.ADMIN) {
-                    AnnouncementSenderRole.ADMIN
-                } else {
-                    AnnouncementSenderRole.TEACHER
-                },
-                createdAt = AppDatabase.currentTimestamp(),
-                scope = scope,
-                targetClassIds = if (scope == AnnouncementScope.SELECTED_CLASSES) {
-                    selectedClassIds.toList()
-                } else {
-                    emptyList()
-                },
-                type = if (attachmentUri == null) MessageType.TEXT_ONLY else MessageType.ATTACHMENT,
-                attachmentName = attachmentName,
-                attachmentUrl = attachmentUri?.toString(),
-                attachmentMimeType = attachmentMimeType,
-                attachmentSizeBytes = attachmentSizeBytes
-            )
+            sendOnlineAnnouncement(title, body, scope)
+        }
+    }
 
-            AppDatabase.addAnnouncement(announcement)
-            // فرستنده پیام خودش را از همان ابتدا خوانده‌شده می‌بیند.
-            AppDatabase.markAnnouncementRead(announcement.id, role, phone)
-            Toast.makeText(this, "اعلان با موفقیت ثبت شد", Toast.LENGTH_SHORT).show()
-            setResult(RESULT_OK)
-            finish()
+    private fun sendOnlineAnnouncement(
+        title: String,
+        body: String,
+        scope: AnnouncementScope
+    ) {
+        val announcementId = UUID.randomUUID().toString()
+        val targetJson = Gson().toJson(
+            if (scope == AnnouncementScope.SELECTED_CLASSES) selectedClassIds.toList()
+            else emptyList<String>()
+        )
+
+        val temporaryFile = runCatching { createTemporaryAttachmentFile() }
+            .getOrElse {
+                Toast.makeText(this, "خواندن فایل پیوست امکان‌پذیر نبود", Toast.LENGTH_LONG).show()
+                return
+            }
+        val attachmentPart = temporaryFile?.let { file ->
+            val mediaType = attachmentMimeType?.toMediaTypeOrNull()
+                ?: "application/octet-stream".toMediaTypeOrNull()
+            MultipartBody.Part.createFormData(
+                "attachment",
+                attachmentName ?: file.name,
+                file.asRequestBody(mediaType)
+            )
+        }
+
+        setSending(true)
+        RetrofitClient.instance.createAnnouncement(
+            id = announcementId.toRequestBody("text/plain".toMediaTypeOrNull()),
+            title = title.toRequestBody("text/plain; charset=utf-8".toMediaTypeOrNull()),
+            body = body.toRequestBody("text/plain; charset=utf-8".toMediaTypeOrNull()),
+            scope = scope.name.toRequestBody("text/plain".toMediaTypeOrNull()),
+            targetClassIds = targetJson.toRequestBody("application/json".toMediaTypeOrNull()),
+            attachment = attachmentPart
+        ).enqueue(object : Callback<CreateAnnouncementResponse> {
+            override fun onResponse(
+                call: Call<CreateAnnouncementResponse>,
+                response: Response<CreateAnnouncementResponse>
+            ) {
+                temporaryFile?.delete()
+                setSending(false)
+                val result = response.body()
+                if (response.isSuccessful && result?.status == "success") {
+                    Toast.makeText(
+                        this@CreateAnnouncementActivity,
+                        result.message.ifBlank { "اعلان با موفقیت ارسال شد" },
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    setResult(RESULT_OK)
+                    finish()
+                } else {
+                    Toast.makeText(
+                        this@CreateAnnouncementActivity,
+                        result?.message ?: "ارسال اعلان انجام نشد",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            override fun onFailure(call: Call<CreateAnnouncementResponse>, t: Throwable) {
+                temporaryFile?.delete()
+                setSending(false)
+                Toast.makeText(
+                    this@CreateAnnouncementActivity,
+                    "اتصال به سرور برقرار نشد؛ اعلان ارسال نشد",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        })
+    }
+
+    private fun createTemporaryAttachmentFile(): File? {
+        val uri = attachmentUri ?: return null
+        val suffix = attachmentName
+            ?.substringAfterLast('.', "")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { ".$it" }
+            ?: ".tmp"
+        val file = File.createTempFile("announcement_", suffix, cacheDir)
+        contentResolver.openInputStream(uri)?.use { input ->
+            file.outputStream().use { output -> input.copyTo(output) }
+        } ?: error("Cannot open attachment")
+        return file
+    }
+
+    private fun setSending(sending: Boolean) {
+        btnSend.text = if (sending) "در حال ارسال..." else "ارسال اعلان"
+        if (sending) {
+            btnSend.isEnabled = false
+            btnSend.alpha = 0.65f
+        } else {
+            updateSendState()
         }
     }
 

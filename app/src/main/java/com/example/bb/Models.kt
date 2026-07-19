@@ -115,7 +115,8 @@ data class Announcement(
     val attachmentName: String? = null,
     val attachmentUrl: String? = null,
     val attachmentMimeType: String? = null,
-    val attachmentSizeBytes: Long? = null
+    val attachmentSizeBytes: Long? = null,
+    val isRead: Boolean = false
 ) : Serializable {
     val date: String get() = createdAt
     val hasAttachment: Boolean

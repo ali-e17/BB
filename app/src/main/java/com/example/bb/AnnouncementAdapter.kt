@@ -11,8 +11,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 
 class AnnouncementAdapter(
-    private val role: UserRole,
-    private val phone: String,
     private val onItemClick: (Announcement) -> Unit
 ) : RecyclerView.Adapter<AnnouncementAdapter.ViewHolder>() {
 
@@ -34,14 +32,13 @@ class AnnouncementAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = announcements[position]
-        val isRead = AppDatabase.isAnnouncementRead(item.id, role, phone)
+        val isRead = item.isRead
 
         holder.txtSender.text = item.senderName
         holder.txtDate.text = item.createdAt
         holder.txtTitle.text = item.title
         applyDynamicAlignment(holder.txtTitle, item.title)
 
-        // ظاهر شبیه ایمیل: پیام خوانده‌نشده پررنگ‌تر و با نقطه مشخص می‌شود.
         holder.txtSender.setTypeface(null, if (isRead) Typeface.NORMAL else Typeface.BOLD)
         holder.txtTitle.setTypeface(null, if (isRead) Typeface.NORMAL else Typeface.BOLD)
         holder.txtReadState.text = if (isRead) "✓" else "●"
@@ -70,6 +67,13 @@ class AnnouncementAdapter(
         announcements.clear()
         announcements.addAll(items)
         notifyDataSetChanged()
+    }
+
+    fun markRead(announcementId: String) {
+        val index = announcements.indexOfFirst { it.id == announcementId }
+        if (index < 0 || announcements[index].isRead) return
+        announcements[index] = announcements[index].copy(isRead = true)
+        notifyItemChanged(index)
     }
 
     private fun applyDynamicAlignment(view: TextView, text: CharSequence?) {
