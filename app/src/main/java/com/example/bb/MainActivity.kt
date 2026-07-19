@@ -125,6 +125,7 @@ class MainActivity : AppCompatActivity() {
                 items.add(DashboardItem("مدیریت دانش‌آموزان", "ثبت‌نام و ویرایش اطلاعات دانش‌آموزان", android.R.drawable.ic_menu_myplaces))
                 items.add(DashboardItem("صدور کارنامه", "ثبت نمره و چاپ کارنامه", android.R.drawable.ic_menu_edit))
                 items.add(DashboardItem("مدیریت کلاس‌ها", "تعریف کلاس جدید و زمان‌بندی", android.R.drawable.ic_input_add))
+                items.add(DashboardItem("مدیریت حضور و غیاب", "بازبینی جلسات و دریافت خروجی اکسل", android.R.drawable.ic_menu_recent_history))
                 items.add(DashboardItem("اعلانات", "ارسال پیام به اساتید و دانش‌آموزان", android.R.drawable.ic_menu_send))
                 items.add(DashboardItem("مدیریت اساتید", "افزودن استاد جدید و مدیریت دسترسی", android.R.drawable.ic_menu_save))
             }

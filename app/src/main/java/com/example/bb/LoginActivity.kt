@@ -20,8 +20,9 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
-        // بررسی لاگین بودن از قبل
-        if (sharedPreferences.getBoolean("IS_LOGGED_IN", false)) {
+        // ورود خودکار فقط زمانی معتبر است که Token سرور نیز ذخیره شده باشد.
+        val savedToken = sharedPreferences.getString("API_TOKEN", "").orEmpty()
+        if (sharedPreferences.getBoolean("IS_LOGGED_IN", false) && savedToken.isNotBlank()) {
             val savedRole = sharedPreferences.getString("CURRENT_USER_ROLE", "STUDENT") ?: "STUDENT"
             val savedUsername = sharedPreferences.getString("CURRENT_USERNAME", "student") ?: "student"
 
@@ -109,15 +110,17 @@ class LoginActivity : AppCompatActivity() {
                         sharedPreferences.edit().apply {
                             putBoolean("IS_LOGGED_IN", true)
                             putString("CURRENT_USER_ROLE", body.role ?: "STUDENT")
-                            putString("CURRENT_USERNAME", username)
-                            putString("CURRENT_USER_ID", body.userId ?: "") // 🌟 ذخیره آیدی منحصر به فرد کاربر
+                            putString("CURRENT_USERNAME", body.username ?: username)
+                            putString("CURRENT_USER_ID", body.userId ?: "")
                             putString("CURRENT_DISPLAY_NAME", body.displayName ?: "کاربر")
+                            putString("API_TOKEN", body.token.orEmpty())
+                            putString("API_TOKEN_EXPIRES_AT", body.tokenExpiresAt.orEmpty())
                             apply()
                         }
 
                         val intent = Intent(this@LoginActivity, MainActivity::class.java)
                         intent.putExtra("USER_ROLE", body.role)
-                        intent.putExtra("USERNAME", username)
+                        intent.putExtra("USERNAME", body.username ?: username)
                         startActivity(intent)
                         finish()
                     } else {

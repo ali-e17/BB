@@ -67,6 +67,8 @@ class ProfileActivity : AppCompatActivity() {
                         putString("CURRENT_USERNAME", "")
                         putString("CURRENT_DISPLAY_NAME", "")
                         putString("CURRENT_USER_ID", "")
+                        putString("API_TOKEN", "")
+                        putString("API_TOKEN_EXPIRES_AT", "")
                         apply()
                     }
                     val intent = Intent(this, LoginActivity::class.java)

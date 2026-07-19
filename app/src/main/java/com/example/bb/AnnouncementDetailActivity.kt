@@ -15,14 +15,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 
 class AnnouncementDetailActivity : AppCompatActivity() {
 
-    private lateinit var role: UserRole
-    private var phone: String = ""
     private lateinit var announcement: Announcement
     private var pendingLocalAttachment: Uri? = null
 
@@ -50,17 +51,10 @@ class AnnouncementDetailActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.btnDetailBack).setOnClickListener { finish() }
 
-        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        role = runCatching {
-            UserRole.valueOf(
-                intent.getStringExtra("USER_ROLE")
-                    ?: prefs.getString("CURRENT_USER_ROLE", "STUDENT").orEmpty()
-            )
-        }.getOrDefault(UserRole.STUDENT)
-        phone = prefs.getString("CURRENT_USERNAME", "").orEmpty()
-
-        val announcementId = intent.getStringExtra("ANNOUNCEMENT_ID").orEmpty()
-        val loaded = AppDatabase.getAnnouncementById(announcementId)
+        @Suppress("DEPRECATION")
+        val passed = intent.getSerializableExtra("ANNOUNCEMENT_DATA") as? Announcement
+        val fallbackId = intent.getStringExtra("ANNOUNCEMENT_ID").orEmpty()
+        val loaded = passed ?: AppDatabase.getAnnouncementById(fallbackId)
         if (loaded == null) {
             Toast.makeText(this, "این اعلان دیگر در دسترس نیست", Toast.LENGTH_SHORT).show()
             finish()
@@ -68,8 +62,17 @@ class AnnouncementDetailActivity : AppCompatActivity() {
         }
 
         announcement = loaded
-        AppDatabase.markAnnouncementRead(announcement.id, role, phone)
         render()
+        markReadOnline()
+    }
+
+    private fun markReadOnline() {
+        RetrofitClient.instance
+            .markAnnouncementRead(MarkAnnouncementReadRequest(announcement.id))
+            .enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) = Unit
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) = Unit
+            })
     }
 
     private fun render() {
@@ -84,8 +87,8 @@ class AnnouncementDetailActivity : AppCompatActivity() {
             AnnouncementSenderRole.SYSTEM -> "سامانه"
         }
         findViewById<TextView>(R.id.txtDetailDate).text = announcement.createdAt
-        findViewById<TextView>(R.id.txtDetailTarget).text =
-            AppDatabase.getAnnouncementTargetSummary(announcement)
+        findViewById<TextView>(R.id.txtDetailTarget).text = targetSummary(announcement)
+
         val bodyView = findViewById<TextView>(R.id.txtDetailBody)
         bodyView.text = announcement.body
         applyDynamicAlignment(bodyView, announcement.body, Gravity.TOP)
@@ -93,13 +96,21 @@ class AnnouncementDetailActivity : AppCompatActivity() {
         renderAttachment()
     }
 
+    private fun targetSummary(item: Announcement): String = when (item.scope) {
+        AnnouncementScope.ALL_CLASSES -> "همه کلاس‌ها"
+        AnnouncementScope.DIRECT_STUDENT -> "پیام شخصی سامانه"
+        AnnouncementScope.SELECTED_CLASSES -> {
+            val names = item.targetClassIds.mapNotNull(AppDatabase::getClassNameById)
+            when {
+                names.isNotEmpty() -> names.joinToString("، ")
+                item.targetClassIds.isNotEmpty() -> "${item.targetClassIds.size} کلاس انتخابی"
+                else -> "کلاس‌های انتخابی"
+            }
+        }
+    }
 
     private fun applyCenteredDirection(view: TextView, text: CharSequence?) {
-        view.textDirection = if (isRtlText(text)) {
-            View.TEXT_DIRECTION_RTL
-        } else {
-            View.TEXT_DIRECTION_LTR
-        }
+        view.textDirection = if (isRtlText(text)) View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR
         view.gravity = Gravity.CENTER
     }
 
@@ -138,8 +149,7 @@ class AnnouncementDetailActivity : AppCompatActivity() {
         }
 
         card.visibility = View.VISIBLE
-        findViewById<TextView>(R.id.txtFileName).text =
-            announcement.attachmentName ?: "فایل پیوست"
+        findViewById<TextView>(R.id.txtFileName).text = announcement.attachmentName ?: "فایل پیوست"
 
         val meta = mutableListOf<String>()
         announcement.attachmentMimeType?.takeIf { it.isNotBlank() }?.let(meta::add)
@@ -177,17 +187,21 @@ class AnnouncementDetailActivity : AppCompatActivity() {
                 .setTitle(fileName)
                 .setDescription("دانلود پیوست اعلان")
                 .setMimeType(announcement.attachmentMimeType ?: "application/octet-stream")
-                .setNotificationVisibility(
-                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
-                )
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+
+            val token = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+                .getString("API_TOKEN", "").orEmpty()
+            if (token.isNotBlank()) {
+                request.addRequestHeader("Authorization", "Bearer $token")
+            }
 
             val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             manager.enqueue(request)
         }.onSuccess {
             Toast.makeText(this, "دانلود پیوست شروع شد", Toast.LENGTH_SHORT).show()
         }.onFailure {
-            openAttachment(uri)
+            Toast.makeText(this, "شروع دانلود امکان‌پذیر نبود", Toast.LENGTH_LONG).show()
         }
     }
 

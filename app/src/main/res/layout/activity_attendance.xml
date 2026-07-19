@@ -4,22 +4,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/app_global_background"
     android:fitsSystemWindows="true"
-    android:background="@drawable/app_global_background">
+    android:layoutDirection="ltr">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/topBar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="16dp"
-        app:strokeWidth="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
         app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -27,107 +30,300 @@
                 android:id="@+id/btnBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
+                android:contentDescription="بازگشت"
                 android:padding="12dp"
                 android:src="@android:drawable/ic_menu_revert"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:tint="@color/main_text" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="لیست حضور و غیاب"
+                android:text="حضور و غیاب"
                 android:textColor="@color/title_blue"
+                android:textDirection="rtl"
                 android:textSize="18sp"
-            android:textStyle="bold" />
-        </RelativeLayout>
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutClassSelector"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="20dp"
-        app:boxStrokeColor="@color/title_blue"
-        app:boxCornerRadiusTopStart="12dp"
-        app:boxCornerRadiusTopEnd="12dp"
-        app:boxCornerRadiusBottomStart="12dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="20dp"
+        app:boxBackgroundColor="@color/card_background"
         app:boxCornerRadiusBottomEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxStrokeColor="@color/box_stroke_selector"
+        app:hintEnabled="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBar">
 
         <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/spinnerClass"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/main_text"
+            android:layout_height="54dp"
+            android:background="@null"
+            android:gravity="right|center_vertical"
             android:hint="انتخاب کلاس"
             android:inputType="none"
-            android:background="@null"
-            android:popupBackground="@color/card_background" />
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:popupBackground="@color/card_background"
+            android:textColor="@color/main_text"
+            android:textColorHint="@color/sub_text"
+            android:textDirection="firstStrong"
+            android:textSize="14sp" />
+
     </com.google.android.material.textfield.TextInputLayout>
 
-    <HorizontalScrollView
-        android:id="@+id/scrollDates"
-        android:layout_width="match_parent"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardSessionOverview"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:scrollbars="none"
-        android:paddingHorizontal="16dp"
-        android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/layoutClassSelector">
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="20dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="1dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutClassSelector"
+        app:strokeColor="#1F1040D1"
+        app:strokeWidth="1dp">
 
         <LinearLayout
-            android:id="@+id/containerDates"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layoutDirection="rtl"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="14dp">
+
+            <TextView
+                android:id="@+id/txtSessionTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:text="جلسه"
+                android:textColor="@color/title_blue"
+                android:textDirection="rtl"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtSessionMeta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="right"
+                android:lineSpacingExtra="2dp"
+                android:text="ابتدا کلاس و جلسه را انتخاب کنید"
+                android:textColor="@color/sub_text"
+                android:textDirection="rtl"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAttendanceDate"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="11dp"
+                android:gravity="center"
+                android:text="تاریخ برگزاری"
+                android:textAllCaps="false"
+                android:visibility="gone"
+                android:textDirection="rtl"
+                android:textSize="13sp"
+                app:cornerRadius="11dp"
+                app:icon="@android:drawable/ic_menu_my_calendar"
+                app:iconGravity="textStart" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <HorizontalScrollView
+        android:id="@+id/scrollSessions"
+        android:layout_width="0dp"
+        android:layout_height="54dp"
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:fillViewport="false"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cardSessionOverview">
+
+        <LinearLayout
+            android:id="@+id/containerSessions"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
             android:orientation="horizontal" />
+
     </HorizontalScrollView>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvAttendance"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:padding="8dp"
-        android:paddingBottom="16dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/scrollDates"
-        app:layout_constraintBottom_toTopOf="@id/bottomPanel" />
-
-    <LinearLayout
-        android:id="@+id/bottomPanel"
-        android:layout_width="match_parent"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardLiveStats"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@color/card_background"
-        android:padding="20dp"
-        android:elevation="16dp"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="20dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="13dp"
+        app:cardElevation="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scrollSessions"
+        app:strokeColor="#182B4E78"
+        app:strokeWidth="1dp">
 
         <TextView
             android:id="@+id/txtLiveStats"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="حاضر: ۰ | غایب: ۰ | تأخیر: ۰"
-            android:textColor="@color/main_text"
-            android:textSize="14sp"
-            android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="12dp"/>
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp"
+            android:text="بررسی‌نشده: ۰ | حاضر: ۰ | تأخیر: ۰ | غایب: ۰"
+            android:textColor="@color/main_text"
+            android:textDirection="rtl"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btnSaveAttendance"
+    </com.google.android.material.card.MaterialCardView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAttendance"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="4dp"
+        android:clipToPadding="false"
+        android:paddingTop="6dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomPanel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cardLiveStats" />
+
+    <TextView
+        android:id="@+id/attendanceEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:text="در حال دریافت اطلاعات..."
+        android:textColor="@color/sub_text"
+        android:textDirection="rtl"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/bottomPanel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cardLiveStats" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottomPanel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="14dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="ثبت نهایی اطلاعات"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/brand_orange"
-            app:cornerRadius="12dp" />
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:id="@+id/txtMarkingHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="وضعیت همه دانش‌آموزان را مشخص کنید"
+                android:textColor="@color/sub_text"
+                android:textDirection="rtl"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExportAttendance"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="9dp"
+                android:text="خروجی اکسل کل جلسات"
+                android:textAllCaps="false"
+                android:textColor="@color/title_blue"
+                android:textDirection="rtl"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:cornerRadius="13dp"
+                app:icon="@android:drawable/ic_menu_save"
+                app:iconGravity="textStart"
+                app:iconTint="@color/title_blue"
+                app:strokeColor="@color/title_blue"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveAttendance"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="9dp"
+                android:enabled="false"
+                android:text="ثبت نهایی حضور و غیاب"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textDirection="rtl"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/brand_orange"
+                app:cornerRadius="13dp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressAttendance"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="gone"
+        app:indicatorColor="@color/brand_orange"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:trackColor="#22FF6E14" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
