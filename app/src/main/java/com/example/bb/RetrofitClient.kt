@@ -34,6 +34,9 @@ data class UnreadAnnouncementCountResponse(
 )
 
 interface ApiService {
+    @POST("update_password.php")
+    fun updatePassword(@Body request: UpdatePasswordRequest): Call<ApiResponse>
+
     @POST("assign_teacher_to_class.php")
     fun assignTeacherToClass(@Body request: AssignTeacherRequest): Call<ApiResponse>
 
@@ -218,3 +221,10 @@ object RetrofitClient {
             .create(ApiService::class.java)
     }
 }
+
+data class UpdatePasswordRequest(
+    val role: String,
+    val phone: String,
+    val oldPassword: String,
+    val newPassword: String
+)

@@ -7,13 +7,18 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class UpdateProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_update_profile)
+
         findViewById<ImageView>(R.id.btnUpdateProfileBack).setOnClickListener { finish() }
+
         val etOldPassword = findViewById<TextInputEditText>(R.id.etOldPassword)
         val etNewPassword = findViewById<TextInputEditText>(R.id.etNewPassword)
         val etConfirmPassword = findViewById<TextInputEditText>(R.id.etConfirmPassword)
@@ -43,14 +48,43 @@ class UpdateProfileActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val role = runCatching { UserRole.valueOf(userRole) }.getOrDefault(UserRole.STUDENT)
-            if (!AppDatabase.updatePassword(role, currentUsername, oldPassword, newPassword)) {
-                Toast.makeText(this, "رمز عبور فعلی اشتباه است", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            // غیرفعال کردن دکمه حین ارتباط با سرور
+            btnUpdatePassword.isEnabled = false
+            btnUpdatePassword.text = "در حال ارتباط با سرور..."
 
-            Toast.makeText(this, "رمز عبور با موفقیت تغییر کرد", Toast.LENGTH_SHORT).show()
-            finish()
+            val request = UpdatePasswordRequest(
+                role = userRole,
+                phone = currentUsername,
+                oldPassword = oldPassword,
+                newPassword = newPassword
+            )
+
+            // 🌐 ارسال درخواست آنلاین به سرور
+            RetrofitClient.instance.updatePassword(request).enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                    btnUpdatePassword.isEnabled = true
+                    btnUpdatePassword.text = "تغییر رمز عبور"
+
+                    val body = response.body()
+                    if (response.isSuccessful && body?.status == "success") {
+                        // آپدیت همزمان در حافظه لوکال گوشی برای لاگین‌های آفلاین احتمالی
+                        val roleEnum = runCatching { UserRole.valueOf(userRole) }.getOrDefault(UserRole.STUDENT)
+                        AppDatabase.updatePassword(roleEnum, currentUsername, oldPassword, newPassword)
+
+                        Toast.makeText(this@UpdateProfileActivity, "رمز عبور با موفقیت تغییر کرد", Toast.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        // نمایش پیام خطای سرور (مثلاً رمز قبلی اشتباه است)
+                        Toast.makeText(this@UpdateProfileActivity, body?.message ?: "خطا در تغییر رمز عبور", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                    btnUpdatePassword.isEnabled = true
+                    btnUpdatePassword.text = "تغییر رمز عبور"
+                    Toast.makeText(this@UpdateProfileActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
     }
 }
