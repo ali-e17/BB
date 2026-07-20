@@ -141,7 +141,8 @@ data class LoginResponse(
     val displayName: String? = null,
     val token: String? = null,
     val tokenExpiresAt: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val avatarName: String? = null // 🌟 فقط این خط رو اضافه کن که دیتای سرور گم نشه
 )
 
 data class ToggleActiveRequest(val studentId: String, val isActive: Boolean)
