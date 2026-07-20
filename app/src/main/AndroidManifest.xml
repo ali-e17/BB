@@ -100,5 +100,8 @@
         <activity
             android:name=".AddEditClassActivity"
             android:exported="false" />
+
+        <activity android:name=".TeacherHistoryActivity" />
+
     </application>
 </manifest>

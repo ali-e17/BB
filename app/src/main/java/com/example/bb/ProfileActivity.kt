@@ -158,6 +158,12 @@ class ProfileActivity : AppCompatActivity() {
                 layoutTeacherOptions.visibility = View.VISIBLE
                 tvStudentClassStatus.visibility = View.GONE
                 ivAvatar.setImageResource(R.drawable.avatar_teacher_1)
+
+                // 🌟 اضافه شدن عملکرد دکمه سوابق کلاس
+                val btnViewTeacherClasses = findViewById<LinearLayout>(R.id.btnViewTeacherClasses)
+                btnViewTeacherClasses.setOnClickListener {
+                    startActivity(Intent(this@ProfileActivity, TeacherHistoryActivity::class.java))
+                }
             }
             "admin" -> {
                 tvUserRole.text = "دسترسی کامل (مدیر کل)"
