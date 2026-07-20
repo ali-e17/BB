@@ -87,7 +87,6 @@ class ProfileActivity : AppCompatActivity() {
         val displayName = sharedPreferences.getString("CURRENT_DISPLAY_NAME", "")
         tvUserName.text = if (!displayName.isNullOrEmpty()) displayName else "کاربر عزیز"
 
-        // تنظیم اولیه نقش‌ها
         setupProfileData()
     }
 
@@ -99,6 +98,7 @@ class ProfileActivity : AppCompatActivity() {
     private fun setupProfileData() {
         val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
         val currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
+        val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
 
         when (userRole.lowercase()) {
             "student" -> {
@@ -106,10 +106,8 @@ class ProfileActivity : AppCompatActivity() {
                 layoutStudentOptions.visibility = View.VISIBLE
                 layoutTeacherOptions.visibility = View.GONE
                 tvStudentClassStatus.visibility = View.VISIBLE
-
                 tvStudentClassStatus.text = "در حال بررسی وضعیت کلاس..."
 
-                // 🌐 دریافت زنده اطلاعات دانش‌آموز از سرور
                 RetrofitClient.instance.getStudents().enqueue(object : Callback<List<StudentModel>> {
                     override fun onResponse(call: Call<List<StudentModel>>, response: Response<List<StudentModel>>) {
                         if (response.isSuccessful) {
@@ -117,19 +115,14 @@ class ProfileActivity : AppCompatActivity() {
                             val myStudent = allStudents.find { it.id == currentUserId }
 
                             if (myStudent != null) {
-                                // 🌟 هماهنگ‌سازی کامل آواتار با فرمول رندوم ثابت پنل مدیریت
                                 val randomNum = (Math.abs(myStudent.id.hashCode()) % 9) + 1
                                 val fallback = "avatar_student_$randomNum"
                                 val avatar = myStudent.avatarName?.takeIf { it.isNotBlank() } ?: fallback
 
                                 val resId = resources.getIdentifier(avatar, "drawable", packageName)
-                                if (resId != 0) {
-                                    ivAvatar.setImageResource(resId)
-                                } else {
-                                    ivAvatar.setImageResource(R.drawable.avatar_student_1)
-                                }
+                                if (resId != 0) ivAvatar.setImageResource(resId)
+                                else ivAvatar.setImageResource(R.drawable.avatar_student_1)
 
-                                // لود وضعیت کلاس
                                 if (!myStudent.classId.isNullOrBlank()) {
                                     RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
                                         override fun onResponse(call: Call<List<ClassModel>>, response2: Response<List<ClassModel>>) {
@@ -157,9 +150,13 @@ class ProfileActivity : AppCompatActivity() {
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.VISIBLE
                 tvStudentClassStatus.visibility = View.GONE
-                ivAvatar.setImageResource(R.drawable.avatar_teacher_1)
 
-                // 🌟 اضافه شدن عملکرد دکمه سوابق کلاس
+                val teacher = AppDatabase.getTeacherByUsername(currentUsername)
+                val avatar = teacher?.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_teacher_1"
+                val resId = resources.getIdentifier(avatar, "drawable", packageName)
+                if (resId != 0) ivAvatar.setImageResource(resId)
+                else ivAvatar.setImageResource(R.drawable.avatar_teacher_1)
+
                 val btnViewTeacherClasses = findViewById<LinearLayout>(R.id.btnViewTeacherClasses)
                 btnViewTeacherClasses.setOnClickListener {
                     startActivity(Intent(this@ProfileActivity, TeacherHistoryActivity::class.java))
@@ -170,7 +167,12 @@ class ProfileActivity : AppCompatActivity() {
                 layoutStudentOptions.visibility = View.GONE
                 layoutTeacherOptions.visibility = View.GONE
                 tvStudentClassStatus.visibility = View.GONE
-                ivAvatar.setImageResource(R.drawable.avatar_admin_1)
+
+                // 🌟 لود هوشمند آواتار مدیر از دیتابیس
+                val avatar = AppDatabase.getAdminAvatarName()
+                val resId = resources.getIdentifier(avatar, "drawable", packageName)
+                if (resId != 0) ivAvatar.setImageResource(resId)
+                else ivAvatar.setImageResource(R.drawable.avatar_admin_1)
             }
         }
     }
@@ -180,33 +182,61 @@ class ProfileActivity : AppCompatActivity() {
         val view = layoutInflater.inflate(R.layout.dialog_avatar_selector, null)
         val rvAvatars = view.findViewById<RecyclerView>(R.id.rvAvatarGrid)
 
-        val avatars = listOf(
-            resources.getIdentifier("avatar_student_1", "drawable", packageName),
-            resources.getIdentifier("avatar_student_2", "drawable", packageName),
-            resources.getIdentifier("avatar_student_3", "drawable", packageName),
-            resources.getIdentifier("avatar_student_4", "drawable", packageName),
-            resources.getIdentifier("avatar_student_5", "drawable", packageName),
-            resources.getIdentifier("avatar_student_6", "drawable", packageName),
-            resources.getIdentifier("avatar_student_7", "drawable", packageName),
-            resources.getIdentifier("avatar_student_8", "drawable", packageName),
-            resources.getIdentifier("avatar_student_9", "drawable", packageName)
-        ).filter { it != 0 }
+        // 🌟 سیستم هوشمند تفکیک آواتار بر اساس نقش (شامل ۴ آواتار اختصاصی مدیر)
+        val avatarNames = when (userRole.uppercase()) {
+            "ADMIN" -> (1..4).map { "avatar_admin_$it" }
+            "TEACHER" -> (1..6).map { "avatar_teacher_$it" }
+            else -> (1..9).map { "avatar_student_$it" }
+        }
+
+        val avatars = avatarNames.map { name ->
+            resources.getIdentifier(name, "drawable", packageName)
+        }.filter { it != 0 }
 
         rvAvatars.adapter = AvatarAdapter(avatars) { selectedResId ->
             ivAvatar.setImageResource(selectedResId)
             val avatarName = resources.getResourceEntryName(selectedResId)
 
             val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-            val currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
+            val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
+            var currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
 
-            if (userRole.lowercase() == "student" && currentUserId.isNotEmpty()) {
-                // 🌐 شلیک و ذخیره قطعی تغییر آواتار روی دیتابیس آنلاین سرور
-                val request = UpdateAvatarRequest(currentUserId, avatarName)
+            // 🌟 استخراج هوشمند و تضمینی ID در صورت خالی بودن SharedPreferences
+            if (currentUserId.isEmpty()) {
+                currentUserId = when (userRole.uppercase()) {
+                    "TEACHER" -> AppDatabase.getTeacherByUsername(currentUsername)?.id ?: ""
+                    "STUDENT" -> AppDatabase.getStudentByUsername(currentUsername)?.id ?: ""
+                    "ADMIN" -> "admin_main"
+                    else -> ""
+                }
+            }
+
+            if (currentUserId.isNotEmpty()) {
+
+                // 🌟 ذخیره فوری آواتار در دیتابیس لوکال (با پاس دادن شماره تلفن برای جلوگیری از ارور تکراری بودن)
+                when (userRole.uppercase()) {
+                    "ADMIN" -> AppDatabase.updateAdminAvatarLocally(avatarName)
+                    "TEACHER" -> {
+                        AppDatabase.getTeacherByUsername(currentUsername)?.let {
+                            it.avatarName = avatarName
+                            AppDatabase.upsertTeacher(it, originalPhone = currentUsername) // کلید طلایی حل مشکل کاتلین
+                        }
+                    }
+                    "STUDENT" -> {
+                        AppDatabase.getStudentByUsername(currentUsername)?.let {
+                            it.avatarName = avatarName
+                            AppDatabase.upsertStudent(it, originalPhone = currentUsername)
+                        }
+                    }
+                }
+
+                // 🌐 شلیک تغییرات به سرور
+                val request = UpdateAvatarRequest(currentUserId, avatarName, userRole.uppercase())
                 RetrofitClient.instance.updateAvatar(request).enqueue(object : Callback<ApiResponse> {
                     override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                         if (response.isSuccessful && response.body()?.status == "success") {
                             Toast.makeText(this@ProfileActivity, "عکس پروفایل شما در سرور ذخیره شد", Toast.LENGTH_SHORT).show()
-                            setupProfileData() // بازخوانی دیتا برای تثبیت
+                            setupProfileData()
                         } else {
                             Toast.makeText(this@ProfileActivity, "خطا در ثبت عکس در سرور", Toast.LENGTH_SHORT).show()
                         }
@@ -215,6 +245,8 @@ class ProfileActivity : AppCompatActivity() {
                         Toast.makeText(this@ProfileActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
                     }
                 })
+            } else {
+                Toast.makeText(this@ProfileActivity, "خطا در شناسایی کاربر. لطفاً دوباره وارد شوید.", Toast.LENGTH_LONG).show()
             }
             dialog.dismiss()
         }

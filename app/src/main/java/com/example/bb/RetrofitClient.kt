@@ -168,7 +168,13 @@ data class AttendanceAnnouncementsResponse(
     val createdCount: Int = 0
 )
 
-data class UpdateAvatarRequest(val studentId: String, val avatarName: String)
+// 🌟 تغییرات مهم برای پشتیبانی از آپدیت آواتار هر دو گروه (استاد و دانش‌آموز)
+data class UpdateAvatarRequest(
+    val userId: String,
+    val avatarName: String,
+    val role: String
+)
+
 data class AssignTeacherRequest(val classId: String, val teacherPhone: String?)
 
 private class AuthInterceptor(
@@ -221,10 +227,3 @@ object RetrofitClient {
             .create(ApiService::class.java)
     }
 }
-
-data class UpdatePasswordRequest(
-    val role: String,
-    val phone: String,
-    val oldPassword: String,
-    val newPassword: String
-)

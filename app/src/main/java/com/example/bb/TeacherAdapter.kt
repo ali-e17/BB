@@ -32,7 +32,20 @@ class TeacherAdapter(
         val teacher = teachers[position]
         val classCount = AppDatabase.getTeacherClasses(teacher.username).size
 
-        holder.txtAvatar.text = teacher.name.firstOrNull()?.toString() ?: "A"
+        // 🌟 سیستم هوشمند نمایش آواتار اختصاصی اساتید
+        val context = holder.itemView.context
+        holder.txtAvatar.text = "" // پاک کردن متن از داخل دایره
+
+        val avatarName = teacher.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_teacher_1"
+        val resId = context.resources.getIdentifier(avatarName, "drawable", context.packageName)
+
+        if (resId != 0) {
+            holder.txtAvatar.setBackgroundResource(resId)
+        } else {
+            // در صورت پیدا نشدن عکس، آواتار پیش‌فرض شماره ۱ رو می‌ذاره
+            holder.txtAvatar.setBackgroundResource(context.resources.getIdentifier("avatar_teacher_1", "drawable", context.packageName))
+        }
+
         holder.tvTeacherName.text = teacher.name
         holder.tvTeacherUsername.text = "شماره: ${teacher.username} | کلاس فعال: $classCount"
 

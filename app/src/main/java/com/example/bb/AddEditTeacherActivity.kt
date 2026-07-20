@@ -22,7 +22,6 @@ class AddEditTeacherActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.btnTeacherBack).setOnClickListener { finish() }
 
-        // 🌟 اتصال به فیلدهای جدید نام و فامیل
         val etFirstName = findViewById<TextInputEditText>(R.id.etTeacherFirstName)
         val etLastName = findViewById<TextInputEditText>(R.id.etTeacherLastName)
         val etPhone = findViewById<TextInputEditText>(R.id.etTeacherPhone)
@@ -66,14 +65,19 @@ class AddEditTeacherActivity : AppCompatActivity() {
 
             val formattedPhone = if (phone.startsWith("0")) phone.substring(1) else phone
 
+            // 🌟 تولید آواتار رندوم برای اساتید جدید (بین 1 تا 6)
+            val randomAvatar = "avatar_teacher_${(1..6).random()}"
+            val finalAvatar = editingTeacher?.avatarName ?: randomAvatar
+
             val model = TeacherModel(
                 id = editingTeacher?.id ?: UUID.randomUUID().toString(),
                 firstName = fname,
                 lastName = lname,
-                phone = formattedPhone, // 🌟 استفاده از شماره تلفن بدون صفر
+                phone = formattedPhone,
                 nationalId = nationalId,
                 password = editingTeacher?.password ?: nationalId,
                 classIds = editingTeacher?.classIds.orEmpty(),
+                avatarName = finalAvatar, // 🌟 قرار دادن آواتار نهایی
                 isActive = editingTeacher?.isActive ?: true
             )
 
@@ -83,7 +87,6 @@ class AddEditTeacherActivity : AppCompatActivity() {
                 override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                     btnSave.isEnabled = true
                     if (response.isSuccessful && response.body()?.status == "success") {
-                        // آپدیت موقت لوکال برای سرعت بیشتر
                         AppDatabase.addTeacher(model)
                         Toast.makeText(this@AddEditTeacherActivity, if (editingTeacher == null) "استاد ثبت شد" else "اطلاعات استاد ویرایش شد", Toast.LENGTH_SHORT).show()
                         setResult(RESULT_OK)

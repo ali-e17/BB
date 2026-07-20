@@ -22,7 +22,8 @@ data class AdminModel(
     var name: String,
     var phone: String,
     var nationalId: String,
-    var password: String
+    var password: String,
+    var avatarName: String? = "avatar_admin_1" // 🌟 اضافه شد
 )
 
 data class StudentModel(
@@ -36,7 +37,7 @@ data class StudentModel(
     var classId: String? = null,
     var registrationDate: String = AppDatabase.today(),
     var isActive: Boolean = true,
-    var avatarName: String? = "avatar_student_1" // 🌟 اضافه شدن علامت سوال برای ایمنی در برابر نال
+    var avatarName: String? = "avatar_student_1"
 ) : Serializable {
     val name: String
         get() = "$firstName $lastName"
@@ -50,7 +51,8 @@ data class TeacherModel(
     var nationalId: String,
     var password: String,
     var isActive: Boolean = true,
-    var classIds: String = ""
+    var classIds: String = "",
+    var avatarName: String? = "avatar_teacher_1" // 🌟 اضافه شدن آواتار اساتید
 ) : java.io.Serializable {
     val name: String
         get() = "$firstName $lastName"
@@ -58,8 +60,6 @@ data class TeacherModel(
     val username: String
         get() = phone
 }
-
-
 
 data class ClassModel(
     val id: String,
@@ -147,7 +147,32 @@ data class ReportCardDraftModel(
     val updatedAt: String
 )
 
-object AppDatabase {
+data class ServerAttendanceRecord(
+    val id: String,
+    val classId: String,
+    val studentId: String,
+    val date: String,
+    val teacherPhone: String,
+    val status: String,
+    val delayMinutes: Int
+)
+
+data class SaveAttendanceRequest(
+    val classId: String,
+    val date: String,
+    val teacherPhone: String,
+    val items: List<AttendanceItem>
+)
+
+data class UpdatePasswordRequest(
+    val role: String,
+    val phone: String,
+    val oldPassword: String,
+    val newPassword: String
+)
+
+object AppDatabase
+{
     private const val PREFS_NAME = "AppDatabasePrefs"
     private const val DATA_KEY = "app_data_v2"
 
@@ -305,6 +330,13 @@ object AppDatabase {
     fun deleteClass(classId: String, context: Context? = null) { completeClass(classId) }
 
     fun getAllTeachers(): List<TeacherModel> = teachers.toList()
+
+    fun replaceTeachersLocally(serverTeachers: List<TeacherModel>) {
+        teachers.clear()
+        teachers.addAll(serverTeachers.distinctBy { it.id })
+        save()
+    }
+
     fun getTeacherByUsername(phone: String): TeacherModel? = teachers.find { it.username == phone }
 
     fun upsertTeacher(teacher: TeacherModel, originalPhone: String? = null): String? {
@@ -561,7 +593,8 @@ object AppDatabase {
                     nationalId = old.getString("teacher_${i}_nationalId", "").orEmpty(),
                     password = old.getString("teacher_${i}_password", "").orEmpty(),
                     classIds = old.getString("teacher_${i}_classIds", "").orEmpty(),
-                    isActive = old.getBoolean("teacher_${i}_isActive", true)
+                    isActive = old.getBoolean("teacher_${i}_isActive", true),
+                    avatarName = "avatar_teacher_1" // مقدار دیفالت برای اساتید قدیمی
                 )
             }
         }
@@ -585,9 +618,12 @@ object AppDatabase {
     private fun save() {
         if (!::appContext.isInitialized) return
         val root = JSONObject()
-        root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("password", admin.password))
+        root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("password", admin.password).put("avatarName", admin.avatarName ?: "avatar_admin_1"))
         root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("password", s.password).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_student_1")) } })
-        root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("password", t.password).put("classIds", t.classIds).put("isActive", t.isActive)) } })
+
+        // 🌟 ذخیره آواتار اساتید در جیسون لوکال
+        root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("password", t.password).put("classIds", t.classIds).put("isActive", t.isActive).put("avatarName", t.avatarName ?: "avatar_teacher_1")) } })
+
         root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt)) } })
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
         root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
@@ -682,7 +718,7 @@ object AppDatabase {
 
     private fun load(root: JSONObject) {
         students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); announcementReads.clear(); reportCards.clear(); reportCardDrafts.clear()
-        root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), it.optString("password")) }
+        root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), it.optString("password"), it.optString("avatarName", "avatar_admin_1")) }
 
         root.optJSONArray("students").forEachObject { o ->
             val legacyName = o.optString("name")
@@ -698,7 +734,7 @@ object AppDatabase {
                 classId = o.optNullableString("classId"),
                 registrationDate = o.optString("registrationDate", AppDatabase.today()),
                 isActive = o.optBoolean("isActive", true),
-                avatarName = o.optString("avatarName", "avatar_student_1") // 🌟 تغییر به متن
+                avatarName = o.optString("avatarName", "avatar_student_1")
             )
         }
 
@@ -713,7 +749,8 @@ object AppDatabase {
                 nationalId = o.optString("nationalId"),
                 password = o.optString("password"),
                 classIds = o.optString("classIds"),
-                isActive = o.optBoolean("isActive", true)
+                isActive = o.optBoolean("isActive", true),
+                avatarName = o.optString("avatarName", "avatar_teacher_1") // 🌟 بازیابی آواتار اساتید
             )
         }
         root.optJSONArray("classes").forEachObject { o -> classes += ClassModel(o.optString("id"), o.optString("className"), o.optString("startTime"), o.optString("endTime"), o.optString("daysOfWeek"), o.optInt("sessionCount"), o.optNullableString("teacherPhone"), runCatching { ClassStatus.valueOf(o.optString("status")) }.getOrDefault(ClassStatus.ACTIVE), o.optString("createdAt"), o.optNullableString("completedAt")) }
@@ -844,4 +881,11 @@ object AppDatabase {
 
     private fun JSONObject.optNullableString(key: String): String? =
         if (isNull(key)) null else optString(key).takeIf { it.isNotBlank() && it != "null" }
+
+
+    fun updateAdminAvatarLocally(avatarName: String) {
+        admin.avatarName = avatarName
+        save()
+    }
+    fun getAdminAvatarName(): String = admin.avatarName ?: "avatar_admin_1"
 }
