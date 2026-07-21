@@ -4,8 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:background="@drawable/app_global_background">
+    android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/topBar"
@@ -13,15 +13,13 @@
         android:layout_height="64dp"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/card_background"
         app:cardCornerRadius="20dp"
         app:cardElevation="16dp"
-        app:strokeWidth="0dp"
-        android:outlineSpotShadowColor="#1A1040D1"
-        android:outlineAmbientShadowColor="#20000000"
-        app:cardBackgroundColor="@color/card_background"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeWidth="0dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -37,22 +35,15 @@
                 android:src="@android:drawable/ic_menu_revert"
                 app:tint="@color/main_text" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/txtFormTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/txtFormTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ثبت‌نام دانش‌آموز جدید"
-                    android:textColor="@color/title_blue"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="ثبت‌نام دانش‌آموز جدید"
+                android:textColor="@color/title_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
         </RelativeLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -69,109 +60,77 @@
             android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/StudentManageFormBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:textColorHint="@color/hint_color"
-                app:hintTextColor="@color/title_blue"
-                app:boxStrokeColor="@color/title_blue"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp">
+                android:layout_marginBottom="18dp"
+                android:hint="نام">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFirstName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/input_text"
-                    android:hint="نام"
-                    android:inputType="text" />
+                    android:inputType="text"
+                    android:textColor="@color/input_text" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/StudentManageFormBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:textColorHint="@color/hint_color"
-                app:hintTextColor="@color/title_blue"
-                app:boxStrokeColor="@color/title_blue"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp">
+                android:layout_marginBottom="18dp"
+                android:hint="نام خانوادگی">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etLastName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/input_text"
-                    android:hint="نام خانوادگی"
-                    android:inputType="text" />
+                    android:inputType="text"
+                    android:textColor="@color/input_text" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:visibility="gone"
+                style="@style/StudentManageFormBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:textColorHint="@color/hint_color"
-                app:hintTextColor="@color/title_blue"
-                app:boxStrokeColor="@color/title_blue"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp">
+                android:layout_marginBottom="18dp"
+                android:visibility="gone">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etStudentCode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/input_text"
-                    android:hint="کد دانشجویی"
-                    android:inputType="number" />
+                    android:inputType="number"
+                    android:textColor="@color/input_text" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/StudentManageFormBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:textColorHint="@color/hint_color"
-                app:hintTextColor="@color/title_blue"
-                app:boxStrokeColor="@color/title_blue"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp">
+                android:layout_marginBottom="18dp"
+                android:hint="شماره تماس (بدون صفر)">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPhone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/input_text"
+                    android:inputType="phone"
                     android:maxLength="10"
-                    android:hint="شماره تماس (بدون صفر)"
-                    android:inputType="phone" />
+                    android:textColor="@color/input_text" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/StudentManageFormBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:textColorHint="@color/hint_color"
-                app:hintTextColor="@color/title_blue"
-                app:boxStrokeColor="@color/title_blue">
+                android:layout_marginBottom="18dp"
+                android:hint="کد ملی (رمز اولیه)">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etNationalId"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="کد ملی (رمز اولیه)"
                     android:inputType="number"
                     android:maxLength="10"
                     android:textColor="@color/input_text" />
@@ -186,11 +145,11 @@
         android:layout_height="56dp"
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/brand_orange"
         android:text="ذخیره اطلاعات"
+        android:textColor="@color/white"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/brand_orange"
         app:cornerRadius="12dp"
         app:layout_constraintBottom_toBottomOf="parent" />
 

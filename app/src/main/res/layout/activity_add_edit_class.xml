@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -53,8 +54,8 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:fillViewport="true"
         android:layout_marginTop="12dp"
+        android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBarClassEdit">
 
@@ -63,178 +64,158 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
+            android:paddingTop="4dp"
             android:paddingBottom="32dp">
 
+            <TextView
+                style="@style/ClassFormLabel"
+                android:text="نام کلاس" />
+
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                style="@style/ClassFormOutlinedBox.ExposedDropdown"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="18dp"
-                android:hint="نام کلاس (سطح آموزشی)"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/brand_orange">
+                android:layout_height="wrap_content">
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/spinnerClassName"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
                     android:inputType="none"
-                    android:textColor="@color/main_text" />
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textColor="@color/main_text"
+                    android:textDirection="firstStrong" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="ساعت برگزاری"
-                android:textColor="@color/main_text"
-                android:textStyle="bold" />
+                style="@style/ClassFormSectionTitle"
+                android:text="ساعت برگزاری" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layoutDirection="ltr"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                    android:hint="شروع؛ مثل 15 یا 1530"
-                    app:boxStrokeColor="@color/brand_orange"
-                    app:hintTextColor="@color/brand_orange">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etStartTime"
+                    <TextView
+                        style="@style/ClassFormLabel"
+                        android:layout_marginTop="0dp"
+                        android:text="ساعت شروع" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/ClassFormOutlinedBox"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:"
-                        android:imeOptions="actionNext"
-                        android:inputType="number"
-                        android:maxLength="5"
-                        android:textColor="@color/main_text"
-                        android:textDirection="ltr" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_height="wrap_content">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etStartTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:"
+                            android:gravity="center"
+                            android:imeOptions="actionNext"
+                            android:inputType="number"
+                            android:maxLength="5"
+                            android:singleLine="true"
+                            android:textColor="@color/main_text"
+                            android:textDirection="ltr"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:hint="پایان؛ مثل 1630"
-                    app:boxStrokeColor="@color/brand_orange"
-                    app:hintTextColor="@color/brand_orange">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etEndTime"
+                    <TextView
+                        style="@style/ClassFormLabel"
+                        android:layout_marginTop="0dp"
+                        android:text="ساعت پایان" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/ClassFormOutlinedBox"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:"
-                        android:imeOptions="actionNext"
-                        android:inputType="number"
-                        android:maxLength="5"
-                        android:textColor="@color/main_text"
-                        android:textDirection="ltr" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_height="wrap_content">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etEndTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:"
+                            android:gravity="center"
+                            android:imeOptions="actionNext"
+                            android:inputType="number"
+                            android:maxLength="5"
+                            android:singleLine="true"
+                            android:textColor="@color/main_text"
+                            android:textDirection="ltr"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
             </LinearLayout>
 
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="18dp"
-                android:text="عدد 15 به‌صورت خودکار 15:00 و عدد 1530 به‌صورت 15:30 ذخیره می‌شود."
-                android:textColor="@color/sub_text"
-                android:textSize="12sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="روزهای برگزاری"
-                android:textColor="@color/main_text"
-                android:textStyle="bold" />
+                style="@style/ClassFormSectionTitle"
+                android:text="روزهای برگزاری" />
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipGroupDays"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="18dp"
+                android:layout_marginBottom="4dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
                 app:selectionRequired="false"
                 app:singleLine="false"
                 app:singleSelection="false">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipSat"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="شنبه" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipSun"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="یک‌شنبه" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipMon"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="دوشنبه" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipTue"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="سه‌شنبه" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipWed"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="چهارشنبه" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipThu"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="پنج‌شنبه" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipFri"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="جمعه" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipSat" style="@style/ClassDayChip" android:text="شنبه" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipSun" style="@style/ClassDayChip" android:text="یک‌شنبه" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipMon" style="@style/ClassDayChip" android:text="دوشنبه" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipTue" style="@style/ClassDayChip" android:text="سه‌شنبه" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipWed" style="@style/ClassDayChip" android:text="چهارشنبه" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipThu" style="@style/ClassDayChip" android:text="پنج‌شنبه" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipFri" style="@style/ClassDayChip" android:text="جمعه" />
             </com.google.android.material.chip.ChipGroup>
 
+            <TextView
+                style="@style/ClassFormLabel"
+                android:layout_marginTop="18dp"
+                android:text="تعداد کل جلسات ترم" />
+
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/ClassFormOutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:hint="تعداد کل جلسات ترم"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/brand_orange">
+                android:layout_marginBottom="26dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSessionCount"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
                     android:imeOptions="actionDone"
                     android:inputType="number"
                     android:maxLength="3"
-                    android:textColor="@color/main_text" />
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textColor="@color/main_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <FrameLayout
@@ -250,7 +231,7 @@
                     android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    app:cornerRadius="12dp" />
+                    app:cornerRadius="14dp" />
 
                 <ProgressBar
                     android:id="@+id/progressSavingClass"
@@ -260,14 +241,7 @@
                     android:visibility="gone" />
             </FrameLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center"
-                android:text="تخصیص استاد و مدیریت دانش‌آموزان از صفحه‌های جدا انجام می‌شود."
-                android:textColor="@color/sub_text"
-                android:textSize="12sp" />
         </LinearLayout>
     </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -139,6 +139,11 @@ class AddEditClassActivity : AppCompatActivity() {
     }
 
     private fun validateAndSave() {
+        spinnerClassName.error = null
+        etStartTime.error = null
+        etEndTime.error = null
+        etSessionCount.error = null
+
         val className = spinnerClassName.text?.toString()?.trim().orEmpty()
         if (className !in SchoolClassCatalog.classNames && className != existingClass?.className) {
             spinnerClassName.error = "نام کلاس را از فهرست انتخاب کنید"
@@ -148,14 +153,14 @@ class AddEditClassActivity : AppCompatActivity() {
 
         val startTime = ClassTimeUtils.parse(etStartTime.text?.toString().orEmpty())
         if (startTime == null) {
-            etStartTime.error = "ساعت شروع نامعتبر است؛ مثل 15 یا 1530 وارد کنید"
+            etStartTime.error = "ساعت شروع نامعتبر است"
             etStartTime.requestFocus()
             return
         }
 
         val endTime = ClassTimeUtils.parse(etEndTime.text?.toString().orEmpty())
         if (endTime == null) {
-            etEndTime.error = "ساعت پایان نامعتبر است؛ مثل 16 یا 1630 وارد کنید"
+            etEndTime.error = "ساعت پایان نامعتبر است"
             etEndTime.requestFocus()
             return
         }
@@ -194,7 +199,6 @@ class AddEditClassActivity : AppCompatActivity() {
             endTime = endTime.formatted,
             daysOfWeek = selectedDays.joinToString("، "),
             sessionCount = sessionCount,
-            // استاد فقط از بخش مدیریت اساتید تغییر می‌کند.
             teacherPhone = old?.teacherPhone,
             status = old?.status ?: ClassStatus.ACTIVE,
             createdAt = old?.createdAt ?: AppDatabase.today(),
@@ -238,7 +242,7 @@ class AddEditClassActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(
                         this@AddEditClassActivity,
-                        result?.message?.takeIf { it.isNotBlank() } ?: "سرور کلاس را ثبت نکرد",
+                        serverMessage(response, result, "سرور کلاس را ثبت نکرد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -248,7 +252,7 @@ class AddEditClassActivity : AppCompatActivity() {
                 setSavingState(false)
                 Toast.makeText(
                     this@AddEditClassActivity,
-                    "اتصال به سرور برقرار نشد",
+                    "اتصال به سرور برقرار نشد: ${t.localizedMessage ?: "خطای نامشخص"}",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -261,6 +265,7 @@ class AddEditClassActivity : AppCompatActivity() {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 setSavingState(false)
                 val result = response.body()
+
                 if (response.isSuccessful && result?.status == "success") {
                     AppDatabase.upsertClass(model)
                     Toast.makeText(
@@ -273,8 +278,7 @@ class AddEditClassActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(
                         this@AddEditClassActivity,
-                        result?.message?.takeIf { it.isNotBlank() }
-                            ?: "ویرایش کلاس در سرور انجام نشد؛ update_class.php را بررسی کنید",
+                        serverMessage(response, result, "ویرایش کلاس در سرور انجام نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -284,11 +288,30 @@ class AddEditClassActivity : AppCompatActivity() {
                 setSavingState(false)
                 Toast.makeText(
                     this@AddEditClassActivity,
-                    "خطا در اتصال به update_class.php",
+                    "اتصال به سرور برقرار نشد: ${t.localizedMessage ?: "خطای نامشخص"}",
                     Toast.LENGTH_LONG
                 ).show()
             }
         })
+    }
+
+    private fun serverMessage(
+        response: Response<ApiResponse>,
+        result: ApiResponse?,
+        fallback: String
+    ): String {
+        result?.message?.takeIf { it.isNotBlank() }?.let { return it }
+
+        val rawError = runCatching { response.errorBody()?.string() }
+            .getOrNull()
+            ?.trim()
+            .orEmpty()
+
+        return when {
+            rawError.isNotBlank() -> "خطای سرور (${response.code()}): $rawError"
+            response.code() == 404 -> "فایل update_class.php روی هاست پیدا نشد"
+            else -> "$fallback (کد ${response.code()})"
+        }
     }
 
     private fun setTimeFormatter(field: TextInputEditText) {

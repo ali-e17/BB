@@ -23,6 +23,8 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.Collator
+import java.util.Locale
 
 class StudentManagementActivity : AppCompatActivity() {
 
@@ -38,6 +40,13 @@ class StudentManagementActivity : AppCompatActivity() {
     private var selectedClassId: String? = null
     private val activeClasses = arrayListOf<ClassModel>()
     private val filterOptions = arrayListOf<ClassFilterOption>()
+
+    private val persianCollator: Collator by lazy {
+        Collator.getInstance(Locale("fa", "IR")).apply {
+            strength = Collator.PRIMARY
+            decomposition = Collator.CANONICAL_DECOMPOSITION
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -121,7 +130,12 @@ class StudentManagementActivity : AppCompatActivity() {
         activeClasses.addAll(
             serverClasses
                 .filter { it.status == ClassStatus.ACTIVE }
-                .sortedBy { it.className.lowercase() }
+                .sortedWith { a, b ->
+                    persianCollator.compare(
+                        normalizePersian(a.className),
+                        normalizePersian(b.className)
+                    )
+                }
         )
 
         filterOptions.clear()
@@ -170,10 +184,14 @@ class StudentManagementActivity : AppCompatActivity() {
                 AppDatabase.replaceStudents(allStudents)
 
                 val filtered = allStudents.filter { student ->
-                    val matchesSearch = search.isBlank() ||
-                            student.name.contains(search, true) ||
-                            student.studentCode.contains(search, true) ||
-                            student.phone.contains(search)
+                    val normalizedSearch = normalizePersian(search)
+                    val normalizedStudent = normalizePersian(
+                        "${student.firstName} ${student.lastName} ${student.name} " +
+                            "${student.studentCode} ${student.phone}"
+                    )
+
+                    val matchesSearch =
+                        normalizedSearch.isBlank() || normalizedStudent.contains(normalizedSearch)
 
                     val matchesClass = when (selectedClassId) {
                         null -> true
@@ -182,7 +200,10 @@ class StudentManagementActivity : AppCompatActivity() {
                         else -> student.classId == selectedClassId
                     }
                     matchesSearch && matchesClass
-                }
+                }.sortedWith(Comparator { first, second ->
+                    compareStudents(first, second)
+                })
+
                 adapter.updateList(filtered)
             }
 
@@ -196,6 +217,47 @@ class StudentManagementActivity : AppCompatActivity() {
         })
     }
 
+    private fun compareStudents(first: StudentModel, second: StudentModel): Int {
+        val familyCompare = persianCollator.compare(
+            sortableLastName(first),
+            sortableLastName(second)
+        )
+        if (familyCompare != 0) return familyCompare
+
+        val firstNameCompare = persianCollator.compare(
+            normalizePersian(first.firstName),
+            normalizePersian(second.firstName)
+        )
+        if (firstNameCompare != 0) return firstNameCompare
+
+        return persianCollator.compare(
+            normalizePersian(first.studentCode),
+            normalizePersian(second.studentCode)
+        )
+    }
+
+    private fun sortableLastName(student: StudentModel): String {
+        val directLastName = normalizePersian(student.lastName)
+        if (directLastName.isNotBlank()) return directLastName
+
+        val normalizedFullName = normalizePersian(student.name)
+        val parts = normalizedFullName.split(" ").filter { it.isNotBlank() }
+        return when {
+            parts.size > 1 -> parts.drop(1).joinToString(" ")
+            else -> normalizedFullName
+        }
+    }
+
+    private fun normalizePersian(value: String): String = value
+        .lowercase(Locale("fa", "IR"))
+        .replace('ي', 'ی')
+        .replace('ى', 'ی')
+        .replace('ك', 'ک')
+        .replace('ة', 'ه')
+        .replace('\u200C', ' ')
+        .replace(Regex("\\s+"), " ")
+        .trim()
+
     private fun showDetails(student: StudentModel) {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_student_details, null)
@@ -208,27 +270,27 @@ class StudentManagementActivity : AppCompatActivity() {
         val className = activeClasses.find { it.id == student.classId }?.className
             ?: AppDatabase.getClassNameById(student.classId)
             ?: "بدون کلاس فعال"
+
         view.findViewById<TextView>(R.id.dialogLevel).text = className
         view.findViewById<TextView>(R.id.dialogPhone).text =
-            "${student.phone} | کد ملی: ${student.nationalId}"
-        view.findViewById<TextView>(R.id.dialogRegDate).text = student.registrationDate
+            student.phone.ifBlank { "ثبت نشده" }
+        view.findViewById<TextView>(R.id.dialogNationalId).text =
+            student.nationalId.ifBlank { "ثبت نشده" }
+        view.findViewById<TextView>(R.id.dialogRegDate).text =
+            student.registrationDate.ifBlank { "ثبت نشده" }
 
-        // 🌟 اختصاص عکس رندوم ثابت برای دیالوگ جزئیات
         val avatarView = view.findViewById<ImageView>(R.id.dialogAvatar)
         val randomNum = (Math.abs(student.id.hashCode()) % 9) + 1
         val fallback = "avatar_student_$randomNum"
-
         val avatar = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
         val resId = resources.getIdentifier(avatar, "drawable", packageName)
-        if (resId != 0) {
-            avatarView.setImageResource(resId)
-        } else {
-            avatarView.setImageResource(R.drawable.avatar_student_1)
-        }
+        avatarView.setImageResource(
+            if (resId != 0) resId else R.drawable.avatar_student_1
+        )
 
         val status = view.findViewById<TextView>(R.id.dialogStatus)
         val archive = view.findViewById<MaterialButton>(R.id.btnDialogArchive)
-        status.text = if (student.isActive) "فعال" else "بایگانی شده"
+        status.text = if (student.isActive) "فعال" else "بایگانی‌شده"
         archive.text = if (student.isActive) "بایگانی کردن" else "فعال‌سازی مجدد"
 
         archive.setOnClickListener {
@@ -283,6 +345,7 @@ class StudentManagementActivity : AppCompatActivity() {
                     .putExtra("STUDENT_DATA", student)
             )
         }
+
         dialog.show()
     }
 
@@ -303,6 +366,7 @@ class StudentManagementActivity : AppCompatActivity() {
         private fun bindView(position: Int, convertView: View?, parent: ViewGroup): View {
             val view = convertView ?: LayoutInflater.from(context)
                 .inflate(R.layout.item_class_filter_option, parent, false)
+
             val item = options[position]
             view.findViewById<TextView>(R.id.tvFilterClassName).text = item.title
             view.findViewById<TextView>(R.id.tvFilterClassSchedule).apply {
