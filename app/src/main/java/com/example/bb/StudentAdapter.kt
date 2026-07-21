@@ -22,7 +22,8 @@ class StudentAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StudentViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_student_list, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_student_list, parent, false)
         return StudentViewHolder(view)
     }
 
@@ -31,28 +32,33 @@ class StudentAdapter(
         val context = holder.itemView.context
 
         holder.tvName.text = student.name
-        holder.tvId.text = "کد: ${student.studentCode}"
-        holder.tvLevel.text = AppDatabase.getClassNameById(student.classId) ?: "بدون کلاس فعال"
+        holder.tvId.text = "کد دانش‌آموزی: ${student.studentCode.ifBlank { "ندارد" }}"
 
-        // 🌟 اختصاص عکس رندوم ثابت بر اساس آیدی کاربر
+        val className = AppDatabase.getClassNameById(student.classId)
+        holder.tvLevel.text = className ?: "بدون کلاس"
+        holder.tvLevel.setBackgroundResource(
+            if (className.isNullOrBlank()) {
+                R.drawable.bg_student_no_class_small
+            } else {
+                R.drawable.bg_student_class_small
+            }
+        )
+
         val randomNum = (Math.abs(student.id.hashCode()) % 9) + 1
         val fallback = "avatar_student_$randomNum"
-
         val avatar = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
-        val resId = context.resources.getIdentifier(avatar, "drawable", context.packageName)
-        if (resId != 0) {
-            holder.ivAvatar.setImageResource(resId)
-        } else {
-            holder.ivAvatar.setImageResource(R.drawable.avatar_student_1)
-        }
+        val resId = context.resources.getIdentifier(
+            avatar,
+            "drawable",
+            context.packageName
+        )
 
-        if (!student.isActive) {
-            holder.itemView.alpha = 0.5f
-            holder.btnDetails.text = "بایگانی شده"
-        } else {
-            holder.itemView.alpha = 1.0f
-            holder.btnDetails.text = "جزئیات"
-        }
+        holder.ivAvatar.setImageResource(
+            if (resId != 0) resId else R.drawable.avatar_student_1
+        )
+
+        holder.itemView.alpha = if (student.isActive) 1f else 0.68f
+        holder.btnDetails.text = "جزئیات"
 
         holder.btnDetails.setOnClickListener {
             onDetailsClicked(student)

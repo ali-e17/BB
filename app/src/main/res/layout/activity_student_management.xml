@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -68,45 +69,66 @@
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
-            app:boxStrokeColor="@color/title_blue"
-            app:hintTextColor="@color/title_blue"
+            app:boxStrokeColor="@color/student_manage_field_stroke"
+            app:boxStrokeWidth="2dp"
+            app:boxStrokeWidthFocused="3dp"
             app:startIconDrawable="@android:drawable/ic_menu_search"
             app:startIconTint="@color/sub_text">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSearchStudent"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="56dp"
                 android:hint="جست‌وجوی نام، کد یا شماره تماس"
                 android:imeOptions="actionDone"
                 android:inputType="text"
-                android:textColor="@color/main_text" />
+                android:textColor="@color/main_text"
+                android:textColorHint="@color/hint_color"
+                android:textDirection="rtl" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="7dp"
+            android:gravity="right"
+            android:text="فیلتر بر اساس کلاس"
+            android:textColor="@color/main_text"
+            android:textDirection="rtl"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="فیلتر بر اساس کلاس"
+            android:layoutDirection="rtl"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
-            app:boxStrokeColor="@color/title_blue"
-            app:hintTextColor="@color/title_blue">
+            app:boxStrokeColor="@color/student_manage_field_stroke"
+            app:boxStrokeWidth="2dp"
+            app:boxStrokeWidthFocused="3dp"
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/spinnerClassFilter"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="56dp"
                 android:background="@null"
+                android:gravity="right|center_vertical"
                 android:inputType="none"
                 android:maxLines="2"
-                android:minHeight="56dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
                 android:paddingVertical="8dp"
                 android:popupBackground="@color/card_background"
+                android:layoutDirection="rtl"
+                android:textAlignment="viewStart"
                 android:textColor="@color/main_text"
+                android:textDirection="rtl"
                 android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
