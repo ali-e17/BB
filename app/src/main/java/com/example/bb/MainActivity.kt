@@ -2,7 +2,9 @@ package com.example.bb
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -10,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,159 +23,145 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val roleString = intent.getStringExtra("USER_ROLE") ?: "STUDENT"
-        val usernameString = intent.getStringExtra("USERNAME") ?: "کاربر"
+        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        val roleString = intent.getStringExtra("USER_ROLE")
+            ?: prefs.getString("CURRENT_USER_ROLE", "STUDENT")
+            ?: "STUDENT"
+        val username = intent.getStringExtra("USERNAME")
+            ?: prefs.getString("CURRENT_USERNAME", "")
+            .orEmpty()
 
-        currentUserRole = try {
-            UserRole.valueOf(roleString)
-        } catch (e: Exception) {
-            UserRole.STUDENT
-        }
+        currentUserRole = runCatching { UserRole.valueOf(roleString.uppercase()) }
+            .getOrDefault(UserRole.STUDENT)
 
         val txtGreeting = findViewById<TextView>(R.id.txtGreeting)
         val txtUserName = findViewById<TextView>(R.id.txtUserName)
         val txtRoleBadge = findViewById<TextView>(R.id.txtRoleBadge)
 
-        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        txtGreeting.text = when (hour) {
-            in 0..11 -> "صبح بخیر،"
-            in 12..16 -> "ظهر بخیر،"
-            in 17..19 -> "عصر بخیر،"
-            else -> "شب بخیر،"
-        }
-
-        // 🌟 تغییر مهم: دریافت نام کامل کاربر که در زمان ورود از سرور گرفته شده بود
-        val sharedPrefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        val currentDisplayName = sharedPrefs.getString("CURRENT_DISPLAY_NAME", usernameString) ?: usernameString
-        txtUserName.text = currentDisplayName
+        txtGreeting.text = greetingForHour(Calendar.getInstance().get(Calendar.HOUR_OF_DAY))
+        txtUserName.text = prefs.getString("CURRENT_DISPLAY_NAME", "")
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: "کاربر عزیز"
 
         txtRoleBadge.text = when (currentUserRole) {
-            UserRole.STUDENT -> "دانش‌آموز"
+            UserRole.ADMIN -> "مدیر"
             UserRole.TEACHER -> "استاد"
-            UserRole.ADMIN -> "مدیر کل"
+            UserRole.STUDENT -> "دانش‌آموز"
         }
+        txtRoleBadge.visibility = View.VISIBLE
 
         val btnThemeToggle = findViewById<ImageView>(R.id.btnThemeToggle)
         val btnLanguageToggle = findViewById<TextView>(R.id.btnLanguageToggle)
+        updateThemeIcon(btnThemeToggle)
 
-        val currentMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
-        if (currentMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
-            btnThemeToggle.setImageResource(R.drawable.ic_sun)
-        } else {
-            btnThemeToggle.setImageResource(R.drawable.ic_moon)
-        }
-
-        var currentLanguage = sharedPrefs.getString("APP_LANGUAGE", "fa") ?: "fa"
-
-        btnLanguageToggle.text = if (currentLanguage == "fa") "EN" else "FA"
+        var currentLanguage = prefs.getString("APP_LANGUAGE", "fa") ?: "fa"
+        btnLanguageToggle.text = if (currentLanguage == "fa") "EN" else "فا"
 
         btnThemeToggle.setOnClickListener {
-            val themePrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
-            val editor = themePrefs.edit()
-            val checkMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
-
-            if (checkMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                editor.putBoolean("IS_DARK_MODE", false)
-                Toast.makeText(this, "تم روشن شد", Toast.LENGTH_SHORT).show()
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                editor.putBoolean("IS_DARK_MODE", true)
-                Toast.makeText(this, "تم تاریک شد", Toast.LENGTH_SHORT).show()
-            }
-            editor.apply()
+            val darkNow = isDarkMode()
+            AppCompatDelegate.setDefaultNightMode(
+                if (darkNow) AppCompatDelegate.MODE_NIGHT_NO
+                else AppCompatDelegate.MODE_NIGHT_YES
+            )
+            getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("IS_DARK_MODE", !darkNow)
+                .apply()
         }
 
         btnLanguageToggle.setOnClickListener {
-            val editor = sharedPrefs.edit()
-            if (currentLanguage == "fa") {
-                currentLanguage = "en"
-                btnLanguageToggle.text = "FA"
-                editor.putString("APP_LANGUAGE", "en")
-                Toast.makeText(this, "Language changed to English", Toast.LENGTH_SHORT).show()
-            } else {
-                currentLanguage = "fa"
-                btnLanguageToggle.text = "EN"
-                editor.putString("APP_LANGUAGE", "fa")
-                Toast.makeText(this, "زبان به فارسی تغییر یافت", Toast.LENGTH_SHORT).show()
-            }
-            editor.apply()
+            currentLanguage = if (currentLanguage == "fa") "en" else "fa"
+            prefs.edit().putString("APP_LANGUAGE", currentLanguage).apply()
+            btnLanguageToggle.text = if (currentLanguage == "fa") "EN" else "فا"
+            Toast.makeText(
+                this,
+                if (currentLanguage == "fa") "زبان فارسی انتخاب شد" else "English selected",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
-        val btnProfile = findViewById<ImageView>(R.id.btnProfile)
-        btnProfile.setOnClickListener {
-            val intent = Intent(this, ProfileActivity::class.java)
-            intent.putExtra("USER_ROLE", currentUserRole.name.lowercase())
-            startActivity(intent)
+        findViewById<ImageView>(R.id.btnProfile).setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
         }
 
         recyclerView = findViewById(R.id.recyclerViewDashboard)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
-        val items = mutableListOf<DashboardItem>()
-
-        when (currentUserRole) {
-            UserRole.STUDENT -> {
-                items.add(DashboardItem("کارنامه و نمرات", "مشاهده کارنامه‌های صادر شده", android.R.drawable.ic_menu_sort_by_size))
-                items.add(DashboardItem("دیکشنری آفلاین", "جستجوی لغات بدون نیاز به نت", android.R.drawable.ic_menu_search))
-                items.add(DashboardItem("اعلانات", "مشاهده پیام‌ها و تکالیف جدید", android.R.drawable.ic_menu_agenda))
-            }
-            UserRole.TEACHER -> {
-                items.add(DashboardItem("حضور و غیاب", "ثبت لیست حضور و غیاب کلاس", android.R.drawable.ic_menu_recent_history))
-                items.add(DashboardItem("اعلانات", "ارسال پیام برای کلاس‌ها", android.R.drawable.ic_dialog_email))
-            }
-            UserRole.ADMIN -> {
-                items.add(DashboardItem("مدیریت دانش‌آموزان", "ثبت‌نام و ویرایش اطلاعات دانش‌آموزان", android.R.drawable.ic_menu_myplaces))
-                items.add(DashboardItem("صدور کارنامه", "ثبت نمره و چاپ کارنامه", android.R.drawable.ic_menu_edit))
-                items.add(DashboardItem("مدیریت کلاس‌ها", "تعریف کلاس جدید و زمان‌بندی", android.R.drawable.ic_input_add))
-                items.add(DashboardItem("مدیریت حضور و غیاب", "بازبینی جلسات و دریافت خروجی اکسل", android.R.drawable.ic_menu_recent_history))
-                items.add(DashboardItem("اعلانات", "ارسال پیام به اساتید و دانش‌آموزان", android.R.drawable.ic_menu_send))
-                items.add(DashboardItem("مدیریت اساتید", "افزودن استاد جدید و مدیریت دسترسی", android.R.drawable.ic_menu_save))
-            }
-        }
-
-        recyclerView.adapter = DashboardAdapter(items) { clickedItem ->
+        recyclerView.adapter = DashboardAdapter(buildDashboardItems()) { clickedItem ->
             when {
-                clickedItem.title.contains("اعلان") -> {
-                    val intent = Intent(this, AnnouncementsActivity::class.java)
-                    intent.putExtra("USER_ROLE", currentUserRole.name)
-                    startActivity(intent)
-                }
+                clickedItem.title.contains("اعلان") -> startActivity(
+                    Intent(this, AnnouncementsActivity::class.java)
+                        .putExtra("USER_ROLE", currentUserRole.name)
+                )
                 clickedItem.title.contains("کارنامه") || clickedItem.title.contains("نمر") -> {
                     when (currentUserRole) {
-                        UserRole.ADMIN -> {
-                            startActivity(Intent(this, ReportCardSetupActivity::class.java))
-                        }
-                        UserRole.STUDENT -> {
-                            showStudentReportCards(usernameString)
-                        }
-                        else -> {}
+                        UserRole.ADMIN -> startActivity(Intent(this, ReportCardSetupActivity::class.java))
+                        UserRole.STUDENT -> showStudentReportCards(username)
+                        else -> Unit
                     }
                 }
-                clickedItem.title.contains("دانش‌آموزان") -> {
-                    startActivity(Intent(this, StudentManagementActivity::class.java))
-                }
-                clickedItem.title.contains("حضور") -> {
-                    startActivity(Intent(this, AttendanceActivity::class.java))
-                }
-                clickedItem.title.contains("کلاس‌ها") -> {
-                    startActivity(Intent(this, ClassManagementActivity::class.java))
-                }
-                clickedItem.title.contains("اساتید") -> {
-                    startActivity(Intent(this, TeacherManagementActivity::class.java))
-                }
-                clickedItem.title.contains("دیکشنری") -> {
-                    startActivity(Intent(this, DictionaryActivity::class.java))
-                }
-                else -> {
-                    Toast.makeText(this, "این بخش در حال توسعه است: ${clickedItem.title}", Toast.LENGTH_SHORT).show()
-                }
+                clickedItem.title.contains("دانش‌آموزان") -> startActivity(Intent(this, StudentManagementActivity::class.java))
+                clickedItem.title.contains("حضور") -> startActivity(Intent(this, AttendanceActivity::class.java))
+                clickedItem.title.contains("کلاس‌ها") -> startActivity(Intent(this, ClassManagementActivity::class.java))
+                clickedItem.title.contains("اساتید") -> startActivity(Intent(this, TeacherManagementActivity::class.java))
+                clickedItem.title.contains("دیکشنری") -> startActivity(Intent(this, DictionaryActivity::class.java))
+                else -> Toast.makeText(this, "این بخش در حال توسعه است", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        findViewById<TextView>(R.id.txtGreeting)?.text =
+            greetingForHour(Calendar.getInstance().get(Calendar.HOUR_OF_DAY))
+        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        findViewById<TextView>(R.id.txtUserName)?.text =
+            prefs.getString("CURRENT_DISPLAY_NAME", "")?.takeIf { it.isNotBlank() } ?: "کاربر عزیز"
+    }
+
+    private fun greetingForHour(hour: Int): String = when (hour) {
+        in 0..4 -> "شب بخیر،"
+        in 5..7 -> "صبح زود بخیر،"
+        in 8..11 -> "صبح بخیر،"
+        in 12..13 -> "ظهر بخیر،"
+        in 14..16 -> "بعدازظهر بخیر،"
+        in 17..19 -> "عصر بخیر،"
+        else -> "شب بخیر،"
+    }
+
+    private fun isDarkMode(): Boolean =
+        resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+            Configuration.UI_MODE_NIGHT_YES
+
+    private fun updateThemeIcon(view: ImageView) {
+        view.setImageResource(if (isDarkMode()) R.drawable.ic_sun else R.drawable.ic_moon)
+    }
+
+    private fun buildDashboardItems(): List<DashboardItem> = when (currentUserRole) {
+        UserRole.STUDENT -> listOf(
+            DashboardItem("کارنامه و نمرات", "مشاهده کارنامه‌های صادرشده", android.R.drawable.ic_menu_sort_by_size),
+            DashboardItem("دیکشنری آفلاین", "جست‌وجوی لغات بدون اینترنت", android.R.drawable.ic_menu_search),
+            DashboardItem("اعلانات", "پیام‌ها و تکالیف جدید", android.R.drawable.ic_menu_agenda)
+        )
+        UserRole.TEACHER -> listOf(
+            DashboardItem("حضور و غیاب", "ثبت وضعیت جلسه‌های کلاس", android.R.drawable.ic_menu_recent_history),
+            DashboardItem("اعلانات", "ارسال پیام برای کلاس‌ها", android.R.drawable.ic_dialog_email)
+        )
+        UserRole.ADMIN -> listOf(
+            DashboardItem("مدیریت دانش‌آموزان", "ثبت‌نام و ویرایش اطلاعات", android.R.drawable.ic_menu_myplaces),
+            DashboardItem("صدور کارنامه", "ثبت نمره و انتشار کارنامه", android.R.drawable.ic_menu_edit),
+            DashboardItem("مدیریت کلاس‌ها", "تعریف کلاس و زمان‌بندی", android.R.drawable.ic_input_add),
+            DashboardItem("مدیریت حضور و غیاب", "بازبینی جلسات و خروجی اکسل", android.R.drawable.ic_menu_recent_history),
+            DashboardItem("اعلانات", "ارسال پیام به کلاس‌ها", android.R.drawable.ic_menu_send),
+            DashboardItem("مدیریت اساتید", "افزودن و مدیریت دسترسی استاد", android.R.drawable.ic_menu_myplaces)
+        )
+    }
+
     private fun showStudentReportCards(phone: String) {
-        val student = AppDatabase.getStudentByUsername(phone) ?: return
+        val student = AppDatabase.getStudentByUsername(phone) ?: run {
+            Toast.makeText(this, "اطلاعات دانش‌آموز هنوز همگام نشده است", Toast.LENGTH_SHORT).show()
+            return
+        }
         val reports = AppDatabase.getReportCardsForStudent(student.id)
         if (reports.isEmpty()) {
             Toast.makeText(this, "هنوز کارنامه‌ای برای شما منتشر نشده است", Toast.LENGTH_SHORT).show()
@@ -194,6 +183,7 @@ class MainActivity : AppCompatActivity() {
                     putIntegerArrayListExtra("SCORES_LIST", ArrayList(report.criteria.map { report.scores[it.id] ?: 0 }))
                     putIntegerArrayListExtra("MAX_SCORES_LIST", ArrayList(report.criteria.map { it.maxScore }))
                 })
-            }.show()
+            }
+            .show()
     }
 }

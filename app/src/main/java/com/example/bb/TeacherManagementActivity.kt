@@ -1,11 +1,13 @@
 package com.example.bb
 
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -15,10 +17,24 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.text.Collator
+import java.util.Locale
 
 class TeacherManagementActivity : AppCompatActivity() {
 
-    private lateinit var teacherAdapter: TeacherAdapter
+    private lateinit var adapter: TeacherAdapter
+    private lateinit var txtCount: TextView
+    private lateinit var emptyState: View
+    private lateinit var statusFilter: MaterialAutoCompleteTextView
+    private val teachers = arrayListOf<TeacherModel>()
+    private val classes = arrayListOf<ClassModel>()
+    private var search = ""
+    private var selectedStatus = "همه اساتید"
+    private val collator = Collator.getInstance(Locale("fa", "IR")).apply { strength = Collator.PRIMARY }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,113 +45,154 @@ class TeacherManagementActivity : AppCompatActivity() {
             startActivity(Intent(this, AddEditTeacherActivity::class.java))
         }
 
+        txtCount = findViewById(R.id.txtTeacherCount)
+        emptyState = findViewById(R.id.teacherEmptyState)
+        statusFilter = findViewById(R.id.spinnerTeacherStatusFilter)
+        val options = listOf("همه اساتید", "اساتید فعال", "بایگانی‌شده‌ها")
+        statusFilter.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, options))
+        statusFilter.setText(options.first(), false)
+        statusFilter.setOnClickListener { statusFilter.showDropDown() }
+        statusFilter.setOnItemClickListener { _, _, position, _ ->
+            selectedStatus = options[position]
+            applyFilters()
+        }
+
+        findViewById<EditText>(R.id.etSearchTeacher).addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) { search = s.toString().trim(); applyFilters() }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+        })
+
         val recycler = findViewById<RecyclerView>(R.id.rvTeachers)
         recycler.layoutManager = LinearLayoutManager(this)
-
-        teacherAdapter = TeacherAdapter(
-            teachers = emptyList(),
+        adapter = TeacherAdapter(emptyList(),
             onRowClick = { teacher ->
-                if (!teacher.isActive) {
-                    Toast.makeText(this, "ابتدا استاد را فعال کنید", Toast.LENGTH_SHORT).show()
-                } else {
-                    startActivity(
-                        Intent(this, AssignClassActivity::class.java)
-                            .putExtra(AssignClassActivity.EXTRA_TEACHER_USERNAME, teacher.username)
-                    )
-                }
+                if (!teacher.isActive) Toast.makeText(this, "ابتدا استاد را فعال کنید", Toast.LENGTH_SHORT).show()
+                else startActivity(Intent(this, AssignClassActivity::class.java)
+                    .putExtra(AssignClassActivity.EXTRA_TEACHER_USERNAME, teacher.username))
             },
-            onDetailsClick = ::showTeacherDetailsBottomSheet
+            onDetailsClick = ::showTeacherDetails
         )
-        recycler.adapter = teacherAdapter
+        recycler.adapter = adapter
     }
 
-    override fun onResume() {
-        super.onResume()
-        // 🌐 دریافت زنده لیست اساتید از سرور
-        RetrofitClient.instance.getTeachers().enqueue(object : Callback<List<TeacherModel>> {
-            override fun onResponse(call: Call<List<TeacherModel>>, response: Response<List<TeacherModel>>) {
-                if (response.isSuccessful) {
-                    val teachers = response.body().orEmpty()
-                    // در صورت نیاز میتونی متد replaceTeachers هم تو AppDatabase بسازی
-                    teacherAdapter.updateData(teachers)
-                } else {
-                    teacherAdapter.updateData(AppDatabase.getAllTeachers())
-                }
-            }
+    override fun onResume() { super.onResume(); loadData() }
 
-            override fun onFailure(call: Call<List<TeacherModel>>, t: Throwable) {
-                teacherAdapter.updateData(AppDatabase.getAllTeachers())
-                Toast.makeText(this@TeacherManagementActivity, "دریافت آنلاین اساتید ناموفق بود", Toast.LENGTH_SHORT).show()
+    private fun loadData() {
+        RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
+            override fun onResponse(call: Call<List<ClassModel>>, response: Response<List<ClassModel>>) {
+                classes.clear()
+                if (response.isSuccessful) {
+                    classes.addAll(response.body().orEmpty())
+                    AppDatabase.replaceClasses(classes)
+                } else {
+                    classes.addAll(AppDatabase.getAllClasses(false))
+                }
+                loadTeachers()
+            }
+            override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
+                classes.clear(); classes.addAll(AppDatabase.getAllClasses(false)); loadTeachers()
             }
         })
     }
 
-    private fun showTeacherDetailsBottomSheet(initialTeacher: TeacherModel) {
-        var teacher = initialTeacher
+    private fun loadTeachers() {
+        RetrofitClient.instance.getTeachers().enqueue(object : Callback<List<TeacherModel>> {
+            override fun onResponse(call: Call<List<TeacherModel>>, response: Response<List<TeacherModel>>) {
+                if (response.isSuccessful) {
+                    teachers.clear(); teachers.addAll(response.body().orEmpty()); AppDatabase.replaceTeachersLocally(teachers); applyFilters()
+                } else showLocal()
+            }
+            override fun onFailure(call: Call<List<TeacherModel>>, t: Throwable) { showLocal() }
+        })
+    }
+
+    private fun showLocal() {
+        teachers.clear(); teachers.addAll(AppDatabase.getAllTeachers()); applyFilters()
+        Toast.makeText(this, "فهرست ذخیره‌شده اساتید نمایش داده شد", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun applyFilters() {
+        val q = normalize(search)
+        val result = teachers.filter { teacher ->
+            val matchesText = q.isBlank() || normalize("${teacher.firstName} ${teacher.lastName} ${teacher.phone}").contains(q)
+            val matchesStatus = when (selectedStatus) {
+                "اساتید فعال" -> teacher.isActive
+                "بایگانی‌شده‌ها" -> !teacher.isActive
+                else -> true
+            }
+            matchesText && matchesStatus
+        }.sortedWith { a, b ->
+            val last = collator.compare(normalize(a.lastName), normalize(b.lastName))
+            if (last != 0) last else collator.compare(normalize(a.firstName), normalize(b.firstName))
+        }
+        adapter.updateData(result)
+        txtCount.text = "${result.size} استاد"
+        emptyState.visibility = if (result.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    private fun showTeacherDetails(initial: TeacherModel) {
+        var teacher = initial
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_teacher_details, null)
         dialog.setContentView(view)
 
-        val avatar = view.findViewById<TextView>(R.id.dialogTeacherAvatar)
+        val avatar = view.findViewById<ImageView>(R.id.dialogTeacherAvatar)
         val name = view.findViewById<TextView>(R.id.dialogTeacherName)
-        val username = view.findViewById<TextView>(R.id.dialogTeacherUsername)
-        val classes = view.findViewById<TextView>(R.id.dialogTeacherClass)
+        val phone = view.findViewById<TextView>(R.id.dialogTeacherUsername)
+        val assigned = view.findViewById<TextView>(R.id.dialogTeacherClass)
         val status = view.findViewById<TextView>(R.id.dialogTeacherStatus)
-        val archiveHint = view.findViewById<TextView>(R.id.dialogTeacherArchiveHint)
-        val btnArchive = view.findViewById<MaterialButton>(R.id.btnDialogTeacherArchive)
-        val btnEdit = view.findViewById<MaterialButton>(R.id.btnDialogTeacherEdit)
+        val hint = view.findViewById<TextView>(R.id.dialogTeacherArchiveHint)
+        val archive = view.findViewById<MaterialButton>(R.id.btnDialogTeacherArchive)
 
         fun render() {
-            val assignedClasses = AppDatabase.getTeacherClasses(teacher.username)
-
-            avatar.text = teacher.name.firstOrNull()?.toString() ?: "A"
+            val avatarName = teacher.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_teacher_1"
+            val res = resources.getIdentifier(avatarName, "drawable", packageName)
+            avatar.setImageResource(if (res != 0) res else R.drawable.avatar_teacher_1)
             name.text = teacher.name
-            username.text = "کد ملی: ${teacher.nationalId} | تماس: ${teacher.username}"
-            classes.text = if (assignedClasses.isEmpty()) {
-                "بدون کلاس فعال"
-            } else {
-                assignedClasses.joinToString("، ") { it.className }
+            phone.text = teacher.phone
+            val teacherClasses = classes.filter {
+                it.status == ClassStatus.ACTIVE && normalizePhone(it.teacherPhone) == normalizePhone(teacher.phone)
             }
-
+            assigned.text = teacherClasses.takeIf { it.isNotEmpty() }
+                ?.joinToString("، ") { it.className } ?: "بدون کلاس فعال"
             status.text = if (teacher.isActive) "فعال" else "بایگانی‌شده"
-            status.setTextColor(
-                android.graphics.Color.parseColor(if (teacher.isActive) "#10B981" else "#94A3B8")
-            )
-            btnArchive.text = if (teacher.isActive) "بایگانی کردن" else "فعال‌سازی مجدد"
-
-            val archiveBlocked = teacher.isActive && assignedClasses.isNotEmpty()
-            btnArchive.isEnabled = !archiveBlocked
-            btnArchive.alpha = if (archiveBlocked) 0.5f else 1f
-            archiveHint.visibility = if (archiveBlocked) View.VISIBLE else View.GONE
+            status.setBackgroundResource(if (teacher.isActive) R.drawable.bg_unified_status_active else R.drawable.bg_unified_status_inactive)
+            archive.text = if (teacher.isActive) "بایگانی کردن" else "فعال‌سازی مجدد"
+            val blocked = teacher.isActive && teacherClasses.isNotEmpty()
+            archive.isEnabled = !blocked
+            archive.alpha = if (blocked) .5f else 1f
+            hint.visibility = if (blocked) View.VISIBLE else View.GONE
         }
-
         render()
 
-        btnArchive.setOnClickListener {
-            val success = AppDatabase.toggleTeacherArchiveStatus(teacher.username, this)
-            if (!success) {
-                Toast.makeText(this, "ابتدا کلاس‌های فعال استاد را حذف کنید", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            teacher = AppDatabase.getTeacherByUsername(teacher.username) ?: teacher
-            render()
-            teacherAdapter.updateData(AppDatabase.getAllTeachers())
-            Toast.makeText(
-                this,
-                if (teacher.isActive) "استاد فعال شد" else "استاد بایگانی شد",
-                Toast.LENGTH_SHORT
-            ).show()
+        archive.setOnClickListener {
+            archive.isEnabled = false
+            RetrofitClient.instance.toggleTeacherActive(
+                ToggleTeacherActiveRequest(teacher.id, !teacher.isActive)
+            ).enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                    archive.isEnabled = true
+                    if (response.isSuccessful && response.body()?.status == "success") {
+                        teacher = teacher.copy(isActive = !teacher.isActive)
+                        render(); dialog.dismiss(); loadTeachers()
+                    } else Toast.makeText(this@TeacherManagementActivity, response.body()?.message ?: "تغییر وضعیت انجام نشد", Toast.LENGTH_LONG).show()
+                }
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                    archive.isEnabled = true
+                    Toast.makeText(this@TeacherManagementActivity, "خطا در اتصال به سرور", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
-
-        btnEdit.setOnClickListener {
+        view.findViewById<MaterialButton>(R.id.btnDialogTeacherEdit).setOnClickListener {
             dialog.dismiss()
-            startActivity(
-                Intent(this, AddEditTeacherActivity::class.java)
-                    .putExtra(AddEditTeacherActivity.EXTRA_TEACHER_USERNAME, teacher.username)
-            )
+            startActivity(Intent(this, AddEditTeacherActivity::class.java)
+                .putExtra(AddEditTeacherActivity.EXTRA_TEACHER_USERNAME, teacher.username))
         }
-
         dialog.show()
     }
+
+    private fun normalize(value: String): String = value.lowercase(Locale("fa"))
+        .replace('ي','ی').replace('ى','ی').replace('ك','ک').replace('\u200c',' ').trim()
+    private fun normalizePhone(value: String?): String = value.orEmpty().replace(" ", "").removePrefix("0")
 }

@@ -23,234 +23,160 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var tvStudentClassStatus: TextView
     private lateinit var layoutStudentOptions: LinearLayout
     private lateinit var layoutTeacherOptions: LinearLayout
-    private lateinit var userRole: String
-
     private lateinit var ivAvatar: ImageView
-    private lateinit var btnChangeAvatar: TextView
-    private lateinit var btnLogout: LinearLayout
-    private lateinit var btnChangePassword: LinearLayout
+    private lateinit var userRole: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
+        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        userRole = prefs.getString("CURRENT_USER_ROLE", "STUDENT").orEmpty().uppercase()
+
         findViewById<ImageView>(R.id.btnProfileBack).setOnClickListener { finish() }
-
-        val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        userRole = sharedPreferences.getString("CURRENT_USER_ROLE", "STUDENT") ?: "STUDENT"
-
         tvUserName = findViewById(R.id.tvUserName)
         tvUserRole = findViewById(R.id.tvUserRole)
         tvStudentClassStatus = findViewById(R.id.tvStudentClassStatus)
         layoutStudentOptions = findViewById(R.id.layoutStudentOptions)
         layoutTeacherOptions = findViewById(R.id.layoutTeacherOptions)
-
         ivAvatar = findViewById(R.id.ivAvatar)
-        btnChangeAvatar = findViewById(R.id.btnChangeAvatar)
-        btnLogout = findViewById(R.id.btnLogout)
-        btnChangePassword = findViewById(R.id.btnChangePassword)
 
-        btnChangePassword.setOnClickListener {
-            val intent = Intent(this, UpdateProfileActivity::class.java)
-            intent.putExtra("USER_ROLE", userRole)
-            startActivity(intent)
+        findViewById<LinearLayout>(R.id.btnChangePassword).setOnClickListener {
+            startActivity(Intent(this, UpdateProfileActivity::class.java).putExtra("USER_ROLE", userRole))
+        }
+        findViewById<LinearLayout>(R.id.btnLogout).setOnClickListener { confirmLogout() }
+        findViewById<TextView>(R.id.btnChangeAvatar).setOnClickListener { showAvatarSelectionDialog() }
+        findViewById<LinearLayout>(R.id.btnViewTeacherClasses).setOnClickListener {
+            startActivity(Intent(this, TeacherHistoryActivity::class.java))
         }
 
-        btnLogout.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("خروج از حساب")
-                .setMessage("آیا می‌خواهید از حساب کاربری خود خارج شوید؟")
-                .setPositiveButton("بله") { _, _ ->
-                    sharedPreferences.edit().apply {
-                        putBoolean("IS_LOGGED_IN", false)
-                        putString("CURRENT_USER_ROLE", "STUDENT")
-                        putString("CURRENT_USERNAME", "")
-                        putString("CURRENT_DISPLAY_NAME", "")
-                        putString("CURRENT_USER_ID", "")
-                        putString("API_TOKEN", "")
-                        putString("API_TOKEN_EXPIRES_AT", "")
-                        apply()
-                    }
-                    val intent = Intent(this, LoginActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                .setNegativeButton("خیر", null)
-                .show()
-        }
-
-        btnChangeAvatar.setOnClickListener {
-            showAvatarSelectionDialog()
-        }
-
-        val displayName = sharedPreferences.getString("CURRENT_DISPLAY_NAME", "")
-        tvUserName.text = if (!displayName.isNullOrEmpty()) displayName else "کاربر عزیز"
-
-        setupProfileData()
+        tvUserName.text = prefs.getString("CURRENT_DISPLAY_NAME", "کاربر عزیز")
+        applyAvatar(prefs.getString("CURRENT_AVATAR_NAME", "").orEmpty())
+        renderRoleState()
+        loadProfile()
     }
 
     override fun onResume() {
         super.onResume()
-        setupProfileData()
+        loadProfile()
     }
 
-    private fun setupProfileData() {
-        val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        val currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
-        val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
+    private fun renderRoleState() {
+        tvUserRole.text = when (userRole) {
+            "ADMIN" -> "مدیر آموزشگاه"
+            "TEACHER" -> "استاد آموزشگاه"
+            else -> "دانش‌آموز آموزشگاه"
+        }
+        layoutStudentOptions.visibility = if (userRole == "STUDENT") View.VISIBLE else View.GONE
+        layoutTeacherOptions.visibility = if (userRole == "TEACHER") View.VISIBLE else View.GONE
+        tvStudentClassStatus.visibility = if (userRole == "STUDENT") View.VISIBLE else View.GONE
+    }
 
-        when (userRole.lowercase()) {
-            "student" -> {
-                tvUserRole.text = "دانش‌آموز آموزشگاه"
-                layoutStudentOptions.visibility = View.VISIBLE
-                layoutTeacherOptions.visibility = View.GONE
-                tvStudentClassStatus.visibility = View.VISIBLE
-                tvStudentClassStatus.text = "در حال بررسی وضعیت کلاس..."
-
-                RetrofitClient.instance.getStudents().enqueue(object : Callback<List<StudentModel>> {
-                    override fun onResponse(call: Call<List<StudentModel>>, response: Response<List<StudentModel>>) {
-                        if (response.isSuccessful) {
-                            val allStudents = response.body().orEmpty()
-                            val myStudent = allStudents.find { it.id == currentUserId }
-
-                            if (myStudent != null) {
-                                val randomNum = (Math.abs(myStudent.id.hashCode()) % 9) + 1
-                                val fallback = "avatar_student_$randomNum"
-                                val avatar = myStudent.avatarName?.takeIf { it.isNotBlank() } ?: fallback
-
-                                val resId = resources.getIdentifier(avatar, "drawable", packageName)
-                                if (resId != 0) ivAvatar.setImageResource(resId)
-                                else ivAvatar.setImageResource(R.drawable.avatar_student_1)
-
-                                if (!myStudent.classId.isNullOrBlank()) {
-                                    RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
-                                        override fun onResponse(call: Call<List<ClassModel>>, response2: Response<List<ClassModel>>) {
-                                            val classes = response2.body().orEmpty()
-                                            val myClass = classes.find { it.id == myStudent.classId }
-                                            tvStudentClassStatus.text = "کلاس فعلی شما: ${myClass?.className ?: "نامشخص"}"
-                                        }
-                                        override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
-                                            tvStudentClassStatus.text = "خطا در دریافت نام کلاس"
-                                        }
-                                    })
-                                } else {
-                                    tvStudentClassStatus.text = "شما هنوز در هیچ کلاسی ثبت‌نام نشده‌اید."
-                                }
-                            }
-                        }
-                    }
-                    override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
-                        tvStudentClassStatus.text = "عدم اتصال به سرور"
-                    }
-                })
-            }
-            "teacher" -> {
-                tvUserRole.text = "مدرس رسمی بیان برتر"
-                layoutStudentOptions.visibility = View.GONE
-                layoutTeacherOptions.visibility = View.VISIBLE
-                tvStudentClassStatus.visibility = View.GONE
-
-                val teacher = AppDatabase.getTeacherByUsername(currentUsername)
-                val avatar = teacher?.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_teacher_1"
-                val resId = resources.getIdentifier(avatar, "drawable", packageName)
-                if (resId != 0) ivAvatar.setImageResource(resId)
-                else ivAvatar.setImageResource(R.drawable.avatar_teacher_1)
-
-                val btnViewTeacherClasses = findViewById<LinearLayout>(R.id.btnViewTeacherClasses)
-                btnViewTeacherClasses.setOnClickListener {
-                    startActivity(Intent(this@ProfileActivity, TeacherHistoryActivity::class.java))
+    private fun loadProfile() {
+        RetrofitClient.instance.getProfile().enqueue(object : Callback<ProfileResponse> {
+            override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
+                val body = response.body()
+                if (!response.isSuccessful || body?.status != "success") return
+                val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+                prefs.edit()
+                    .putString("CURRENT_DISPLAY_NAME", body.displayName)
+                    .putString("CURRENT_AVATAR_NAME", body.avatarName)
+                    .apply()
+                tvUserName.text = body.displayName.ifBlank { "کاربر عزیز" }
+                applyAvatar(body.avatarName)
+                if (userRole == "STUDENT") {
+                    tvStudentClassStatus.text = body.className
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { "کلاس فعلی شما: $it" }
+                        ?: "هنوز در کلاس فعالی ثبت‌نام نشده‌اید"
                 }
             }
-            "admin" -> {
-                tvUserRole.text = "دسترسی کامل (مدیر کل)"
-                layoutStudentOptions.visibility = View.GONE
-                layoutTeacherOptions.visibility = View.GONE
-                tvStudentClassStatus.visibility = View.GONE
-
-                // 🌟 لود هوشمند آواتار مدیر از دیتابیس
-                val avatar = AppDatabase.getAdminAvatarName()
-                val resId = resources.getIdentifier(avatar, "drawable", packageName)
-                if (resId != 0) ivAvatar.setImageResource(resId)
-                else ivAvatar.setImageResource(R.drawable.avatar_admin_1)
+            override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
+                if (userRole == "STUDENT") tvStudentClassStatus.text = "وضعیت کلاس در حال حاضر در دسترس نیست"
             }
+        })
+    }
+
+    private fun applyAvatar(name: String) {
+        val fallback = when (userRole) {
+            "ADMIN" -> "avatar_admin_1"
+            "TEACHER" -> "avatar_teacher_1"
+            else -> "avatar_student_1"
         }
+        val res = resources.getIdentifier(name.ifBlank { fallback }, "drawable", packageName)
+        ivAvatar.setImageResource(if (res != 0) res else resources.getIdentifier(fallback, "drawable", packageName))
     }
 
     private fun showAvatarSelectionDialog() {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_avatar_selector, null)
-        val rvAvatars = view.findViewById<RecyclerView>(R.id.rvAvatarGrid)
-
-        // 🌟 سیستم هوشمند تفکیک آواتار بر اساس نقش (شامل ۴ آواتار اختصاصی مدیر)
-        val avatarNames = when (userRole.uppercase()) {
+        val names = when (userRole) {
             "ADMIN" -> (1..4).map { "avatar_admin_$it" }
             "TEACHER" -> (1..6).map { "avatar_teacher_$it" }
             else -> (1..9).map { "avatar_student_$it" }
         }
-
-        val avatars = avatarNames.map { name ->
-            resources.getIdentifier(name, "drawable", packageName)
-        }.filter { it != 0 }
-
-        rvAvatars.adapter = AvatarAdapter(avatars) { selectedResId ->
-            ivAvatar.setImageResource(selectedResId)
-            val avatarName = resources.getResourceEntryName(selectedResId)
-
-            val sharedPreferences = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-            val currentUsername = sharedPreferences.getString("CURRENT_USERNAME", "") ?: ""
-            var currentUserId = sharedPreferences.getString("CURRENT_USER_ID", "") ?: ""
-
-            // 🌟 استخراج هوشمند و تضمینی ID در صورت خالی بودن SharedPreferences
-            if (currentUserId.isEmpty()) {
-                currentUserId = when (userRole.uppercase()) {
-                    "TEACHER" -> AppDatabase.getTeacherByUsername(currentUsername)?.id ?: ""
-                    "STUDENT" -> AppDatabase.getStudentByUsername(currentUsername)?.id ?: ""
-                    "ADMIN" -> "admin_main"
-                    else -> ""
-                }
-            }
-
-            if (currentUserId.isNotEmpty()) {
-
-                // 🌟 ذخیره فوری آواتار در دیتابیس لوکال (با پاس دادن شماره تلفن برای جلوگیری از ارور تکراری بودن)
-                when (userRole.uppercase()) {
-                    "ADMIN" -> AppDatabase.updateAdminAvatarLocally(avatarName)
-                    "TEACHER" -> {
-                        AppDatabase.getTeacherByUsername(currentUsername)?.let {
-                            it.avatarName = avatarName
-                            AppDatabase.upsertTeacher(it, originalPhone = currentUsername) // کلید طلایی حل مشکل کاتلین
-                        }
-                    }
-                    "STUDENT" -> {
-                        AppDatabase.getStudentByUsername(currentUsername)?.let {
-                            it.avatarName = avatarName
-                            AppDatabase.upsertStudent(it, originalPhone = currentUsername)
-                        }
+        val resourcesList = names.map { resources.getIdentifier(it, "drawable", packageName) }.filter { it != 0 }
+        view.findViewById<RecyclerView>(R.id.rvAvatarGrid).adapter = AvatarAdapter(resourcesList) { selected ->
+            val avatarName = resources.getResourceEntryName(selected)
+            RetrofitClient.instance.updateAvatar(
+                UpdateAvatarRequest(
+                    userId = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+                        .getString("CURRENT_USER_ID", "").orEmpty(),
+                    avatarName = avatarName,
+                    role = userRole
+                )
+            ).enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                    if (response.isSuccessful && response.body()?.status == "success") {
+                        getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+                            .edit().putString("CURRENT_AVATAR_NAME", avatarName).apply()
+                        ivAvatar.setImageResource(selected)
+                        Toast.makeText(this@ProfileActivity, "عکس پروفایل ذخیره شد", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this@ProfileActivity, response.body()?.message ?: "ذخیره عکس انجام نشد", Toast.LENGTH_SHORT).show()
                     }
                 }
-
-                // 🌐 شلیک تغییرات به سرور
-                val request = UpdateAvatarRequest(currentUserId, avatarName, userRole.uppercase())
-                RetrofitClient.instance.updateAvatar(request).enqueue(object : Callback<ApiResponse> {
-                    override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                        if (response.isSuccessful && response.body()?.status == "success") {
-                            Toast.makeText(this@ProfileActivity, "عکس پروفایل شما در سرور ذخیره شد", Toast.LENGTH_SHORT).show()
-                            setupProfileData()
-                        } else {
-                            Toast.makeText(this@ProfileActivity, "خطا در ثبت عکس در سرور", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                        Toast.makeText(this@ProfileActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
-                    }
-                })
-            } else {
-                Toast.makeText(this@ProfileActivity, "خطا در شناسایی کاربر. لطفاً دوباره وارد شوید.", Toast.LENGTH_LONG).show()
-            }
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                    Toast.makeText(this@ProfileActivity, "خطا در اتصال به سرور", Toast.LENGTH_SHORT).show()
+                }
+            })
             dialog.dismiss()
         }
         dialog.setContentView(view)
         dialog.show()
+    }
+
+    private fun confirmLogout() {
+        AlertDialog.Builder(this)
+            .setTitle("خروج از حساب")
+            .setMessage("از حساب کاربری خارج می‌شوید؟")
+            .setPositiveButton("خروج") { _, _ -> logout() }
+            .setNegativeButton("انصراف", null)
+            .show()
+    }
+
+    private fun logout() {
+        RetrofitClient.instance.logout().enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) = clearSession()
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) = clearSession()
+        })
+    }
+
+    private fun clearSession() {
+        getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().apply {
+            remove("IS_LOGGED_IN")
+            remove("CURRENT_USER_ROLE")
+            remove("CURRENT_USERNAME")
+            remove("CURRENT_USER_ID")
+            remove("CURRENT_DISPLAY_NAME")
+            remove("CURRENT_AVATAR_NAME")
+            remove("API_TOKEN")
+            remove("API_TOKEN_EXPIRES_AT")
+            apply()
+        }
+        startActivity(Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        })
+        finish()
     }
 }

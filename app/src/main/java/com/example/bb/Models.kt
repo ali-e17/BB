@@ -33,7 +33,7 @@ data class StudentModel(
     var studentCode: String = "",
     var phone: String,
     var nationalId: String,
-    var password: String,
+    var password: String = "",
     var classId: String? = null,
     var registrationDate: String = AppDatabase.today(),
     var isActive: Boolean = true,
@@ -49,7 +49,7 @@ data class TeacherModel(
     var lastName: String,
     var phone: String,
     var nationalId: String,
-    var password: String,
+    var password: String = "",
     var isActive: Boolean = true,
     var classIds: String = "",
     var avatarName: String? = "avatar_teacher_1" // 🌟 اضافه شدن آواتار اساتید
@@ -251,7 +251,10 @@ object AppDatabase
     }
 
     fun getStudentById(id: String): StudentModel? = students.find { it.id == id }
-    fun getStudentByUsername(phone: String): StudentModel? = students.find { it.phone == phone }
+    fun getStudentByUsername(phone: String): StudentModel? {
+        val normalized = normalizePhone(phone)
+        return students.find { normalizePhone(it.phone) == normalized }
+    }
     fun searchStudents(query: String): List<StudentModel> = students.filter {
         it.name.contains(query, true) || it.studentCode.contains(query, true) || it.phone.contains(query)
     }
@@ -337,7 +340,10 @@ object AppDatabase
         save()
     }
 
-    fun getTeacherByUsername(phone: String): TeacherModel? = teachers.find { it.username == phone }
+    fun getTeacherByUsername(phone: String): TeacherModel? {
+        val normalized = normalizePhone(phone)
+        return teachers.find { normalizePhone(it.username) == normalized }
+    }
 
     fun upsertTeacher(teacher: TeacherModel, originalPhone: String? = null): String? {
         if (teachers.any { it.username == teacher.username && it.username != originalPhone }) return "این شماره تلفن قبلاً ثبت شده است"
@@ -359,8 +365,11 @@ object AppDatabase
         it.status == ClassStatus.ACTIVE && it.teacherPhone == null
     }
 
-    fun getTeacherClasses(phone: String): List<ClassModel> = classes.filter {
-        it.teacherPhone == phone && it.status == ClassStatus.ACTIVE
+    fun getTeacherClasses(phone: String): List<ClassModel> {
+        val normalized = normalizePhone(phone)
+        return classes.filter {
+            normalizePhone(it.teacherPhone.orEmpty()) == normalized && it.status == ClassStatus.ACTIVE
+        }
     }
 
     fun assignClassToTeacher(phone: String, classId: String, context: Context? = null) {
@@ -385,10 +394,19 @@ object AppDatabase
         return true
     }
 
+    private fun normalizePhone(value: String): String = value
+        .replace(" ", "")
+        .replace("-", "")
+        .removePrefix("+98")
+        .removePrefix("0098")
+        .removePrefix("0")
+
     private fun syncTeacherClassIds() {
         teachers.forEach { teacher ->
-            teacher.classIds = classes.filter { it.teacherPhone == teacher.username && it.status == ClassStatus.ACTIVE }
-                .joinToString(",") { it.id }
+            val normalized = normalizePhone(teacher.username)
+            teacher.classIds = classes.filter {
+                normalizePhone(it.teacherPhone.orEmpty()) == normalized && it.status == ClassStatus.ACTIVE
+            }.joinToString(",") { it.id }
         }
     }
 

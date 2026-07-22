@@ -45,7 +45,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutOldPassword"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/UnifiedOutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
@@ -53,7 +53,7 @@
             android:layoutDirection="rtl"
             app:hintTextColor="#FF6B00"
             android:textColorHint="@color/hint_color"
-            app:boxStrokeColor="@color/title_blue"
+            app:boxStrokeColor="@color/unified_field_stroke"
             app:passwordToggleEnabled="true"
             app:passwordToggleTint="@color/title_blue"
             app:boxCornerRadiusTopStart="12dp"
@@ -73,7 +73,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutNewPassword"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/UnifiedOutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
@@ -81,7 +81,7 @@
             android:layoutDirection="rtl"
             app:hintTextColor="#FF6B00"
             android:textColorHint="@color/hint_color"
-            app:boxStrokeColor="@color/title_blue"
+            app:boxStrokeColor="@color/unified_field_stroke"
             app:passwordToggleEnabled="true"
             app:passwordToggleTint="@color/title_blue"
             app:boxCornerRadiusTopStart="12dp"
@@ -101,7 +101,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutConfirmPassword"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/UnifiedOutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
@@ -109,7 +109,7 @@
             android:layoutDirection="rtl"
             app:hintTextColor="#FF6B00"
             android:textColorHint="@color/hint_color"
-            app:boxStrokeColor="@color/title_blue"
+            app:boxStrokeColor="@color/unified_field_stroke"
             app:passwordToggleEnabled="true"
             app:passwordToggleTint="@color/title_blue"
             app:boxCornerRadiusTopStart="12dp"

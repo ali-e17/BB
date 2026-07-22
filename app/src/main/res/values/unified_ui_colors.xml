@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="unified_border">#5A3559B8</color>
+    <color name="unified_pressed">#183559B8</color>
+    <color name="unified_info_bg">#E8EEFF</color>
+    <color name="unified_info_border">#91A7E6</color>
+    <color name="unified_active_bg">#E5F7EB</color>
+    <color name="unified_active_border">#75C98D</color>
+    <color name="unified_inactive_bg">#F2F4F7</color>
+    <color name="unified_inactive_border">#98A2B3</color>
+</resources>
