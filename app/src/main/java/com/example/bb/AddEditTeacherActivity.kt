@@ -1,6 +1,7 @@
 package com.example.bb
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -14,97 +15,62 @@ import java.util.UUID
 
 class AddEditTeacherActivity : AppCompatActivity() {
 
-    private var originalUsername: String = ""
+    private var originalUsername = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_teacher)
-
         findViewById<ImageView>(R.id.btnTeacherBack).setOnClickListener { finish() }
 
-        val etFirstName = findViewById<TextInputEditText>(R.id.etTeacherFirstName)
-        val etLastName = findViewById<TextInputEditText>(R.id.etTeacherLastName)
-        val etPhone = findViewById<TextInputEditText>(R.id.etTeacherPhone)
-        val etNationalId = findViewById<TextInputEditText>(R.id.etTeacherNationalId)
-        val btnSave = findViewById<Button>(R.id.btnSaveTeacher)
-        val tvTitle = findViewById<TextView>(R.id.tvTitleAddEdit)
+        val first = findViewById<TextInputEditText>(R.id.etTeacherFirstName)
+        val last = findViewById<TextInputEditText>(R.id.etTeacherLastName)
+        val phone = findViewById<TextInputEditText>(R.id.etTeacherPhone)
+        val national = findViewById<TextInputEditText>(R.id.etTeacherNationalId)
+        val save = findViewById<Button>(R.id.btnSaveTeacher)
+        val progress = findViewById<View>(R.id.progressSavingTeacher)
+        val title = findViewById<TextView>(R.id.tvTitleAddEdit)
 
         originalUsername = intent.getStringExtra(EXTRA_TEACHER_USERNAME).orEmpty()
-        val editingTeacher = originalUsername
-            .takeIf { it.isNotBlank() }
-            ?.let(AppDatabase::getTeacherByUsername)
-
-        if (editingTeacher != null) {
-            tvTitle.text = "ویرایش اطلاعات استاد"
-            etFirstName.setText(editingTeacher.firstName)
-            etLastName.setText(editingTeacher.lastName)
-            etPhone.setText(editingTeacher.phone)
-            etNationalId.setText(editingTeacher.nationalId)
-        } else {
-            tvTitle.text = "افزودن استاد جدید"
+        val editing = originalUsername.takeIf { it.isNotBlank() }?.let(AppDatabase::getTeacherByUsername)
+        if (editing != null) {
+            title.text = "ویرایش اطلاعات استاد"
+            first.setText(editing.firstName); last.setText(editing.lastName)
+            phone.setText("0${editing.phone.removePrefix("0")}"); national.setText(editing.nationalId)
+            save.text = "ذخیره تغییرات"
         }
 
-        btnSave.setOnClickListener {
-            val fname = etFirstName.text?.toString()?.trim().orEmpty()
-            val lname = etLastName.text?.toString()?.trim().orEmpty()
-            val phone = etPhone.text?.toString()?.trim()?.replace(" ", "") ?: ""
-            val nationalId = etNationalId.text?.toString()?.trim()?.replace(" ", "") ?: ""
-
-            if (fname.isBlank() || lname.isBlank() || phone.isBlank() || nationalId.isBlank()) {
-                Toast.makeText(this, "لطفاً تمام فیلدها را پر کنید", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            if (phone.length != 11 || !phone.all(Char::isDigit)) {
-                etPhone.error = "شماره تلفن باید ۱۱ رقم باشد"
-                return@setOnClickListener
-            }
-            if (nationalId.length != 10 || !nationalId.all(Char::isDigit)) {
-                etNationalId.error = "کد ملی باید ۱۰ رقم باشد"
-                return@setOnClickListener
-            }
-
-            val formattedPhone = if (phone.startsWith("0")) phone.substring(1) else phone
-
-            // 🌟 تولید آواتار رندوم برای اساتید جدید (بین 1 تا 6)
-            val randomAvatar = "avatar_teacher_${(1..6).random()}"
-            val finalAvatar = editingTeacher?.avatarName ?: randomAvatar
-
-            val model = TeacherModel(
-                id = editingTeacher?.id ?: UUID.randomUUID().toString(),
-                firstName = fname,
-                lastName = lname,
-                phone = formattedPhone,
-                nationalId = nationalId,
-                password = editingTeacher?.password ?: nationalId,
-                classIds = editingTeacher?.classIds.orEmpty(),
-                avatarName = finalAvatar, // 🌟 قرار دادن آواتار نهایی
-                isActive = editingTeacher?.isActive ?: true
-            )
-
-            // 🌐 ارسال اطلاعات استاد به سرور
-            btnSave.isEnabled = false
-            RetrofitClient.instance.addTeacher(model).enqueue(object : Callback<ApiResponse> {
-                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                    btnSave.isEnabled = true
-                    if (response.isSuccessful && response.body()?.status == "success") {
-                        AppDatabase.addTeacher(model)
-                        Toast.makeText(this@AddEditTeacherActivity, if (editingTeacher == null) "استاد ثبت شد" else "اطلاعات استاد ویرایش شد", Toast.LENGTH_SHORT).show()
-                        setResult(RESULT_OK)
-                        finish()
-                    } else {
-                        Toast.makeText(this@AddEditTeacherActivity, "خطا در ثبت اطلاعات در سرور", Toast.LENGTH_SHORT).show()
-                    }
+        save.setOnClickListener {
+            first.error=null; last.error=null; phone.error=null; national.error=null
+            val f=first.text?.toString()?.trim().orEmpty(); val l=last.text?.toString()?.trim().orEmpty()
+            val p=phone.text?.toString()?.replace(" ","")?.trim().orEmpty(); val n=national.text?.toString()?.trim().orEmpty()
+            when {
+                f.isBlank() -> { first.error="نام را وارد کنید"; first.requestFocus() }
+                l.isBlank() -> { last.error="نام خانوادگی را وارد کنید"; last.requestFocus() }
+                p.length !in 10..11 || !p.all(Char::isDigit) -> { phone.error="شماره تماس معتبر نیست"; phone.requestFocus() }
+                n.length != 10 || !n.all(Char::isDigit) -> { national.error="کد ملی باید ۱۰ رقم باشد"; national.requestFocus() }
+                else -> {
+                    val normalized=p.removePrefix("0")
+                    val model=TeacherModel(
+                        id=editing?.id?:UUID.randomUUID().toString(), firstName=f,lastName=l,phone=normalized,
+                        nationalId=n,password=if(editing==null)n else "",isActive=editing?.isActive?:true,classIds=editing?.classIds.orEmpty(),
+                        avatarName=editing?.avatarName?:"avatar_teacher_${(1..6).random()}"
+                    )
+                    setSaving(save,progress,true)
+                    RetrofitClient.instance.addTeacher(model).enqueue(object:Callback<ApiResponse>{
+                        override fun onResponse(call:Call<ApiResponse>,response:Response<ApiResponse>){
+                            setSaving(save,progress,false);val body=response.body()
+                            if(response.isSuccessful&&body?.status=="success"){
+                                AppDatabase.upsertTeacher(model,originalPhone=originalUsername.takeIf{it.isNotBlank()})
+                                Toast.makeText(this@AddEditTeacherActivity,body.message,Toast.LENGTH_SHORT).show();finish()
+                            } else Toast.makeText(this@AddEditTeacherActivity,body?.message?:"ثبت اطلاعات انجام نشد",Toast.LENGTH_LONG).show()
+                        }
+                        override fun onFailure(call:Call<ApiResponse>,t:Throwable){setSaving(save,progress,false);Toast.makeText(this@AddEditTeacherActivity,"خطا در اتصال به سرور",Toast.LENGTH_LONG).show()}
+                    })
                 }
-
-                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                    btnSave.isEnabled = true
-                    Toast.makeText(this@AddEditTeacherActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
-                }
-            })
+            }
         }
     }
 
-    companion object {
-        const val EXTRA_TEACHER_USERNAME = "TEACHER_USERNAME"
-    }
+    private fun setSaving(button:Button,progress:View,saving:Boolean){button.isEnabled=!saving;button.alpha=if(saving).55f else 1f;progress.visibility=if(saving)View.VISIBLE else View.GONE}
+    companion object { const val EXTRA_TEACHER_USERNAME="TEACHER_USERNAME" }
 }

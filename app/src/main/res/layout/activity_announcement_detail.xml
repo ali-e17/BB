@@ -12,12 +12,12 @@
         android:id="@+id/topBar"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="20dp"
         app:cardBackgroundColor="@color/card_background"
-        app:cardCornerRadius="18dp"
-        app:cardElevation="8dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -85,7 +85,7 @@
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#182B4E78"
+                app:strokeColor="@color/unified_border"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -167,7 +167,7 @@
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#182B4E78"
+                app:strokeColor="@color/unified_border"
                 app:strokeWidth="1dp">
 
                 <TextView
@@ -194,7 +194,7 @@
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#332B4E78"
+                app:strokeColor="@color/unified_border"
                 app:strokeWidth="1dp">
 
                 <LinearLayout

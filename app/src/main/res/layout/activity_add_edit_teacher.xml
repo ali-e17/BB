@@ -1,146 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:background="@drawable/app_global_background">
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/topBarAddEditTeacher"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
-        app:strokeWidth="0dp"
-        app:cardBackgroundColor="@color/card_background"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/btnTeacherBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="@color/main_text"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"/>
-
-            <TextView
-                android:id="@+id/tvTitleAddEdit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="افزودن استاد جدید"
-                android:textColor="@color/title_blue"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/app_global_background" android:fitsSystemWindows="true" android:layoutDirection="rtl">
+    <com.google.android.material.card.MaterialCardView android:id="@+id/topBarAddEditTeacher" android:layout_width="match_parent" android:layout_height="64dp"
+        android:layout_marginHorizontal="20dp" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="20dp" app:cardElevation="10dp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:strokeWidth="0dp">
+        <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
+            <ImageView android:id="@+id/btnTeacherBack" android:layout_width="48dp" android:layout_height="48dp" android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true" android:background="?android:attr/selectableItemBackgroundBorderless" android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert" app:tint="@color/main_text" />
+            <TextView android:id="@+id/tvTitleAddEdit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true"
+                android:text="افزودن استاد جدید" android:textColor="@color/title_blue" android:textSize="18sp" android:textStyle="bold" />
         </RelativeLayout>
     </com.google.android.material.card.MaterialCardView>
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topBarAddEditTeacher">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingBottom="24dp">
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="16dp"
-                android:hint="نام استاد"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/brand_orange">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTeacherFirstName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/main_text"
-                    android:inputType="text" />
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toBottomOf="@id/topBarAddEditTeacher">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="24dp" android:paddingTop="8dp" android:paddingBottom="28dp">
+            <TextView style="@style/UnifiedFormLabel" android:text="نام" />
+            <com.google.android.material.textfield.TextInputLayout style="@style/UnifiedOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:hintEnabled="false">
+                <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTeacherFirstName" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="right|center_vertical" android:inputType="textPersonName" android:textColor="@color/main_text" android:textDirection="rtl" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="نام خانوادگی استاد"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/brand_orange">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTeacherLastName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/main_text"
-                    android:inputType="text" />
+            <TextView style="@style/UnifiedFormLabel" android:text="نام خانوادگی" />
+            <com.google.android.material.textfield.TextInputLayout style="@style/UnifiedOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:hintEnabled="false">
+                <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTeacherLastName" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="right|center_vertical" android:inputType="textPersonName" android:textColor="@color/main_text" android:textDirection="rtl" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="نام کاربری (شماره تماس)"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/brand_orange">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTeacherPhone"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/main_text"
-                    android:inputType="phone" />
+            <TextView style="@style/UnifiedFormLabel" android:text="شماره تماس" />
+            <com.google.android.material.textfield.TextInputLayout style="@style/UnifiedOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:hintEnabled="false">
+                <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTeacherPhone" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789" android:gravity="center_vertical" android:inputType="phone" android:maxLength="11" android:textColor="@color/main_text" android:textDirection="ltr" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
-                android:hint="کد ملی (رمز عبور موقت)"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/brand_orange">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTeacherNationalId"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/main_text"
-                    android:inputType="number" />
+            <TextView style="@style/UnifiedFormLabel" android:text="کد ملی" />
+            <com.google.android.material.textfield.TextInputLayout style="@style/UnifiedOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" app:hintEnabled="false">
+                <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTeacherNationalId" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789" android:gravity="center_vertical" android:inputType="number" android:maxLength="10" android:textColor="@color/main_text" android:textDirection="ltr" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btnSaveTeacher"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="ثبت اطلاعات"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/brand_orange"
-                app:cornerRadius="12dp" />
-
+            <FrameLayout android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="28dp">
+                <Button android:id="@+id/btnSaveTeacher" android:layout_width="match_parent" android:layout_height="match_parent" android:backgroundTint="@color/brand_orange" android:text="ثبت اطلاعات" android:textColor="@color/white" android:textSize="16sp" android:textStyle="bold" app:cornerRadius="13dp" />
+                <ProgressBar android:id="@+id/progressSavingTeacher" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:visibility="gone" />
+            </FrameLayout>
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

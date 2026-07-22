@@ -3,6 +3,7 @@ package com.example.bb
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -16,50 +17,33 @@ class TeacherAdapter(
 
     class TeacherViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val itemRoot: LinearLayout = itemView.findViewById(R.id.itemTeacherRoot)
-        val txtAvatar: TextView = itemView.findViewById(R.id.txtTeacherAvatar)
-        val tvTeacherName: TextView = itemView.findViewById(R.id.tvTeacherName)
-        val tvTeacherUsername: TextView = itemView.findViewById(R.id.tvTeacherUsername)
-        val txtArchivedBadge: TextView = itemView.findViewById(R.id.txtArchivedBadge)
-        val btnViewDetails: MaterialButton = itemView.findViewById(R.id.btnViewTeacherDetails)
+        val avatar: ImageView = itemView.findViewById(R.id.ivTeacherAvatar)
+        val name: TextView = itemView.findViewById(R.id.tvTeacherName)
+        val phone: TextView = itemView.findViewById(R.id.tvTeacherUsername)
+        val classBadge: TextView = itemView.findViewById(R.id.tvTeacherClassCount)
+        val archivedBadge: TextView = itemView.findViewById(R.id.txtArchivedBadge)
+        val details: MaterialButton = itemView.findViewById(R.id.btnViewTeacherDetails)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TeacherViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_teacher, parent, false)
-        return TeacherViewHolder(view)
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TeacherViewHolder =
+        TeacherViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_teacher, parent, false))
 
     override fun onBindViewHolder(holder: TeacherViewHolder, position: Int) {
         val teacher = teachers[position]
-        val classCount = AppDatabase.getTeacherClasses(teacher.username).size
-
-        // 🌟 سیستم هوشمند نمایش آواتار اختصاصی اساتید
         val context = holder.itemView.context
-        holder.txtAvatar.text = "" // پاک کردن متن از داخل دایره
-
         val avatarName = teacher.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_teacher_1"
-        val resId = context.resources.getIdentifier(avatarName, "drawable", context.packageName)
-
-        if (resId != 0) {
-            holder.txtAvatar.setBackgroundResource(resId)
-        } else {
-            // در صورت پیدا نشدن عکس، آواتار پیش‌فرض شماره ۱ رو می‌ذاره
-            holder.txtAvatar.setBackgroundResource(context.resources.getIdentifier("avatar_teacher_1", "drawable", context.packageName))
-        }
-
-        holder.tvTeacherName.text = teacher.name
-        holder.tvTeacherUsername.text = "شماره: ${teacher.username} | کلاس فعال: $classCount"
-
-        holder.txtArchivedBadge.visibility = if (teacher.isActive) View.GONE else View.VISIBLE
-        holder.itemRoot.alpha = if (teacher.isActive) 1f else 0.55f
-
-        holder.itemView.setOnClickListener { onRowClick(teacher) }
-        holder.btnViewDetails.setOnClickListener { onDetailsClick(teacher) }
+        val res = context.resources.getIdentifier(avatarName, "drawable", context.packageName)
+        holder.avatar.setImageResource(if (res != 0) res else R.drawable.avatar_teacher_1)
+        holder.name.text = teacher.name
+        holder.phone.text = "شماره تماس: ${teacher.phone}"
+        val count = AppDatabase.getTeacherClasses(teacher.phone).size
+        holder.classBadge.text = if (count == 0) "بدون کلاس" else "$count کلاس فعال"
+        holder.archivedBadge.visibility = if (teacher.isActive) View.GONE else View.VISIBLE
+        holder.itemRoot.alpha = if (teacher.isActive) 1f else .7f
+        holder.itemRoot.setOnClickListener { onRowClick(teacher) }
+        holder.details.setOnClickListener { onDetailsClick(teacher) }
     }
 
     override fun getItemCount(): Int = teachers.size
-
-    fun updateData(newTeachers: List<TeacherModel>) {
-        teachers = newTeachers
-        notifyDataSetChanged()
-    }
+    fun updateData(newTeachers: List<TeacherModel>) { teachers = newTeachers; notifyDataSetChanged() }
 }
