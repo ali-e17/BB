@@ -79,6 +79,7 @@ data class UpdateAttendanceRequest(
     val sessionId: String,
     val heldDate: String,
     val editReason: String,
+    val expectedRevision: Int,
     val items: List<AttendanceSaveItemRequest>
 )
 

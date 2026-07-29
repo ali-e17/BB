@@ -1,423 +1,213 @@
 package com.example.bb
 
-import android.content.Context
 import android.content.Intent
-import android.graphics.Typeface
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
-import com.google.android.material.checkbox.MaterialCheckBox
-import com.google.android.material.progressindicator.LinearProgressIndicator
-import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.UUID
 
 class ReportCardSetupActivity : AppCompatActivity() {
-
-    private val componentTemplates = listOf(
-        GradeComponent("1", "Work Book", 0, false),
-        GradeComponent("2", "Class Activity", 0, false),
-        GradeComponent("3", "Attendance", 0, false),
-        GradeComponent("4", "Midterm", 0, false),
-        GradeComponent("5", "Oral", 0, false),
-        GradeComponent("6", "Final", 0, false)
-    )
-
-    private val components = mutableListOf<GradeComponent>()
     private val classes = mutableListOf<ClassModel>()
-
-    private lateinit var stepClassPanel: View
-    private lateinit var stepCriteriaPanel: View
-    private lateinit var txtStepTitle: TextView
-    private lateinit var stepProgress: LinearProgressIndicator
-
-    private lateinit var dropdownClassTarget: AutoCompleteTextView
-    private lateinit var btnChooseClassContinue: MaterialButton
-    private lateinit var txtClassSelectionHint: TextView
-
-    private lateinit var txtSelectedClassName: TextView
-    private lateinit var txtSelectedClassTime: TextView
-    private lateinit var containerFields: LinearLayout
-    private lateinit var txtTotalSumValue: TextView
-    private lateinit var txtSelectedCount: TextView
-    private lateinit var txtValidationHint: TextView
-    private lateinit var btnSaveLayout: MaterialButton
-
+    private val components = mutableListOf<EditableComponent>()
     private var selectedClass: ClassModel? = null
-    private var currentStep = STEP_CLASS
+    private var configRevision = 0
+
+    private lateinit var classDropdown: MaterialAutoCompleteTextView
+    private lateinit var selectedInfo: TextView
+    private lateinit var componentContainer: LinearLayout
+    private lateinit var totalText: TextView
+    private lateinit var passInput: TextInputEditText
+    private lateinit var conditionalInput: TextInputEditText
+    private lateinit var addButton: MaterialButton
+    private lateinit var continueButton: MaterialButton
+    private lateinit var progress: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report_card_setup)
+        findViewById<ImageView>(R.id.btnSetupBack).setOnClickListener { finish() }
+        classDropdown = findViewById(R.id.dropdownClassTarget)
+        selectedInfo = findViewById(R.id.txtSelectedClassInfo)
+        componentContainer = findViewById(R.id.containerFields)
+        totalText = findViewById(R.id.txtTotalSumValue)
+        passInput = findViewById(R.id.etPassNoStarMin)
+        conditionalInput = findViewById(R.id.etConditionalMin)
+        addButton = findViewById(R.id.btnAddCriterion)
+        continueButton = findViewById(R.id.btnSaveLayout)
+        progress = findViewById(R.id.progressReportSetup)
+        val role = getSharedPreferences("LocalAppPrefs", MODE_PRIVATE).getString("CURRENT_USER_ROLE", "STUDENT")
+        findViewById<MaterialButton>(R.id.btnEditResultMessages).apply {
+            visibility = if (role == "ADMIN") View.VISIBLE else View.GONE
+            setOnClickListener { startActivity(Intent(this@ReportCardSetupActivity, ResultMessagesActivity::class.java)) }
+        }
 
-        bindViews()
-        resetComponents()
-        showClassStep()
+        addButton.setOnClickListener {
+            if (components.size >= 8) Toast.makeText(this, "حداکثر ۸ معیار مجاز است", Toast.LENGTH_SHORT).show()
+            else { components += EditableComponent(UUID.randomUUID().toString(), "", 0.0); renderComponents() }
+        }
+        continueButton.setOnClickListener { saveAndContinue() }
         loadClasses()
-
-        findViewById<ImageView>(R.id.btnSetupBack).setOnClickListener { handleBack() }
-
-        btnChooseClassContinue.setOnClickListener {
-            val selected = selectedClass
-            if (selected == null) {
-                Toast.makeText(this, "ابتدا یک کلاس را انتخاب کنید", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            hideKeyboard()
-            restoreSavedCriteria(selected.id)
-            showCriteriaStep()
-        }
-
-        btnSaveLayout.setOnClickListener {
-            val selected = selectedClass ?: return@setOnClickListener
-            val activeFields = components.filter { it.isSelected }.map { it.copy() }
-
-            if (!isCriteriaValid(activeFields)) {
-                Toast.makeText(this, "بارم‌بندی را کامل و مجموع را ۱۰۰ کنید", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            hideKeyboard()
-            startActivity(
-                Intent(this, GradeEntryActivity::class.java)
-                    .putExtra("ACTIVE_CRITERIA", ArrayList(activeFields))
-                    .putExtra("SELECTED_CLASS", selected.className)
-                    .putExtra("SELECTED_CLASS_ID", selected.id)
-            )
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (currentStep == STEP_CRITERIA) {
-            selectedClass?.let { restoreSavedCriteria(it.id) }
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        handleBack()
-    }
-
-    private fun bindViews() {
-        stepClassPanel = findViewById(R.id.stepClassPanel)
-        stepCriteriaPanel = findViewById(R.id.stepCriteriaPanel)
-        txtStepTitle = findViewById(R.id.txtStepTitle)
-        stepProgress = findViewById(R.id.stepProgress)
-
-        dropdownClassTarget = findViewById(R.id.dropdownClassTarget)
-        btnChooseClassContinue = findViewById(R.id.btnChooseClassContinue)
-        txtClassSelectionHint = findViewById(R.id.txtClassSelectionHint)
-
-        txtSelectedClassName = findViewById(R.id.txtSelectedClassName)
-        txtSelectedClassTime = findViewById(R.id.txtSelectedClassTime)
-        containerFields = findViewById(R.id.containerFields)
-        txtTotalSumValue = findViewById(R.id.txtTotalSumValue)
-        txtSelectedCount = findViewById(R.id.txtSelectedCount)
-        txtValidationHint = findViewById(R.id.txtValidationHint)
-        btnSaveLayout = findViewById(R.id.btnSaveLayout)
-    }
-
-    private fun handleBack() {
-        if (currentStep == STEP_CRITERIA) {
-            hideKeyboard()
-            showClassStep()
-        } else {
-            finish()
-        }
-    }
-
-    private fun showClassStep() {
-        currentStep = STEP_CLASS
-        stepClassPanel.visibility = View.VISIBLE
-        stepCriteriaPanel.visibility = View.GONE
-        txtStepTitle.text = "مرحله ۱ از ۲ · انتخاب کلاس"
-        stepProgress.setProgressCompat(50, true)
-        updateClassContinueState()
-    }
-
-    private fun showCriteriaStep() {
-        currentStep = STEP_CRITERIA
-        stepClassPanel.visibility = View.GONE
-        stepCriteriaPanel.visibility = View.VISIBLE
-        txtStepTitle.text = "مرحله ۲ از ۲ · تنظیم معیارها"
-        stepProgress.setProgressCompat(100, true)
-
-        selectedClass?.let {
-            txtSelectedClassName.text = it.className
-            txtSelectedClassTime.text = it.classTime.ifBlank { "برنامه زمانی ثبت نشده" }
-        }
-
-        buildDynamicFields()
-        calculateLiveTotal()
     }
 
     private fun loadClasses() {
-        setClasses(AppDatabase.getAllClasses(false))
-
+        setLoading(true)
         RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
-            override fun onResponse(
-                call: Call<List<ClassModel>>,
-                response: Response<List<ClassModel>>
-            ) {
-                val result = response.body()
-                if (response.isSuccessful && result != null) {
-                    AppDatabase.replaceClasses(result)
-                    setClasses(result)
+            override fun onResponse(call: Call<List<ClassModel>>, response: Response<List<ClassModel>>) {
+                setLoading(false)
+                classes.clear()
+                if (response.isSuccessful) {
+                    val prefs = getSharedPreferences("LocalAppPrefs", MODE_PRIVATE)
+                    val role = prefs.getString("CURRENT_USER_ROLE", "STUDENT").orEmpty().uppercase()
+                    val userId = prefs.getString("CURRENT_USER_ID", "").orEmpty()
+                    classes += response.body().orEmpty().filter {
+                        it.status == ClassStatus.ACTIVE &&
+                            (role == "ADMIN" || (role == "TEACHER" && it.teacherId == userId))
+                    }
                 }
+                classDropdown.setAdapter(ArrayAdapter(this@ReportCardSetupActivity, android.R.layout.simple_dropdown_item_1line, classes.map { it.className }))
+                classDropdown.setOnItemClickListener { _, _, position, _ ->
+                    selectedClass = classes.getOrNull(position)
+                    selectedClass?.let { c ->
+                        classDropdown.setText(c.className, false)
+                        selectedInfo.text = buildClassInfo(c)
+                        loadConfig(c.id)
+                    }
+                }
+                if (classes.isEmpty()) selectedInfo.text = "کلاس فعالی برای صدور کارنامه وجود ندارد"
             }
-
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
-                if (classes.isEmpty()) {
-                    txtClassSelectionHint.text = "دریافت کلاس‌ها ممکن نشد؛ اتصال اینترنت را بررسی کنید."
-                    txtClassSelectionHint.setTextColor(
-                        ContextCompat.getColor(this@ReportCardSetupActivity, android.R.color.holo_red_dark)
-                    )
-                }
+                setLoading(false); selectedInfo.text = "دریافت کلاس‌ها انجام نشد"
             }
         })
     }
 
-    private fun setClasses(newClasses: List<ClassModel>) {
-        val previousId = selectedClass?.id
-
-        classes.clear()
-        classes.addAll(
-            newClasses
-                .filter { it.status == ClassStatus.ACTIVE }
-                .distinctBy { it.id }
-        )
-
-        dropdownClassTarget.setAdapter(ClassDropdownAdapter(this, classes))
-        dropdownClassTarget.setOnItemClickListener { _, _, position, _ ->
-            selectedClass = classes.getOrNull(position)
-            selectedClass?.let {
-                dropdownClassTarget.setText(it.className, false)
-                txtClassSelectionHint.text = it.classTime.ifBlank { "برنامه زمانی ثبت نشده" }
-                txtClassSelectionHint.setTextColor(ContextCompat.getColor(this, R.color.sub_text))
-            }
-            updateClassContinueState()
-        }
-
-        if (previousId != null) {
-            classes.find { it.id == previousId }?.let {
-                selectedClass = it
-                dropdownClassTarget.setText(it.className, false)
-                txtClassSelectionHint.text = it.classTime.ifBlank { "برنامه زمانی ثبت نشده" }
-            }
-        }
-
-        if (classes.isEmpty()) {
-            txtClassSelectionHint.text = "کلاس فعالی برای ثبت کارنامه وجود ندارد."
-            btnChooseClassContinue.isEnabled = false
-            btnChooseClassContinue.alpha = 0.5f
-        } else {
-            updateClassContinueState()
-        }
-    }
-
-    private fun updateClassContinueState() {
-        val enabled = selectedClass != null
-        btnChooseClassContinue.isEnabled = enabled
-        btnChooseClassContinue.alpha = if (enabled) 1f else 0.5f
-    }
-
-    private fun resetComponents() {
-        components.clear()
-        components.addAll(componentTemplates.map { it.copy() })
-    }
-
-    private fun restoreSavedCriteria(classId: String) {
-        val saved = AppDatabase.getSavedReportCardCriteria(classId)
-
-        components.clear()
-        componentTemplates.forEach { template ->
-            val previous = saved?.find { it.id == template.id }
-            components += previous?.copy() ?: template.copy()
-        }
-
-        btnSaveLayout.text = if (AppDatabase.hasPublishedReportCards(classId)) {
-            "ادامه و ویرایش نمرات"
-        } else {
-            "تأیید و ورود به ثبت نمرات"
-        }
-
-        if (currentStep == STEP_CRITERIA) {
-            buildDynamicFields()
-            calculateLiveTotal()
-        }
-    }
-
-    private fun buildDynamicFields() {
-        containerFields.removeAllViews()
-        val inflater = LayoutInflater.from(this)
-
-        components.forEach { component ->
-            val row = inflater.inflate(R.layout.item_setup_field, containerFields, false)
-            val card = row.findViewById<MaterialCardView>(R.id.cardCriterion)
-            val selectionArea = row.findViewById<View>(R.id.selectionArea)
-            val checkbox = row.findViewById<MaterialCheckBox>(R.id.checkboxField)
-            val name = row.findViewById<TextView>(R.id.txtFieldName)
-            val scoreLayout = row.findViewById<TextInputLayout>(R.id.scoreInputLayout)
-            val scoreInput = row.findViewById<EditText>(R.id.etMaxScore)
-
-            name.text = component.name
-            checkbox.isChecked = component.isSelected
-            scoreInput.setText(component.maxScore.toString())
-
-            fun renderRow() {
-                val selected = component.isSelected
-                val activeColor = ContextCompat.getColor(this, R.color.title_blue)
-
-                card.strokeWidth = if (selected) dpToPx(2) else dpToPx(1)
-                card.setStrokeColor(if (selected) activeColor else 0x1A2B4E78)
-                scoreLayout.isEnabled = selected
-                scoreInput.isEnabled = selected
-                scoreInput.alpha = if (selected) 1f else 0.55f
-                name.alpha = 1f
-            }
-
-            checkbox.setOnCheckedChangeListener(null)
-            checkbox.isChecked = component.isSelected
-            checkbox.setOnCheckedChangeListener { _, checked ->
-                component.isSelected = checked
-                if (!checked) {
-                    component.maxScore = 0
-                    scoreInput.setText("0")
-                    scoreLayout.error = null
+    private fun loadConfig(classId: String) {
+        setLoading(true)
+        RetrofitClient.instance.getReportConfig(classId).enqueue(object : Callback<ReportConfigResponse> {
+            override fun onResponse(call: Call<ReportConfigResponse>, response: Response<ReportConfigResponse>) {
+                setLoading(false)
+                val config = response.body()?.config
+                components.clear()
+                if (response.isSuccessful && config != null) {
+                    configRevision = config.revision
+                    passInput.setText(format(config.passWithoutStarMin))
+                    conditionalInput.setText(format(config.conditionalMin))
+                    components += config.components.sortedBy { it.sortOrder }.map { EditableComponent(it.id, it.title, it.maxScore) }
+                } else {
+                    configRevision = 0
+                    passInput.setText("78")
+                    conditionalInput.setText("70")
+                    components += listOf(
+                        EditableComponent(UUID.randomUUID().toString(), "Work Book", 15.0),
+                        EditableComponent(UUID.randomUUID().toString(), "Class Activity", 15.0),
+                        EditableComponent(UUID.randomUUID().toString(), "Attendance", 10.0),
+                        EditableComponent(UUID.randomUUID().toString(), "Midterm", 20.0),
+                        EditableComponent(UUID.randomUUID().toString(), "Oral", 15.0),
+                        EditableComponent(UUID.randomUUID().toString(), "Final", 25.0)
+                    )
                 }
-                renderRow()
-                calculateLiveTotal()
+                renderComponents()
             }
-
-            selectionArea.setOnClickListener {
-                checkbox.isChecked = !checkbox.isChecked
+            override fun onFailure(call: Call<ReportConfigResponse>, t: Throwable) {
+                setLoading(false); Toast.makeText(this@ReportCardSetupActivity, "دریافت تنظیمات کارنامه انجام نشد", Toast.LENGTH_LONG).show()
             }
+        })
+    }
 
-            scoreInput.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
-
-                override fun afterTextChanged(s: Editable?) {
-                    val value = s?.toString()?.trim()?.toIntOrNull() ?: 0
-                    component.maxScore = value
-                    scoreLayout.error = if (value > 100) "حداکثر ۱۰۰" else null
-                    calculateLiveTotal()
-                }
-            })
-
-            scoreInput.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus && scoreInput.text.toString() == "0") {
-                    scoreInput.selectAll()
-                } else if (!hasFocus && scoreInput.text.isNullOrBlank()) {
-                    scoreInput.setText("0")
-                }
+    private fun renderComponents() {
+        componentContainer.removeAllViews()
+        components.forEachIndexed { index, component ->
+            val row = LayoutInflater.from(this).inflate(R.layout.item_report_component_edit, componentContainer, false)
+            val title = row.findViewById<TextInputEditText>(R.id.etComponentTitle)
+            val max = row.findViewById<TextInputEditText>(R.id.etComponentMax)
+            title.setText(component.title); max.setText(if (component.maxScore > 0) format(component.maxScore) else "")
+            title.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) component.title = title.text?.toString()?.trim().orEmpty() }
+            max.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) { component.maxScore = max.text?.toString()?.toDoubleOrNull() ?: 0.0; updateTotal() } }
+            row.findViewById<View>(R.id.btnRemoveComponent).setOnClickListener {
+                if (components.size == 1) Toast.makeText(this, "حداقل یک معیار لازم است", Toast.LENGTH_SHORT).show()
+                else { syncRows(); components.removeAt(index); renderComponents() }
             }
+            componentContainer.addView(row)
+        }
+        addButton.isEnabled = components.size < 8
+        updateTotal()
+    }
 
-            renderRow()
-            containerFields.addView(row)
+    private fun syncRows() {
+        for (i in 0 until componentContainer.childCount) {
+            val row = componentContainer.getChildAt(i)
+            components.getOrNull(i)?.apply {
+                title = row.findViewById<TextInputEditText>(R.id.etComponentTitle).text?.toString()?.trim().orEmpty()
+                maxScore = row.findViewById<TextInputEditText>(R.id.etComponentMax).text?.toString()?.toDoubleOrNull() ?: 0.0
+            }
         }
     }
 
-    private fun calculateLiveTotal() {
-        val active = components.filter { it.isSelected }
-        val total = active.sumOf { it.maxScore }
-        val invalidScore = active.any { it.maxScore !in 1..100 }
-        val valid = selectedClass != null && active.isNotEmpty() && !invalidScore && total == 100
-
-        txtTotalSumValue.text = "$total / 100"
-        txtSelectedCount.text = "${active.size} معیار انتخاب شده"
-
-        val color = ContextCompat.getColor(
-            this,
-            if (valid) android.R.color.holo_green_dark else android.R.color.holo_red_dark
-        )
-        txtTotalSumValue.setTextColor(color)
-        txtValidationHint.setTextColor(color)
-
-        txtValidationHint.text = when {
-            active.isEmpty() -> "حداقل یک معیار را فعال کنید."
-            invalidScore -> "بارم هر معیار فعال باید بین ۱ تا ۱۰۰ باشد."
-            total < 100 -> "${100 - total} نمره تا تکمیل بارم‌بندی باقی مانده است."
-            total > 100 -> "مجموع بارم ${total - 100} نمره بیشتر از حد مجاز است."
-            else -> "بارم‌بندی کامل است و می‌توانید ادامه دهید."
-        }
-
-        btnSaveLayout.isEnabled = valid
-        btnSaveLayout.alpha = if (valid) 1f else 0.5f
+    private fun updateTotal() {
+        syncRowsSafe()
+        val total = components.sumOf { it.maxScore }
+        totalText.text = "مجموع بارم: ${format(total)} از ۱۰۰"
+        totalText.setTextColor(if (kotlin.math.abs(total - 100.0) < 0.001) 0xFF027A48.toInt() else 0xFFB42318.toInt())
     }
 
-    private fun isCriteriaValid(items: List<GradeComponent>): Boolean =
-        items.isNotEmpty() &&
-            items.all { it.maxScore in 1..100 } &&
-            items.sumOf { it.maxScore } == 100
-
-    private fun hideKeyboard() {
-        currentFocus?.let { view ->
-            val manager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            manager.hideSoftInputFromWindow(view.windowToken, 0)
-            view.clearFocus()
-        }
-    }
-
-    private fun dpToPx(dp: Int): Int =
-        (dp * resources.displayMetrics.density).toInt()
-
-    private class ClassDropdownAdapter(
-        private val adapterContext: Context,
-        private val items: List<ClassModel>
-    ) : ArrayAdapter<ClassModel>(adapterContext, android.R.layout.simple_list_item_2, items) {
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
-            createView(position, convertView, parent)
-
-        override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View =
-            createView(position, convertView, parent)
-
-        private fun createView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val view = convertView ?: LayoutInflater.from(adapterContext)
-                .inflate(android.R.layout.simple_list_item_2, parent, false)
-            val item = items[position]
-
-            view.findViewById<TextView>(android.R.id.text1).apply {
-                text = item.className
-                setTextColor(ContextCompat.getColor(adapterContext, R.color.main_text))
-                setTypeface(typeface, Typeface.BOLD)
-                textSize = 15f
-                maxLines = 2
+    private fun syncRowsSafe() {
+        for (i in 0 until componentContainer.childCount) {
+            val row = componentContainer.getChildAt(i)
+            components.getOrNull(i)?.let { c ->
+                c.title = row.findViewById<TextInputEditText>(R.id.etComponentTitle).text?.toString()?.trim().orEmpty()
+                c.maxScore = row.findViewById<TextInputEditText>(R.id.etComponentMax).text?.toString()?.toDoubleOrNull() ?: 0.0
             }
-
-            view.findViewById<TextView>(android.R.id.text2).apply {
-                text = item.classTime.ifBlank { "برنامه زمانی ثبت نشده" }
-                setTextColor(ContextCompat.getColor(adapterContext, R.color.sub_text))
-                textSize = 12f
-                maxLines = 2
-            }
-
-            view.setPadding(24, 16, 24, 16)
-            return view
         }
     }
 
-    companion object {
-        private const val STEP_CLASS = 1
-        private const val STEP_CRITERIA = 2
+    private fun saveAndContinue() {
+        val c = selectedClass ?: return Toast.makeText(this, "کلاس را انتخاب کنید", Toast.LENGTH_SHORT).show()
+        syncRows()
+        val pass = passInput.text?.toString()?.toDoubleOrNull()
+        val conditional = conditionalInput.text?.toString()?.toDoubleOrNull()
+        when {
+            components.isEmpty() || components.size > 8 -> return toast("تعداد معیارها باید بین ۱ تا ۸ باشد")
+            components.any { it.title.isBlank() || it.maxScore <= 0 } -> return toast("نام و بارم همه معیارها را کامل کنید")
+            components.map { it.title.lowercase() }.distinct().size != components.size -> return toast("نام معیار تکراری است")
+            kotlin.math.abs(components.sumOf { it.maxScore } - 100.0) > 0.001 -> return toast("مجموع بارم‌ها باید دقیقاً ۱۰۰ باشد")
+            pass == null || conditional == null || conditional < 0 || conditional >= pass || pass >= 83 -> return toast("مرزها باید ۰ ≤ مشروطی < قبولی بدون ستاره < ۸۳ باشند")
+        }
+        val request = SaveReportConfigRequest(c.id, pass!!, conditional!!, configRevision, components.mapIndexed { index, x -> ReportComponentDto(x.id, x.title, x.maxScore, index + 1) })
+        setLoading(true)
+        RetrofitClient.instance.saveReportConfig(request).enqueue(object : Callback<SaveReportConfigResponse> {
+            override fun onResponse(call: Call<SaveReportConfigResponse>, response: Response<SaveReportConfigResponse>) {
+                setLoading(false); val body = response.body()
+                if (response.isSuccessful && body?.status == "success") {
+                    startActivity(Intent(this@ReportCardSetupActivity, GradeEntryActivity::class.java)
+                        .putExtra(GradeEntryActivity.EXTRA_CLASS_ID, c.id)
+                        .putExtra(GradeEntryActivity.EXTRA_CLASS_NAME, c.className))
+                } else toast(body?.message ?: "ذخیره تنظیمات انجام نشد")
+            }
+            override fun onFailure(call: Call<SaveReportConfigResponse>, t: Throwable) { setLoading(false); toast("ارتباط با سرور برقرار نشد") }
+        })
     }
+
+    private fun buildClassInfo(c: ClassModel): String = listOf(
+        c.classCode.takeIf(String::isNotBlank)?.let { "کد $it" },
+        c.bookName.takeIf(String::isNotBlank)?.let { "کتاب $it" },
+        c.classLevel.takeIf(String::isNotBlank)?.let { "سطح $it" },
+        listOf(c.termSeason, c.termYear).filter(String::isNotBlank).joinToString(" ").takeIf(String::isNotBlank)
+    ).filterNotNull().joinToString("  •  ").ifBlank { "اطلاعات تکمیلی این کلاس هنوز کامل نشده" }
+
+    private fun setLoading(value: Boolean) { progress.visibility = if (value) View.VISIBLE else View.GONE; continueButton.isEnabled = !value }
+    private fun format(v: Double) = if (v % 1.0 == 0.0) v.toInt().toString() else "%.2f".format(v)
+    private fun toast(s: String) { Toast.makeText(this, s, Toast.LENGTH_LONG).show() }
+    private data class EditableComponent(val id: String, var title: String, var maxScore: Double)
 }

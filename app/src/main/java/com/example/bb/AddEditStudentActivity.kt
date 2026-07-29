@@ -46,7 +46,7 @@ class AddEditStudentActivity : AppCompatActivity() {
             val phoneValue = phone.text.toString().trim()
             val nationalIdValue = nationalId.text.toString().trim()
 
-            if (fname.isBlank() || lname.isBlank() || phoneValue.isBlank() || nationalIdValue.isBlank()) {
+            if (fname.isBlank() || lname.isBlank() || codeValue.isBlank() || phoneValue.isBlank() || nationalIdValue.isBlank()) {
                 Toast.makeText(this, "لطفاً فیلدهای ضروری را پر کنید", Toast.LENGTH_SHORT).show(); return@setOnClickListener
             }
 
@@ -70,7 +70,7 @@ class AddEditStudentActivity : AppCompatActivity() {
                 studentCode = codeValue,
                 phone = phoneValue,
                 nationalId = nationalIdValue,
-                password = old?.password ?: nationalIdValue,
+                password = "",
                 classId = old?.classId,
                 registrationDate = old?.registrationDate ?: AppDatabase.today(),
                 isActive = old?.isActive ?: true,

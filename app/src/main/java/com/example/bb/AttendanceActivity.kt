@@ -34,7 +34,7 @@ import java.util.Locale
 class AttendanceActivity : AppCompatActivity() {
 
     private lateinit var role: UserRole
-    private var username: String = ""
+    private var currentUserId: String = ""
 
     private val availableClasses = mutableListOf<ClassModel>()
     private var selectedClass: ClassModel? = null
@@ -65,7 +65,7 @@ class AttendanceActivity : AppCompatActivity() {
         role = runCatching {
             UserRole.valueOf(prefs.getString("CURRENT_USER_ROLE", "TEACHER").orEmpty())
         }.getOrDefault(UserRole.TEACHER)
-        username = prefs.getString("CURRENT_USERNAME", "").orEmpty()
+        currentUserId = prefs.getString("CURRENT_USER_ID", "").orEmpty()
 
         if (role == UserRole.STUDENT) {
             Toast.makeText(this, "این بخش مخصوص استاد و مدیر است", Toast.LENGTH_SHORT).show()
@@ -148,7 +148,7 @@ class AttendanceActivity : AppCompatActivity() {
             source.asSequence()
                 .filter { role == UserRole.ADMIN || it.status == ClassStatus.ACTIVE }
                 .filter {
-                    role == UserRole.ADMIN || normalizePhone(it.teacherPhone.orEmpty()) == normalizePhone(username)
+                    role == UserRole.ADMIN || it.teacherId == currentUserId
                 }
                 .distinctBy { it.id }
                 .sortedWith(compareBy<ClassModel> { it.className.lowercase() }.thenBy { it.startTime })
@@ -166,10 +166,7 @@ class AttendanceActivity : AppCompatActivity() {
             return
         }
 
-        val classNames = availableClasses.map {
-            val statusLabel = if (it.status == ClassStatus.COMPLETED) "  •  پایان‌یافته" else ""
-            "${it.className}  •  ${it.sessionCount} جلسه$statusLabel"
-        }
+        val classNames = availableClasses.map { it.className }
         spinnerClass.setAdapter(
             ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, classNames)
         )
@@ -624,6 +621,7 @@ class AttendanceActivity : AppCompatActivity() {
                 sessionId = sessionId,
                 heldDate = selectedHeldDate,
                 editReason = reason,
+                expectedRevision = session.revision,
                 items = buildSaveItems()
             )
         ).enqueue(object : Callback<AttendanceSaveResponse> {

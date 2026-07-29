@@ -1,275 +1,164 @@
 package com.example.bb
 
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
+import android.widget.ArrayAdapter
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class GradeEntryActivity : AppCompatActivity() {
-
-    private lateinit var selectedClassId: String
-    private lateinit var selectedClassName: String
-    private lateinit var activeCriteria: List<GradeComponent>
-
-    private val allStudents = mutableListOf<StudentGrade>()
-    private val visibleStudents = mutableListOf<StudentGrade>()
-
-    private lateinit var recycler: RecyclerView
-    private lateinit var adapter: StudentGradeAdapter
-    private lateinit var txtProgress: TextView
-    private lateinit var txtStorageHint: TextView
-    private lateinit var btnSaveDraft: Button
-    private lateinit var btnPublish: Button
-    private lateinit var searchInput: TextInputEditText
-
-    private var suppressAutoSave = false
-    private var dataLoaded = false
+    private lateinit var classId: String
+    private lateinit var className: String
+    private lateinit var studentDropdown: MaterialAutoCompleteTextView
+    private lateinit var studentMeta: TextView
+    private lateinit var scoreContainer: LinearLayout
+    private lateinit var totalText: TextView
+    private lateinit var draftButton: MaterialButton
+    private lateinit var publishButton: MaterialButton
+    private lateinit var progress: View
+    private var config: ReportConfigDto? = null
+    private val students = mutableListOf<EditableStudent>()
+    private var selectedIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_grade_entry)
-
-        selectedClassName = intent.getStringExtra("SELECTED_CLASS") ?: "نامشخص"
-        selectedClassId = intent.getStringExtra("SELECTED_CLASS_ID") ?: ""
-        @Suppress("DEPRECATION")
-        activeCriteria = intent.getSerializableExtra("ACTIVE_CRITERIA") as? ArrayList<GradeComponent>
-            ?: emptyList()
-
-        findViewById<ImageView>(R.id.btnEntryBack).setOnClickListener { closeAndSaveDraft() }
-        findViewById<TextView>(R.id.txtClassTitle).text = "نمرات $selectedClassName"
-
-        recycler = findViewById(R.id.recyclerStudents)
-        txtProgress = findViewById(R.id.txtGradeProgress)
-        txtStorageHint = findViewById(R.id.txtGradeStorageHint)
-        btnSaveDraft = findViewById(R.id.btnSaveDraft)
-        btnPublish = findViewById(R.id.btnPublishLayout)
-        searchInput = findViewById(R.id.etSearchGradeStudent)
-
-        recycler.layoutManager = LinearLayoutManager(this)
-        adapter = StudentGradeAdapter(
-            students = visibleStudents,
-            activeCriteria = activeCriteria,
-            className = selectedClassName,
-            onStatusChanged = {
-                updateProgress()
-            }
-        )
-        recycler.adapter = adapter
-
-        btnSaveDraft.setOnClickListener { saveDraft(showToast = true) }
-        btnPublish.setOnClickListener { requestPublish() }
-
-        searchInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
-            override fun afterTextChanged(s: Editable?) {
-                applySearch(s?.toString().orEmpty())
-            }
-        })
-
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() = closeAndSaveDraft()
-        })
-
-        renderStorageState()
-        loadStudents()
+        classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
+        className = intent.getStringExtra(EXTRA_CLASS_NAME).orEmpty()
+        if (classId.isBlank()) { finish(); return }
+        findViewById<ImageView>(R.id.btnGradeBack).setOnClickListener { finish() }
+        findViewById<TextView>(R.id.txtGradeClassName).text = className
+        studentDropdown = findViewById(R.id.dropdownGradeStudent)
+        studentMeta = findViewById(R.id.txtGradeStudentMeta)
+        scoreContainer = findViewById(R.id.containerGradeInputs)
+        totalText = findViewById(R.id.txtGradeTotal)
+        draftButton = findViewById(R.id.btnSaveDraft)
+        publishButton = findViewById(R.id.btnPublishReports)
+        progress = findViewById(R.id.progressGradeEntry)
+        findViewById<View>(R.id.btnPreviousStudent).setOnClickListener { move(-1) }
+        findViewById<View>(R.id.btnNextStudent).setOnClickListener { move(1) }
+        draftButton.setOnClickListener { save(false, "") }
+        publishButton.setOnClickListener { requestPublish() }
+        loadRoster()
     }
 
-    override fun onPause() {
-        super.onPause()
-        if (!suppressAutoSave && dataLoaded && allStudents.isNotEmpty()) {
-            saveDraft(showToast = false)
-        }
-    }
-
-    private fun loadStudents() {
+    private fun loadRoster() {
         setLoading(true)
-        RetrofitClient.instance.getStudents().enqueue(object : Callback<List<StudentModel>> {
-            override fun onResponse(
-                call: Call<List<StudentModel>>,
-                response: Response<List<StudentModel>>
-            ) {
-                val serverStudents = response.body()
-                if (response.isSuccessful && serverStudents != null) {
-                    AppDatabase.replaceStudents(serverStudents)
-                    buildGradeList(serverStudents)
-                } else {
-                    buildGradeList(AppDatabase.getAllStudents())
-                    Toast.makeText(
-                        this@GradeEntryActivity,
-                        "پاسخ سرور معتبر نبود؛ اطلاعات ذخیره‌شده دستگاه نمایش داده شد",
-                        Toast.LENGTH_SHORT
-                    ).show()
+        RetrofitClient.instance.getReportRoster(classId).enqueue(object : Callback<ReportRosterResponse> {
+            override fun onResponse(call: Call<ReportRosterResponse>, response: Response<ReportRosterResponse>) {
+                setLoading(false); val body = response.body()
+                if (!response.isSuccessful || body?.status != "success" || body.config == null) {
+                    toast(body?.message ?: "دریافت فهرست نمرات انجام نشد"); return
                 }
+                config = body.config
+                students.clear(); students += body.students.map { s ->
+                    EditableStudent(s.id, s.name, s.studentCode, s.cardId, s.status, s.revision,
+                        body.config.components.associate { c -> c.id to s.scores[c.id] }.toMutableMap())
+                }
+                studentDropdown.setAdapter(ArrayAdapter(this@GradeEntryActivity, android.R.layout.simple_dropdown_item_1line, students.map { it.name }))
+                studentDropdown.setOnItemClickListener { _, _, position, _ -> syncCurrent(); selectedIndex = position; renderCurrent() }
+                if (students.isEmpty()) toast("دانش‌آموزی در سابقه این کلاس ثبت نشده") else renderCurrent()
             }
-
-            override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
-                buildGradeList(AppDatabase.getAllStudents())
-                Toast.makeText(
-                    this@GradeEntryActivity,
-                    "لیست دانش‌آموزان از اطلاعات ذخیره‌شده دستگاه نمایش داده شد",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            override fun onFailure(call: Call<ReportRosterResponse>, t: Throwable) { setLoading(false); toast("ارتباط با سرور برقرار نشد") }
         })
     }
 
-    private fun buildGradeList(source: List<StudentModel>) {
-        val classStudents = source.filter {
-            it.isActive && it.classId == selectedClassId
+    private fun renderCurrent() {
+        val student = students.getOrNull(selectedIndex) ?: return
+        val components = config?.components.orEmpty().sortedBy { it.sortOrder }
+        studentDropdown.setText(student.name, false)
+        studentMeta.text = "کد دانش‌آموزی: ${student.studentCode.ifBlank { "تعیین نشده" }}  •  ${selectedIndex + 1} از ${students.size}"
+        scoreContainer.removeAllViews()
+        components.forEach { component ->
+            val row = LayoutInflater.from(this).inflate(R.layout.item_grade_input_compact, scoreContainer, false)
+            row.findViewById<TextView>(R.id.txtCompactCriterion).text = component.title
+            row.findViewById<TextView>(R.id.txtCompactMax).text = "از ${format(component.maxScore)}"
+            val input = row.findViewById<TextInputEditText>(R.id.etCompactScore)
+            student.scores[component.id]?.let { input.setText(format(it)) }
+            input.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) { syncCurrent(); updateTotal() } }
+            row.findViewById<View>(R.id.btnCompactZero).setOnClickListener { input.setText("0"); syncCurrent(); updateTotal() }
+            scoreContainer.addView(row)
         }
+        updateTotal()
+    }
 
-        val draft = AppDatabase.getReportCardDraft(selectedClassId)
-        val publishedByStudent = AppDatabase.getPublishedReportCardsForClass(selectedClassId)
-            .associateBy { it.studentId }
-
-        allStudents.clear()
-        classStudents.forEach { student ->
-            val draftScores = draft?.scoresByStudent?.get(student.id)
-            val publishedScores = publishedByStudent[student.id]?.scores
-
-            val scores = activeCriteria.associate { criterion ->
-                val value: Int? = when {
-                    draftScores?.containsKey(criterion.id) == true -> draftScores[criterion.id]
-                    publishedScores?.containsKey(criterion.id) == true -> publishedScores[criterion.id]
-                    else -> 0
-                }
-                criterion.id to value
-            }.toMutableMap()
-
-            allStudents += StudentGrade(
-                id = student.id,
-                name = student.name,
-                studentCode = student.studentCode.ifBlank { student.id },
-                status = EntryStatus.COMPLETED,
-                scores = scores
-            )
-        }
-
-        dataLoaded = true
-        setLoading(false)
-        applySearch(searchInput.text?.toString().orEmpty())
-        updateProgress()
-
-        if (allStudents.isEmpty()) {
-            Toast.makeText(this, "این کلاس دانش‌آموز فعالی ندارد", Toast.LENGTH_LONG).show()
+    private fun syncCurrent() {
+        val student = students.getOrNull(selectedIndex) ?: return
+        val components = config?.components.orEmpty().sortedBy { it.sortOrder }
+        for (i in 0 until scoreContainer.childCount) {
+            val component = components.getOrNull(i) ?: continue
+            val row = scoreContainer.getChildAt(i)
+            val raw = row.findViewById<TextInputEditText>(R.id.etCompactScore).text?.toString()?.trim().orEmpty()
+            val value = raw.toDoubleOrNull()
+            val input = row.findViewById<TextInputEditText>(R.id.etCompactScore)
+            when {
+                raw.isBlank() -> { student.scores[component.id] = null; input.error = null }
+                value == null || value < 0 || value > component.maxScore -> { student.scores[component.id] = null; input.error = "۰ تا ${format(component.maxScore)}" }
+                else -> { student.scores[component.id] = value; input.error = null }
+            }
         }
     }
 
-    private fun applySearch(rawQuery: String) {
-        val query = rawQuery.trim()
-        visibleStudents.clear()
-        visibleStudents += if (query.isBlank()) {
-            allStudents
-        } else {
-            allStudents.filter { it.name.contains(query, ignoreCase = true) }
-        }
-        adapter.updateStudents(visibleStudents)
-        findViewById<TextView>(R.id.txtEmptyGrades).visibility =
-            if (dataLoaded && visibleStudents.isEmpty()) View.VISIBLE else View.GONE
+    private fun updateTotal() {
+        syncCurrent()
+        val student = students.getOrNull(selectedIndex) ?: return
+        val entered = student.scores.values.count { it != null }
+        val total = student.scores.values.filterNotNull().sum()
+        totalText.text = "جمع فعلی: ${format(total)} از ۱۰۰  •  $entered/${config?.components?.size ?: 0} معیار"
     }
 
-    private fun updateProgress() {
-        val completed = allStudents.count { it.status == EntryStatus.COMPLETED }
-        txtProgress.text = "$completed از ${allStudents.size} کارنامه آماده انتشار"
-
-        val canPublish = allStudents.isNotEmpty() &&
-            activeCriteria.isNotEmpty() &&
-            allStudents.all { it.status == EntryStatus.COMPLETED }
-
-        btnSaveDraft.isEnabled = allStudents.isNotEmpty()
-        btnSaveDraft.alpha = if (allStudents.isNotEmpty()) 1f else 0.5f
-        btnPublish.isEnabled = canPublish
-        btnPublish.alpha = if (canPublish) 1f else 0.5f
-
-        btnPublish.text = if (AppDatabase.hasPublishedReportCards(selectedClassId)) {
-            "ذخیره و بروزرسانی کارنامه‌ها"
-        } else {
-            "انتشار نهایی کارنامه‌ها"
-        }
-    }
-
-    private fun saveDraft(showToast: Boolean) {
-        if (!dataLoaded || allStudents.isEmpty() || activeCriteria.isEmpty()) return
-        AppDatabase.saveReportCardDraft(selectedClassId, activeCriteria, allStudents)
-        renderStorageState()
-        if (showToast) {
-            Toast.makeText(this, "پیش‌نویس نمرات روی این دستگاه ذخیره شد", Toast.LENGTH_SHORT).show()
-        }
+    private fun move(delta: Int) {
+        if (students.isEmpty()) return
+        syncCurrent(); selectedIndex = (selectedIndex + delta).coerceIn(0, students.lastIndex); renderCurrent()
     }
 
     private fun requestPublish() {
-        if (allStudents.isEmpty()) return
-        if (allStudents.any { it.status != EntryStatus.COMPLETED }) {
-            Toast.makeText(this, "ابتدا نمره‌های نامعتبر یا خالی را اصلاح کنید", Toast.LENGTH_SHORT).show()
-            return
+        syncCurrent()
+        val incomplete = students.any { s -> config.orEmptyComponents().any { s.scores[it.id] == null } }
+        if (incomplete) { toast("برای انتشار، نمرات همه دانش‌آموزان باید کامل باشد"); return }
+        val hasPublished = students.any { it.status == "PUBLISHED" }
+        if (!hasPublished) {
+            MaterialAlertDialogBuilder(this).setTitle("انتشار کارنامه‌ها").setMessage("بعد از انتشار، دانش‌آموزان کارنامه را می‌بینند. ادامه می‌دهید؟")
+                .setNegativeButton("انصراف", null).setPositiveButton("انتشار") { _, _ -> save(true, "") }.show()
+        } else {
+            val input = android.widget.EditText(this).apply { hint = "علت ویرایش کارنامه منتشرشده" }
+            MaterialAlertDialogBuilder(this).setTitle("ویرایش نسخه منتشرشده").setMessage("علت ویرایش در سابقه ثبت می‌شود.")
+                .setView(input).setNegativeButton("انصراف", null).setPositiveButton("انتشار مجدد") { _, _ ->
+                    val reason = input.text.toString().trim(); if (reason.isBlank()) toast("علت ویرایش الزامی است") else save(true, reason)
+                }.show()
         }
+    }
 
-        val allZeroCount = allStudents.count { student ->
-            activeCriteria.all { criterion -> (student.scores[criterion.id] ?: 0) == 0 }
-        }
-
-        val message = buildString {
-            append("کارنامه‌های ${allStudents.size} دانش‌آموز منتشر می‌شود.")
-            if (allZeroCount > 0) {
-                append("\n\nنمرات $allZeroCount دانش‌آموز در تمام معیارها صفر است. از درست بودن آن مطمئن شوید.")
+    private fun save(publish: Boolean, reason: String) {
+        syncCurrent()
+        val payload = students.map { s -> SaveReportStudentRequest(s.id, s.revision, s.scores.toMap()) }
+        setLoading(true)
+        RetrofitClient.instance.saveReportCards(SaveReportCardsRequest(classId, publish, reason, payload)).enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                setLoading(false); val body = response.body()
+                if (response.isSuccessful && body?.status == "success") { toast(body.message); loadRoster() }
+                else toast(body?.message ?: "ذخیره نمرات انجام نشد")
             }
-            if (AppDatabase.hasPublishedReportCards(selectedClassId)) {
-                append("\n\nنسخه منتشرشده قبلی بروزرسانی می‌شود و رکورد تکراری ساخته نخواهد شد.")
-            }
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(if (AppDatabase.hasPublishedReportCards(selectedClassId)) "بروزرسانی کارنامه‌ها" else "انتشار کارنامه‌ها")
-            .setMessage(message)
-            .setNegativeButton("بررسی دوباره", null)
-            .setPositiveButton("تأیید و انتشار") { _, _ -> publish() }
-            .show()
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) { setLoading(false); toast("ارتباط با سرور برقرار نشد") }
+        })
     }
 
-    private fun publish() {
-        AppDatabase.publishReportCards(selectedClassId, activeCriteria, allStudents)
-        suppressAutoSave = true
-        Toast.makeText(
-            this,
-            "کارنامه‌های کلاس $selectedClassName با موفقیت منتشر شد",
-            Toast.LENGTH_LONG
-        ).show()
-        finish()
-    }
+    private fun ReportConfigDto?.orEmptyComponents() = this?.components.orEmpty()
+    private fun setLoading(v: Boolean) { progress.visibility = if (v) View.VISIBLE else View.GONE; draftButton.isEnabled = !v; publishButton.isEnabled = !v }
+    private fun format(v: Double) = if (v % 1.0 == 0.0) v.toInt().toString() else "%.2f".format(v)
+    private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_LONG).show()
+    private data class EditableStudent(val id:String,val name:String,val studentCode:String,val cardId:String?,val status:String,var revision:Int,val scores:MutableMap<String,Double?>)
 
-    private fun closeAndSaveDraft() {
-        if (dataLoaded && allStudents.isNotEmpty()) saveDraft(showToast = false)
-        suppressAutoSave = true
-        finish()
-    }
-
-    private fun setLoading(loading: Boolean) {
-        findViewById<View>(R.id.progressGrades).visibility = if (loading) View.VISIBLE else View.GONE
-        recycler.visibility = if (loading) View.INVISIBLE else View.VISIBLE
-    }
-
-    private fun renderStorageState() {
-        txtStorageHint.text = when {
-            AppDatabase.getReportCardDraft(selectedClassId) != null ->
-                "پیش‌نویس ذخیره شده است؛ تا انتشار نهایی فقط روی همین دستگاه دیده می‌شود."
-            AppDatabase.hasPublishedReportCards(selectedClassId) ->
-                "کارنامه قبلاً منتشر شده است؛ تغییرات جدید را دوباره منتشر کنید."
-            else ->
-                "نمره‌ها فعلاً محلی ذخیره می‌شوند و هنوز به cPanel ارسال نمی‌شوند."
-        }
-    }
+    companion object { const val EXTRA_CLASS_ID = "REPORT_CLASS_ID"; const val EXTRA_CLASS_NAME = "REPORT_CLASS_NAME" }
 }

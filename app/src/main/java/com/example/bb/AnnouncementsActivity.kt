@@ -19,7 +19,7 @@ class AnnouncementsActivity : AppCompatActivity() {
     private lateinit var recycler: RecyclerView
     private lateinit var adapter: AnnouncementAdapter
     private lateinit var role: UserRole
-    private var phone: String = ""
+    private var identityKey: String = ""
     private lateinit var emptyState: View
     private lateinit var loading: View
 
@@ -34,7 +34,7 @@ class AnnouncementsActivity : AppCompatActivity() {
                     ?: prefs.getString("CURRENT_USER_ROLE", "STUDENT").orEmpty()
             )
         }.getOrDefault(UserRole.STUDENT)
-        phone = prefs.getString("CURRENT_USERNAME", "").orEmpty()
+        identityKey = prefs.getString("CURRENT_USER_ID", "").orEmpty()
 
         findViewById<ImageView>(R.id.btnBack).setOnClickListener { finish() }
         emptyState = findViewById(R.id.announcementEmptyState)
@@ -78,7 +78,9 @@ class AnnouncementsActivity : AppCompatActivity() {
             ) {
                 setLoading(false)
                 if (response.isSuccessful) {
-                    render(response.body().orEmpty())
+                    val items = response.body().orEmpty()
+                    AppDatabase.replaceAnnouncements(items)
+                    render(items)
                 } else {
                     showLocalFallback("دریافت اعلانات آنلاین انجام نشد")
                 }
@@ -92,8 +94,8 @@ class AnnouncementsActivity : AppCompatActivity() {
     }
 
     private fun showLocalFallback(message: String) {
-        val local = AppDatabase.getAnnouncementsFor(role, phone).map {
-            it.copy(isRead = AppDatabase.isAnnouncementRead(it.id, role, phone))
+        val local = AppDatabase.getAnnouncementsFor(role, identityKey).map {
+            it.copy(isRead = AppDatabase.isAnnouncementRead(it.id, role, identityKey))
         }
         render(local)
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()

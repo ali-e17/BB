@@ -156,6 +156,27 @@ class ClassManagementActivity : AppCompatActivity() {
             })
     }
 
+
+    private fun confirmTrashClass(model: ClassModel) {
+        val input = android.widget.EditText(this).apply { hint = "علت حذف (اختیاری)" }
+        AlertDialog.Builder(this)
+            .setTitle("انتقال به سطل زباله")
+            .setMessage("این گزینه برای رکوردی است که اشتباهی ساخته شده. سوابق موجود حذف نمی‌شوند.")
+            .setView(input)
+            .setPositiveButton("انتقال") { _, _ ->
+                RetrofitClient.instance.trashEntity(TrashRequest("class", model.id, input.text.toString().trim()))
+                    .enqueue(object : Callback<ApiResponse> {
+                        override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                            val body = response.body()
+                            Toast.makeText(this@ClassManagementActivity, body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
+                            if (response.isSuccessful && body?.status == "success") fetchClasses()
+                        }
+                        override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                            Toast.makeText(this@ClassManagementActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+                        }
+                    })
+            }.setNegativeButton("انصراف", null).show()
+    }
     private fun setLoading(loading: Boolean) {
         progressLoading.visibility = if (loading) View.VISIBLE else View.GONE
     }
@@ -171,16 +192,16 @@ class ClassManagementActivity : AppCompatActivity() {
             val model = activeClasses[position]
             holder.tvName.text = model.className
             holder.tvSchedule.text = model.classTime
-            holder.tvTeacher.text = if (model.teacherPhone.isNullOrBlank()) {
-                "استاد: تعیین نشده"
-            } else {
-                val teacherName = AppDatabase.getTeacherByUsername(model.teacherPhone.orEmpty())?.name
-                "استاد: ${teacherName ?: model.teacherPhone}"
+            holder.tvTeacher.text = when {
+                model.teacherId.isNullOrBlank() -> "استاد: تعیین نشده"
+                model.teacherName.isNotBlank() -> "استاد: ${model.teacherName}"
+                else -> "استاد: ${model.teacherPhone.orEmpty().ifBlank { "تعیین نشده" }}"
             }
 
             holder.btnMembers.setOnClickListener { openClassMembers(model) }
             holder.btnEdit.setOnClickListener { openEditClass(model) }
             holder.btnComplete.setOnClickListener { confirmCompleteClass(model) }
+            holder.btnTrash.setOnClickListener { confirmTrashClass(model) }
         }
 
         override fun getItemCount(): Int = activeClasses.size
@@ -193,5 +214,6 @@ class ClassManagementActivity : AppCompatActivity() {
         val btnMembers: MaterialButton = view.findViewById(R.id.btnManageMembers)
         val btnEdit: MaterialButton = view.findViewById(R.id.btnEditClass)
         val btnComplete: MaterialButton = view.findViewById(R.id.btnCompleteClass)
+        val btnTrash: MaterialButton = view.findViewById(R.id.btnTrashClass)
     }
 }

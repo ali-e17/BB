@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="12dp">
+    <TextView android:id="@+id/txtResultMessageLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="right" android:textColor="@color/main_text" android:textSize="14sp" android:textStyle="bold" />
+    <com.google.android.material.textfield.TextInputLayout xmlns:app="http://schemas.android.com/apk/res-auto" style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etResultMessage" android:layout_width="match_parent" android:layout_height="wrap_content" android:minLines="3" android:maxLines="6" android:gravity="right|top" android:inputType="textMultiLine" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

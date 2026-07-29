@@ -24,7 +24,8 @@ class AssignClassActivity : AppCompatActivity() {
 
     private enum class ScreenMode { ASSIGNED, ADD_CLASS }
 
-    private var teacherUsername: String = ""
+    private var teacherId: String = ""
+    private var selectedTeacher: TeacherModel? = null
     private var requestInFlight = false
     private var screenMode = ScreenMode.ASSIGNED
 
@@ -44,8 +45,8 @@ class AssignClassActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_assign_class)
 
-        teacherUsername = intent.getStringExtra(EXTRA_TEACHER_USERNAME).orEmpty()
-        if (teacherUsername.isBlank()) {
+        teacherId = intent.getStringExtra(EXTRA_TEACHER_ID).orEmpty()
+        if (teacherId.isBlank()) {
             Toast.makeText(this, "استاد مشخص نشده است", Toast.LENGTH_LONG).show()
             finish()
             return
@@ -53,7 +54,8 @@ class AssignClassActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.btnAssignBack).setOnClickListener { finish() }
 
-        val teacherName = AppDatabase.getTeacherByUsername(teacherUsername)?.name ?: teacherUsername
+        selectedTeacher = AppDatabase.getAllTeachers().firstOrNull { it.id == teacherId }
+        val teacherName = selectedTeacher?.name ?: "استاد"
         findViewById<TextView>(R.id.tvAssignTitle).text = "کلاس‌های $teacherName"
 
         toggleGroup = findViewById(R.id.toggleTeacherClasses)
@@ -128,10 +130,10 @@ class AssignClassActivity : AppCompatActivity() {
     private fun renderCurrentList() {
         val query = etSearchClass.text?.toString().orEmpty().trim()
         val assignedCount = allClasses.count {
-            it.status == ClassStatus.ACTIVE && it.teacherPhone == teacherUsername
+            it.status == ClassStatus.ACTIVE && it.teacherId == teacherId
         }
         val availableCount = allClasses.count {
-            it.status == ClassStatus.ACTIVE && it.teacherPhone.isNullOrBlank()
+            it.status == ClassStatus.ACTIVE && it.teacherId.isNullOrBlank() && it.teacherPhone.isNullOrBlank()
         }
 
         btnAssignedTab.text = "کلاس‌های استاد ($assignedCount)"
@@ -140,10 +142,10 @@ class AssignClassActivity : AppCompatActivity() {
         visibleClasses.clear()
         val source = when (screenMode) {
             ScreenMode.ASSIGNED -> allClasses.asSequence().filter {
-                it.status == ClassStatus.ACTIVE && it.teacherPhone == teacherUsername
+                it.status == ClassStatus.ACTIVE && it.teacherId == teacherId
             }
             ScreenMode.ADD_CLASS -> allClasses.asSequence().filter {
-                it.status == ClassStatus.ACTIVE && it.teacherPhone.isNullOrBlank()
+                it.status == ClassStatus.ACTIVE && it.teacherId.isNullOrBlank() && it.teacherPhone.isNullOrBlank()
             }
         }
 
@@ -208,7 +210,7 @@ class AssignClassActivity : AppCompatActivity() {
 
     private fun assignClass(model: ClassModel) {
         val assignedClasses = allClasses.filter {
-            it.status == ClassStatus.ACTIVE && it.teacherPhone == teacherUsername
+            it.status == ClassStatus.ACTIVE && it.teacherId == teacherId
         }
         val conflictingClass = assignedClasses.firstOrNull { schedulesOverlap(it, model) }
         if (conflictingClass != null) {
@@ -223,7 +225,7 @@ class AssignClassActivity : AppCompatActivity() {
             return
         }
 
-        updateTeacherAssignment(model, teacherUsername, "کلاس به استاد تخصیص داده شد")
+        updateTeacherAssignment(model, teacherId, "کلاس به استاد تخصیص داده شد")
     }
 
     private fun confirmRemoveClass(model: ClassModel) {
@@ -239,7 +241,7 @@ class AssignClassActivity : AppCompatActivity() {
 
     private fun updateTeacherAssignment(
         model: ClassModel,
-        teacherPhone: String?,
+        newTeacherId: String?,
         successMessage: String
     ) {
         if (requestInFlight) return
@@ -247,13 +249,15 @@ class AssignClassActivity : AppCompatActivity() {
         renderCurrentList()
 
         RetrofitClient.instance.assignTeacherToClass(
-            AssignTeacherRequest(classId = model.id, teacherPhone = teacherPhone)
+            AssignTeacherRequest(classId = model.id, teacherId = newTeacherId)
         ).enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 requestInFlight = false
                 val result = response.body()
                 if (response.isSuccessful && result?.status == "success") {
-                    model.teacherPhone = teacherPhone
+                    model.teacherId = newTeacherId
+                    model.teacherPhone = if (newTeacherId == null) null else selectedTeacher?.phone
+                    model.teacherName = if (newTeacherId == null) "" else selectedTeacher?.name.orEmpty()
                     AppDatabase.upsertClass(model)
                     Toast.makeText(
                         this@AssignClassActivity,
@@ -319,6 +323,6 @@ class AssignClassActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val EXTRA_TEACHER_USERNAME = "TEACHER_USERNAME"
+        const val EXTRA_TEACHER_ID = "TEACHER_ID"
     }
 }

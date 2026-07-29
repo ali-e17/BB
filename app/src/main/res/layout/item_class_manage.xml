@@ -94,5 +94,12 @@
                 app:cornerRadius="10dp"
                 app:strokeColor="#EF4444" />
         </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTrashClass"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent" android:layout_height="40dp" android:layout_marginTop="8dp"
+            android:text="انتقال رکورد اشتباه به سطل زباله" android:textAllCaps="false" android:textColor="#B42318"
+            android:textSize="11sp" app:cornerRadius="10dp" app:strokeColor="#B42318" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

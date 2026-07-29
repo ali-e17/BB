@@ -2,20 +2,26 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:weightSum="3"
     android:background="#FFFFFF"
-    android:baselineAligned="false">
+    android:baselineAligned="false"
+    android:minHeight="42dp"
+    android:orientation="horizontal"
+    android:weightSum="4">
 
     <TextView
         android:id="@+id/txtTableSubject"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1.4"
+        android:layout_weight="2.2"
+        android:breakStrategy="simple"
         android:gravity="center"
-        android:paddingVertical="8dp"
-        android:textColor="#000000"
-        android:textSize="12sp"
+        android:hyphenationFrequency="none"
+        android:maxLines="2"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="7dp"
+        android:textColor="#111827"
+        android:textDirection="firstStrong"
+        android:textSize="11sp"
         android:textStyle="bold" />
 
     <View
@@ -27,11 +33,11 @@
         android:id="@+id/txtTableScore"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.8"
+        android:layout_weight="0.9"
         android:gravity="center"
-        android:paddingVertical="8dp"
-        android:textColor="#000000"
-        android:textSize="12sp"
+        android:padding="6dp"
+        android:textColor="#111827"
+        android:textSize="11sp"
         android:textStyle="bold" />
 
     <View
@@ -43,10 +49,9 @@
         android:id="@+id/txtTableOutOf"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.8"
+        android:layout_weight="0.9"
         android:gravity="center"
-        android:paddingVertical="8dp"
+        android:padding="6dp"
         android:textColor="#4B5563"
-        android:textSize="12sp" />
-
+        android:textSize="11sp" />
 </LinearLayout>

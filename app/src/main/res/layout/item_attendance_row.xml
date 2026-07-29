@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="6dp"
+    android:layout_marginVertical="4dp"
     app:cardBackgroundColor="@color/card_background"
     app:cardCornerRadius="16dp"
     app:cardElevation="1dp"
@@ -19,9 +19,9 @@
         android:layoutDirection="ltr"
         android:orientation="vertical"
         android:paddingStart="15dp"
-        android:paddingTop="14dp"
+        android:paddingTop="10dp"
         android:paddingEnd="15dp"
-        android:paddingBottom="14dp">
+        android:paddingBottom="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -30,16 +30,16 @@
             android:orientation="horizontal">
 
             <FrameLayout
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="@drawable/bg_circle_icon"
                 android:backgroundTint="@color/bg_blue_light"
                 android:backgroundTintMode="src_atop">
 
                 <ImageView
                     android:id="@+id/ivStudentAvatar"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
                     android:layout_gravity="center"
                     android:contentDescription="تصویر دانش‌آموز"
                     android:src="@drawable/avatar_student_1" />
@@ -91,8 +91,8 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="46dp"
-            android:layout_marginTop="14dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
             android:background="@drawable/bg_input_field"
             android:orientation="horizontal"
             android:padding="4dp"

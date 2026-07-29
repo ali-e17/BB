@@ -17,7 +17,7 @@
     <string name="lang_button_label">فا</string>
 
     <string name="login_welcome">WELCOME</string>
-    <string name="login_username_hint">Username</string>
+    <string name="login_username_hint">کد ملی</string>
     <string name="login_password_hint">Password</string>
     <string name="login_enter">ENTER</string>
     <string name="toast_login_success">Login successful</string>
