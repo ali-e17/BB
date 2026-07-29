@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import retrofit2.Call
 import retrofit2.Callback
@@ -69,7 +70,7 @@ class TeacherManagementActivity : AppCompatActivity() {
             onRowClick = { teacher ->
                 if (!teacher.isActive) Toast.makeText(this, "ابتدا استاد را فعال کنید", Toast.LENGTH_SHORT).show()
                 else startActivity(Intent(this, AssignClassActivity::class.java)
-                    .putExtra(AssignClassActivity.EXTRA_TEACHER_USERNAME, teacher.username))
+                    .putExtra(AssignClassActivity.EXTRA_TEACHER_ID, teacher.id))
             },
             onDetailsClick = ::showTeacherDetails
         )
@@ -152,7 +153,9 @@ class TeacherManagementActivity : AppCompatActivity() {
             name.text = teacher.name
             phone.text = teacher.phone
             val teacherClasses = classes.filter {
-                it.status == ClassStatus.ACTIVE && normalizePhone(it.teacherPhone) == normalizePhone(teacher.phone)
+                it.status == ClassStatus.ACTIVE &&
+                    (it.teacherId == teacher.id ||
+                        (it.teacherId.isNullOrBlank() && normalizePhone(it.teacherPhone) == normalizePhone(teacher.phone)))
             }
             assigned.text = teacherClasses.takeIf { it.isNotEmpty() }
                 ?.joinToString("، ") { it.className } ?: "بدون کلاس فعال"
@@ -188,6 +191,59 @@ class TeacherManagementActivity : AppCompatActivity() {
             dialog.dismiss()
             startActivity(Intent(this, AddEditTeacherActivity::class.java)
                 .putExtra(AddEditTeacherActivity.EXTRA_TEACHER_USERNAME, teacher.username))
+        }
+
+        view.findViewById<MaterialButton>(R.id.btnDialogTrashTeacher).setOnClickListener {
+            val reasonInput = android.widget.EditText(this).apply { this.hint = "علت حذف (اختیاری)" }
+            MaterialAlertDialogBuilder(this)
+                .setTitle("انتقال به سطل زباله")
+                .setMessage("استاد از فهرست‌های فعال حذف می‌شود، ولی سابقه کلاس‌هایش حفظ خواهد شد.")
+                .setView(reasonInput)
+                .setNegativeButton("انصراف", null)
+                .setPositiveButton("انتقال") { _, _ ->
+                    RetrofitClient.instance.trashEntity(TrashRequest("teacher", teacher.id, reasonInput.text.toString().trim()))
+                        .enqueue(object : Callback<ApiResponse> {
+                            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                                val body = response.body()
+                                Toast.makeText(this@TeacherManagementActivity, body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
+                                if (response.isSuccessful && body?.status == "success") { dialog.dismiss(); loadTeachers() }
+                            }
+                            override fun onFailure(call: Call<ApiResponse>, t: Throwable) { Toast.makeText(this@TeacherManagementActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show() }
+                        })
+                }.show()
+        }
+
+        val resetPassword = view.findViewById<MaterialButton>(R.id.btnDialogTeacherResetPassword)
+        resetPassword.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("ساخت رمز موقت")
+                .setMessage("رمز فعلی قابل مشاهده نیست. یک رمز موقت جدید ساخته شود؟")
+                .setNegativeButton("انصراف", null)
+                .setPositiveButton("ساخت رمز") { _, _ ->
+                    resetPassword.isEnabled = false
+                    RetrofitClient.instance.adminResetPassword(
+                        AdminResetPasswordRequest("TEACHER", teacher.id)
+                    ).enqueue(object : Callback<AdminResetPasswordResponse> {
+                        override fun onResponse(call: Call<AdminResetPasswordResponse>, response: Response<AdminResetPasswordResponse>) {
+                            resetPassword.isEnabled = true
+                            val body = response.body()
+                            if (response.isSuccessful && body?.status == "success" && !body.temporaryPassword.isNullOrBlank()) {
+                                MaterialAlertDialogBuilder(this@TeacherManagementActivity)
+                                    .setTitle("رمز موقت ${teacher.name}")
+                                    .setMessage("${body.temporaryPassword}\n\nاین رمز فقط همین یک‌بار نمایش داده می‌شود. کاربر بعد از ورود مجبور به تغییر آن است.")
+                                    .setPositiveButton("متوجه شدم", null)
+                                    .show()
+                            } else {
+                                Toast.makeText(this@TeacherManagementActivity, body?.message ?: "ساخت رمز موقت انجام نشد", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        override fun onFailure(call: Call<AdminResetPasswordResponse>, t: Throwable) {
+                            resetPassword.isEnabled = true
+                            Toast.makeText(this@TeacherManagementActivity, "خطا در اتصال به سرور", Toast.LENGTH_LONG).show()
+                        }
+                    })
+                }
+                .show()
         }
         dialog.show()
     }

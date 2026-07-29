@@ -34,7 +34,7 @@ import java.util.UUID
 class CreateAnnouncementActivity : AppCompatActivity() {
 
     private lateinit var role: UserRole
-    private var phone: String = ""
+    private var currentUserId: String = ""
 
     private var availableClasses: List<ClassModel> = emptyList()
     private val selectedClassIds = linkedSetOf<String>()
@@ -88,7 +88,7 @@ class CreateAnnouncementActivity : AppCompatActivity() {
         setContentView(R.layout.activity_create_announcement)
 
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        phone = prefs.getString("CURRENT_USERNAME", "").orEmpty()
+        currentUserId = prefs.getString("CURRENT_USER_ID", "").orEmpty()
         role = runCatching {
             UserRole.valueOf(
                 intent.getStringExtra("USER_ROLE")
@@ -151,7 +151,7 @@ class CreateAnnouncementActivity : AppCompatActivity() {
             .filter { it.status == ClassStatus.ACTIVE }
             .filter {
                 role == UserRole.ADMIN ||
-                    (role == UserRole.TEACHER && it.teacherPhone == phone)
+                    (role == UserRole.TEACHER && it.teacherId == currentUserId)
             }
             .distinctBy { it.id }
             .sortedBy { it.className.lowercase() }

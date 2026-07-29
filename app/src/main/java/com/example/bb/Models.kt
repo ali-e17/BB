@@ -27,7 +27,7 @@ data class AdminModel(
 )
 
 data class StudentModel(
-    val id: String,
+    val id: String = "",
     var firstName: String,
     var lastName: String,
     var studentCode: String = "",
@@ -44,7 +44,7 @@ data class StudentModel(
 }
 
 data class TeacherModel(
-    val id: String,
+    val id: String = "",
     var firstName: String,
     var lastName: String,
     var phone: String,
@@ -58,11 +58,11 @@ data class TeacherModel(
         get() = "$firstName $lastName"
 
     val username: String
-        get() = phone
+        get() = nationalId
 }
 
 data class ClassModel(
-    val id: String,
+    val id: String = "",
     var className: String,
     var startTime: String,
     var endTime: String,
@@ -71,7 +71,14 @@ data class ClassModel(
     var teacherPhone: String? = null,
     var status: ClassStatus = ClassStatus.ACTIVE,
     var createdAt: String = AppDatabase.today(),
-    var completedAt: String? = null
+    var completedAt: String? = null,
+    var classCode: String = "",
+    var bookName: String = "",
+    var classLevel: String = "",
+    var termYear: String = "",
+    var termSeason: String = "",
+    var teacherId: String? = null,
+    var teacherName: String = ""
 ) : Serializable {
     val classTime: String
         get() = "$daysOfWeek | $startTime تا $endTime | $sessionCount جلسه"
@@ -165,8 +172,6 @@ data class SaveAttendanceRequest(
 )
 
 data class UpdatePasswordRequest(
-    val role: String,
-    val phone: String,
     val oldPassword: String,
     val newPassword: String
 )
@@ -177,7 +182,7 @@ object AppDatabase
     private const val DATA_KEY = "app_data_v2"
 
     private lateinit var appContext: Context
-    private var admin = AdminModel("مدیر آموزشگاه", "09120000001", "0012345678", "0012345678")
+    private var admin = AdminModel("مدیر آموزشگاه", "09120000001", "0012345678", "")
     private val students = mutableListOf<StudentModel>()
     private val teachers = mutableListOf<TeacherModel>()
     private val classes = mutableListOf<ClassModel>()
@@ -207,40 +212,17 @@ object AppDatabase
     private fun now(): String = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.US).format(Date())
     private fun prefs() = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun authenticate(phone: String, password: String): AuthenticatedUser? = when {
-        admin.phone == phone && admin.password == password -> AuthenticatedUser(UserRole.ADMIN, phone, admin.name)
-        teachers.any { it.username == phone && it.password == password && it.isActive } -> {
-            val teacher = teachers.first { it.username == phone }
-            AuthenticatedUser(UserRole.TEACHER, phone, teacher.name)
-        }
-        students.any { it.phone == phone && it.password == password && it.isActive } -> {
-            val student = students.first { it.phone == phone }
-            AuthenticatedUser(UserRole.STUDENT, phone, student.name)
-        }
-        else -> null
-    }
+    @Deprecated("احراز هویت فقط باید از سرور انجام شود")
+    fun authenticate(username: String, password: String): AuthenticatedUser? = null
 
-    fun getDisplayName(role: UserRole, phone: String): String = when (role) {
+    fun getDisplayName(role: UserRole, identity: String): String = when (role) {
         UserRole.ADMIN -> admin.name
-        UserRole.TEACHER -> getTeacherByUsername(phone)?.name ?: phone
-        UserRole.STUDENT -> getStudentByUsername(phone)?.name ?: phone
+        UserRole.TEACHER -> teachers.find { it.id == identity || it.nationalId == identity }?.name ?: identity
+        UserRole.STUDENT -> students.find { it.id == identity || it.nationalId == identity }?.name ?: identity
     }
 
-    fun updatePassword(role: UserRole, phone: String, oldPassword: String, newPassword: String): Boolean {
-        val updated = when (role) {
-            UserRole.ADMIN -> if (admin.phone == phone && admin.password == oldPassword) {
-                admin.password = newPassword; true
-            } else false
-            UserRole.TEACHER -> getTeacherByUsername(phone)?.takeIf { it.password == oldPassword }?.let {
-                it.password = newPassword; true
-            } ?: false
-            UserRole.STUDENT -> getStudentByUsername(phone)?.takeIf { it.password == oldPassword }?.let {
-                it.password = newPassword; true
-            } ?: false
-        }
-        if (updated) save()
-        return updated
-    }
+    @Deprecated("تغییر رمز فقط باید از API امن انجام شود")
+    fun updatePassword(role: UserRole, identity: String, oldPassword: String, newPassword: String): Boolean = false
 
     fun getAllStudents(): List<StudentModel> = students.toList()
 
@@ -265,10 +247,10 @@ object AppDatabase
     }
 
     fun upsertStudent(student: StudentModel, originalPhone: String? = null): String? {
-        if (students.any { it.phone == student.phone && it.id != student.id }) return "این شماره تلفن قبلاً ثبت شده است"
+        // Shared parent phones are valid. Internal ID and national ID remain unique.
         if (students.any { it.nationalId == student.nationalId && it.id != student.id }) return "این کد ملی قبلاً ثبت شده است"
         if (students.any { it.studentCode == student.studentCode && it.id != student.id && student.studentCode.isNotBlank() }) return "این کد دانش‌آموزی قبلاً ثبت شده است"
-        val index = students.indexOfFirst { it.id == student.id || (originalPhone != null && it.phone == originalPhone) }
+        val index = students.indexOfFirst { it.id == student.id }
         if (index >= 0) students[index] = student else students += student
         save()
         return null
@@ -372,6 +354,10 @@ object AppDatabase
         }
     }
 
+    fun getTeacherClassesById(teacherId: String): List<ClassModel> = classes.filter {
+        it.teacherId == teacherId && it.status == ClassStatus.ACTIVE
+    }
+
     fun assignClassToTeacher(phone: String, classId: String, context: Context? = null) {
         val model = getClassById(classId) ?: return
         if (model.status != ClassStatus.ACTIVE || model.teacherPhone != null) return
@@ -403,9 +389,11 @@ object AppDatabase
 
     private fun syncTeacherClassIds() {
         teachers.forEach { teacher ->
-            val normalized = normalizePhone(teacher.username)
+            val normalizedPhone = normalizePhone(teacher.phone)
             teacher.classIds = classes.filter {
-                normalizePhone(it.teacherPhone.orEmpty()) == normalized && it.status == ClassStatus.ACTIVE
+                it.status == ClassStatus.ACTIVE &&
+                    (it.teacherId == teacher.id ||
+                        (it.teacherId.isNullOrBlank() && normalizePhone(it.teacherPhone.orEmpty()) == normalizedPhone))
             }.joinToString(",") { it.id }
         }
     }
@@ -449,24 +437,30 @@ object AppDatabase
         save()
     }
 
-    fun getAnnouncementById(id: String): Announcement? = announcements.find { it.id == id }
-
-    private fun announcementReaderKey(role: UserRole, phone: String): String =
-        "${role.name}:$phone"
-
-    fun isAnnouncementRead(id: String, role: UserRole, phone: String): Boolean {
-        val key = announcementReaderKey(role, phone)
-        return announcementReads.any { it.announcementId == id && it.readerKey == key }
-    }
-
-    fun markAnnouncementRead(id: String, role: UserRole, phone: String) {
-        if (isAnnouncementRead(id, role, phone)) return
-        announcementReads += AnnouncementReadModel(id, announcementReaderKey(role, phone), now())
+    fun replaceAnnouncements(serverAnnouncements: List<Announcement>) {
+        announcements.clear()
+        announcements.addAll(serverAnnouncements.distinctBy { it.id })
         save()
     }
 
-    fun getUnreadAnnouncementCount(role: UserRole, phone: String): Int =
-        getAnnouncementsFor(role, phone).count { !isAnnouncementRead(it.id, role, phone) }
+    fun getAnnouncementById(id: String): Announcement? = announcements.find { it.id == id }
+
+    private fun announcementReaderKey(role: UserRole, identityKey: String): String =
+        "${role.name}:$identityKey"
+
+    fun isAnnouncementRead(id: String, role: UserRole, identityKey: String): Boolean {
+        val key = announcementReaderKey(role, identityKey)
+        return announcementReads.any { it.announcementId == id && it.readerKey == key }
+    }
+
+    fun markAnnouncementRead(id: String, role: UserRole, identityKey: String) {
+        if (isAnnouncementRead(id, role, identityKey)) return
+        announcementReads += AnnouncementReadModel(id, announcementReaderKey(role, identityKey), now())
+        save()
+    }
+
+    fun getUnreadAnnouncementCount(role: UserRole, identityKey: String): Int =
+        getAnnouncementsFor(role, identityKey).count { !isAnnouncementRead(it.id, role, identityKey) }
 
     fun getAnnouncementTargetSummary(announcement: Announcement): String = when (announcement.scope) {
         AnnouncementScope.ALL_CLASSES -> "همه کلاس‌ها"
@@ -481,20 +475,21 @@ object AppDatabase
         }
     }
 
-    fun getAnnouncementsFor(role: UserRole, phone: String): List<Announcement> {
+    fun getAnnouncementsFor(role: UserRole, identityKey: String): List<Announcement> {
         val visible = when (role) {
             UserRole.ADMIN -> announcements
             UserRole.TEACHER -> {
-                val classIds = getTeacherClasses(phone).map { it.id }.toSet()
+                val teacherPhone = teachers.find { it.id == identityKey }?.phone ?: identityKey
+                val classIds = getTeacherClasses(teacherPhone).map { it.id }.toSet()
                 announcements.filter { announcement ->
-                    announcement.senderPhone == phone ||
+                    normalizePhone(announcement.senderPhone) == normalizePhone(teacherPhone) ||
                             (announcement.scope == AnnouncementScope.ALL_CLASSES && classIds.isNotEmpty()) ||
                             (announcement.scope == AnnouncementScope.SELECTED_CLASSES &&
                                     announcement.targetClassIds.any { it in classIds })
                 }
             }
             UserRole.STUDENT -> {
-                val student = getStudentByUsername(phone)
+                val student = getStudentById(identityKey) ?: getStudentByUsername(identityKey)
                 announcements.filter { announcement ->
                     when (announcement.scope) {
                         AnnouncementScope.ALL_CLASSES -> student?.classId != null
@@ -592,7 +587,7 @@ object AppDatabase
                     lastName = parts.getOrNull(1).orEmpty(),
                     studentCode = "S${i + 1}", phone = phone,
                     nationalId = old.getString("student_${i}_nationalId", "").orEmpty(),
-                    password = old.getString("student_${i}_password", "").orEmpty(),
+                    password = "",
                     classId = old.getString("student_${i}_classId", null),
                     avatarName = "avatar_student_1"
                 )
@@ -609,7 +604,7 @@ object AppDatabase
                     lastName = parts.getOrNull(1).orEmpty(),
                     phone = phone,
                     nationalId = old.getString("teacher_${i}_nationalId", "").orEmpty(),
-                    password = old.getString("teacher_${i}_password", "").orEmpty(),
+                    password = "",
                     classIds = old.getString("teacher_${i}_classIds", "").orEmpty(),
                     isActive = old.getBoolean("teacher_${i}_isActive", true),
                     avatarName = "avatar_teacher_1" // مقدار دیفالت برای اساتید قدیمی
@@ -636,13 +631,13 @@ object AppDatabase
     private fun save() {
         if (!::appContext.isInitialized) return
         val root = JSONObject()
-        root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("password", admin.password).put("avatarName", admin.avatarName ?: "avatar_admin_1"))
-        root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("password", s.password).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_student_1")) } })
+        root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("avatarName", admin.avatarName ?: "avatar_admin_1"))
+        root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_student_1")) } })
 
         // 🌟 ذخیره آواتار اساتید در جیسون لوکال
-        root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("password", t.password).put("classIds", t.classIds).put("isActive", t.isActive).put("avatarName", t.avatarName ?: "avatar_teacher_1")) } })
+        root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("classIds", t.classIds).put("isActive", t.isActive).put("avatarName", t.avatarName ?: "avatar_teacher_1")) } })
 
-        root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt)) } })
+        root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt).put("classCode", c.classCode).put("bookName", c.bookName).put("classLevel", c.classLevel).put("termYear", c.termYear).put("termSeason", c.termSeason).put("teacherId", c.teacherId).put("teacherName", c.teacherName)) } })
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
         root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
         root.put("announcements", JSONArray().apply {
@@ -736,7 +731,7 @@ object AppDatabase
 
     private fun load(root: JSONObject) {
         students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); announcementReads.clear(); reportCards.clear(); reportCardDrafts.clear()
-        root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), it.optString("password"), it.optString("avatarName", "avatar_admin_1")) }
+        root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), "", it.optString("avatarName", "avatar_admin_1")) }
 
         root.optJSONArray("students").forEachObject { o ->
             val legacyName = o.optString("name")
@@ -748,7 +743,7 @@ object AppDatabase
                 studentCode = o.optString("studentCode"),
                 phone = o.optString("phone"),
                 nationalId = o.optString("nationalId"),
-                password = o.optString("password"),
+                password = "",
                 classId = o.optNullableString("classId"),
                 registrationDate = o.optString("registrationDate", AppDatabase.today()),
                 isActive = o.optBoolean("isActive", true),
@@ -765,13 +760,33 @@ object AppDatabase
                 lastName = o.optString("lastName", parts.getOrNull(1).orEmpty()),
                 phone = o.optString("phone", o.optString("username")),
                 nationalId = o.optString("nationalId"),
-                password = o.optString("password"),
+                password = "",
                 classIds = o.optString("classIds"),
                 isActive = o.optBoolean("isActive", true),
                 avatarName = o.optString("avatarName", "avatar_teacher_1") // 🌟 بازیابی آواتار اساتید
             )
         }
-        root.optJSONArray("classes").forEachObject { o -> classes += ClassModel(o.optString("id"), o.optString("className"), o.optString("startTime"), o.optString("endTime"), o.optString("daysOfWeek"), o.optInt("sessionCount"), o.optNullableString("teacherPhone"), runCatching { ClassStatus.valueOf(o.optString("status")) }.getOrDefault(ClassStatus.ACTIVE), o.optString("createdAt"), o.optNullableString("completedAt")) }
+        root.optJSONArray("classes").forEachObject { o ->
+            classes += ClassModel(
+                id = o.optString("id"),
+                className = o.optString("className"),
+                startTime = o.optString("startTime"),
+                endTime = o.optString("endTime"),
+                daysOfWeek = o.optString("daysOfWeek"),
+                sessionCount = o.optInt("sessionCount"),
+                teacherPhone = o.optNullableString("teacherPhone"),
+                status = runCatching { ClassStatus.valueOf(o.optString("status")) }.getOrDefault(ClassStatus.ACTIVE),
+                createdAt = o.optString("createdAt"),
+                completedAt = o.optNullableString("completedAt"),
+                classCode = o.optString("classCode"),
+                bookName = o.optString("bookName"),
+                classLevel = o.optString("classLevel"),
+                termYear = o.optString("termYear"),
+                termSeason = o.optString("termSeason"),
+                teacherId = o.optNullableString("teacherId"),
+                teacherName = o.optString("teacherName")
+            )
+        }
         root.optJSONArray("enrollments").forEachObject { o -> enrollments += EnrollmentModel(o.optString("id"), o.optString("studentId"), o.optString("classId"), o.optString("startedAt"), o.optNullableString("endedAt")) }
         root.optJSONArray("attendance").forEachObject { o ->
             val items = mutableListOf<AttendanceItem>()

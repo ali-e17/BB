@@ -14,6 +14,9 @@ import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class LoginActivity : AppCompatActivity() {
 
@@ -21,14 +24,27 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
+        // Phase-1 auth changed the login identifier from phone to national ID.
+        // Old phone-based tokens are intentionally discarded once after app update.
+        if (prefs.getInt("AUTH_SCHEMA_VERSION", 0) < 2) {
+            clearExpiredSession()
+            prefs.edit().putInt("AUTH_SCHEMA_VERSION", 2).apply()
+        }
+
         val savedToken = prefs.getString("API_TOKEN", "").orEmpty()
-        if (prefs.getBoolean("IS_LOGGED_IN", false) && savedToken.isNotBlank()) {
-            startActivity(Intent(this, MainActivity::class.java).apply {
-                putExtra("USER_ROLE", prefs.getString("CURRENT_USER_ROLE", "STUDENT"))
-                putExtra("USERNAME", prefs.getString("CURRENT_USERNAME", ""))
-            })
+        val hasSession = prefs.getBoolean("IS_LOGGED_IN", false) &&
+            savedToken.isNotBlank() && !isTokenExpired(prefs.getString("API_TOKEN_EXPIRES_AT", null))
+
+        if (hasSession) {
+            if (prefs.getBoolean("MUST_CHANGE_PASSWORD", false)) {
+                openForcedPasswordChange()
+            } else {
+                openMain()
+            }
             finish()
             return
+        } else if (savedToken.isNotBlank()) {
+            clearExpiredSession()
         }
 
         setContentView(R.layout.activity_login)
@@ -44,12 +60,15 @@ class LoginActivity : AppCompatActivity() {
 
         btnThemeToggle.setOnClickListener {
             val dark = isDarkMode()
+            getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("IS_DARK_MODE", !dark)
+                .apply()
             AppCompatDelegate.setDefaultNightMode(
                 if (dark) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
             )
-            getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
-                .edit().putBoolean("IS_DARK_MODE", !dark).apply()
         }
+
         btnLanguageToggle.setOnClickListener {
             language = if (language == "fa") "en" else "fa"
             prefs.edit().putString("APP_LANGUAGE", language).apply()
@@ -57,37 +76,48 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btnLogin.setOnClickListener {
-            val username = etUsername.text?.toString()?.trim().orEmpty()
+            val nationalId = normalizeDigits(etUsername.text?.toString().orEmpty())
+                .filter(Char::isDigit)
             val password = etPassword.text?.toString().orEmpty()
-            if (username.isBlank() || password.isBlank()) {
-                Toast.makeText(this, "شماره تماس و رمز عبور را وارد کنید", Toast.LENGTH_SHORT).show()
+
+            if (nationalId.length != 10 || password.isBlank()) {
+                Toast.makeText(this, "کد ملی ۱۰ رقمی و رمز عبور را وارد کنید", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             btnLogin.isEnabled = false
             btnLogin.text = "در حال بررسی..."
-            RetrofitClient.instance.login(LoginRequest(username, password))
+            RetrofitClient.instance.login(LoginRequest(nationalId, password))
                 .enqueue(object : Callback<LoginResponse> {
-                    override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                    override fun onResponse(
+                        call: Call<LoginResponse>,
+                        response: Response<LoginResponse>
+                    ) {
                         btnLogin.isEnabled = true
                         btnLogin.text = "ورود"
                         val body = response.body()
+
                         if (response.isSuccessful && body?.status == "success") {
                             prefs.edit().apply {
                                 putBoolean("IS_LOGGED_IN", true)
                                 putString("CURRENT_USER_ROLE", body.role ?: "STUDENT")
-                                putString("CURRENT_USERNAME", body.username ?: username)
+                                putString("CURRENT_USERNAME", body.username ?: nationalId)
+                                putString("CURRENT_PHONE", body.phone.orEmpty())
                                 putString("CURRENT_USER_ID", body.userId.orEmpty())
                                 putString("CURRENT_DISPLAY_NAME", body.displayName ?: "کاربر")
                                 putString("CURRENT_AVATAR_NAME", body.avatarName.orEmpty())
                                 putString("API_TOKEN", body.token.orEmpty())
                                 putString("API_TOKEN_EXPIRES_AT", body.tokenExpiresAt.orEmpty())
+                                putBoolean("MUST_CHANGE_PASSWORD", body.mustChangePassword)
+                                putInt("AUTH_SCHEMA_VERSION", 2)
                                 apply()
                             }
-                            startActivity(Intent(this@LoginActivity, MainActivity::class.java).apply {
-                                putExtra("USER_ROLE", body.role)
-                                putExtra("USERNAME", body.username ?: username)
-                            })
+
+                            if (body.mustChangePassword) {
+                                openForcedPasswordChange()
+                            } else {
+                                openMain()
+                            }
                             finish()
                         } else {
                             Toast.makeText(
@@ -107,6 +137,43 @@ class LoginActivity : AppCompatActivity() {
                 })
         }
     }
+
+    private fun openMain() {
+        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+        startActivity(Intent(this, MainActivity::class.java).apply {
+            putExtra("USER_ROLE", prefs.getString("CURRENT_USER_ROLE", "STUDENT"))
+        })
+    }
+
+    private fun openForcedPasswordChange() {
+        startActivity(Intent(this, ForceChangePasswordActivity::class.java))
+    }
+
+    private fun clearExpiredSession() {
+        getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().apply {
+            remove("IS_LOGGED_IN")
+            remove("API_TOKEN")
+            remove("API_TOKEN_EXPIRES_AT")
+            remove("MUST_CHANGE_PASSWORD")
+            apply()
+        }
+    }
+
+    private fun isTokenExpired(raw: String?): Boolean {
+        if (raw.isNullOrBlank()) return true
+        return runCatching {
+            val parsed = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(raw)
+            parsed == null || parsed.before(Date())
+        }.getOrDefault(true)
+    }
+
+    private fun normalizeDigits(value: String): String = value
+        .replace('۰', '0').replace('۱', '1').replace('۲', '2').replace('۳', '3')
+        .replace('۴', '4').replace('۵', '5').replace('۶', '6').replace('۷', '7')
+        .replace('۸', '8').replace('۹', '9')
+        .replace('٠', '0').replace('١', '1').replace('٢', '2').replace('٣', '3')
+        .replace('٤', '4').replace('٥', '5').replace('٦', '6').replace('٧', '7')
+        .replace('٨', '8').replace('٩', '9')
 
     private fun isDarkMode(): Boolean =
         resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==

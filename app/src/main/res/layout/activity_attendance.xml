@@ -261,55 +261,72 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingTop="12dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="16dp">
+            android:paddingStart="16dp"
+            android:paddingTop="7dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="9dp">
 
             <TextView
                 android:id="@+id/txtMarkingHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:maxLines="2"
                 android:text="وضعیت همه دانش‌آموزان را مشخص کنید"
                 android:textColor="@color/sub_text"
                 android:textDirection="rtl"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnExportAttendance"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="9dp"
-                android:text="خروجی اکسل کل جلسات"
-                android:textAllCaps="false"
-                android:textColor="@color/title_blue"
-                android:textDirection="rtl"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:cornerRadius="13dp"
-                app:icon="@android:drawable/ic_menu_save"
-                app:iconGravity="textStart"
-                app:iconTint="@color/title_blue"
-                app:strokeColor="@color/title_blue"
-                app:strokeWidth="1dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSaveAttendance"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="9dp"
-                android:enabled="false"
-                android:text="ثبت نهایی حضور و غیاب"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textDirection="rtl"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/brand_orange"
-                app:cornerRadius="13dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnExportAttendance"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:minWidth="48dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="اکسل"
+                    android:textAllCaps="false"
+                    android:textColor="@color/title_blue"
+                    android:textDirection="rtl"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:cornerRadius="12dp"
+                    app:icon="@android:drawable/ic_menu_save"
+                    app:iconGravity="textStart"
+                    app:iconPadding="5dp"
+                    app:iconSize="17dp"
+                    app:iconTint="@color/title_blue"
+                    app:strokeColor="@color/title_blue"
+                    app:strokeWidth="1dp" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSaveAttendance"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:text="ثبت نهایی"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textDirection="rtl"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/brand_orange"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

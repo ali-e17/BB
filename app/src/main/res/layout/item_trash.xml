@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginVertical="6dp"
+    app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="16dp" app:strokeWidth="1dp" app:strokeColor="#1F667085">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layoutDirection="rtl" android:padding="15dp">
+        <TextView android:id="@+id/txtTrashName" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="right" android:maxLines="2"
+            android:ellipsize="end" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold" />
+        <TextView android:id="@+id/txtTrashMeta" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+            android:gravity="right" android:textColor="@color/sub_text" android:textSize="12sp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnTrashRestore" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp" android:layout_height="42dp" android:layout_weight="1" android:text="بازیابی" android:textAllCaps="false" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnTrashPermanentDelete" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp" android:layout_height="42dp" android:layout_marginStart="8dp" android:layout_weight="1" android:text="حذف قطعی"
+                android:textAllCaps="false" android:textColor="#B42318" app:strokeColor="#B42318" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

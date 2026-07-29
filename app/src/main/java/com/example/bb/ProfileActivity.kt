@@ -167,11 +167,13 @@ class ProfileActivity : AppCompatActivity() {
             remove("IS_LOGGED_IN")
             remove("CURRENT_USER_ROLE")
             remove("CURRENT_USERNAME")
+            remove("CURRENT_PHONE")
             remove("CURRENT_USER_ID")
             remove("CURRENT_DISPLAY_NAME")
             remove("CURRENT_AVATAR_NAME")
             remove("API_TOKEN")
             remove("API_TOKEN_EXPIRES_AT")
+            remove("MUST_CHANGE_PASSWORD")
             apply()
         }
         startActivity(Intent(this, LoginActivity::class.java).apply {

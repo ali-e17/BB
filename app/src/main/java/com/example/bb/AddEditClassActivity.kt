@@ -23,7 +23,12 @@ class AddEditClassActivity : AppCompatActivity() {
     private var existingClass: ClassModel? = null
 
     private lateinit var tvTitle: TextView
+    private lateinit var etClassCode: TextInputEditText
     private lateinit var spinnerClassName: MaterialAutoCompleteTextView
+    private lateinit var etBookName: TextInputEditText
+    private lateinit var etClassLevel: TextInputEditText
+    private lateinit var etTermYear: TextInputEditText
+    private lateinit var spinnerTermSeason: MaterialAutoCompleteTextView
     private lateinit var etStartTime: TextInputEditText
     private lateinit var etEndTime: TextInputEditText
     private lateinit var etSessionCount: TextInputEditText
@@ -38,7 +43,12 @@ class AddEditClassActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.btnClassEditBack).setOnClickListener { finish() }
 
         tvTitle = findViewById(R.id.tvClassEditTitle)
+        etClassCode = findViewById(R.id.etClassCode)
         spinnerClassName = findViewById(R.id.spinnerClassName)
+        etBookName = findViewById(R.id.etBookName)
+        etClassLevel = findViewById(R.id.etClassLevel)
+        etTermYear = findViewById(R.id.etTermYear)
+        spinnerTermSeason = findViewById(R.id.spinnerTermSeason)
         etStartTime = findViewById(R.id.etStartTime)
         etEndTime = findViewById(R.id.etEndTime)
         etSessionCount = findViewById(R.id.etSessionCount)
@@ -54,6 +64,12 @@ class AddEditClassActivity : AppCompatActivity() {
             )
         )
         spinnerClassName.setOnClickListener { spinnerClassName.showDropDown() }
+
+        val seasons = listOf("بهار", "تابستان", "پاییز", "زمستان")
+        spinnerTermSeason.setAdapter(
+            ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, seasons)
+        )
+        spinnerTermSeason.setOnClickListener { spinnerTermSeason.showDropDown() }
 
         setTimeFormatter(etStartTime)
         setTimeFormatter(etEndTime)
@@ -122,7 +138,12 @@ class AddEditClassActivity : AppCompatActivity() {
             return
         }
 
+        etClassCode.setText(model.classCode)
         spinnerClassName.setText(model.className, false)
+        etBookName.setText(model.bookName)
+        etClassLevel.setText(model.classLevel)
+        etTermYear.setText(model.termYear)
+        spinnerTermSeason.setText(model.termSeason, false)
         etStartTime.setText(model.startTime)
         etEndTime.setText(model.endTime)
         etSessionCount.setText(model.sessionCount.toString())
@@ -139,10 +160,22 @@ class AddEditClassActivity : AppCompatActivity() {
     }
 
     private fun validateAndSave() {
+        etClassCode.error = null
         spinnerClassName.error = null
+        etBookName.error = null
+        etClassLevel.error = null
+        etTermYear.error = null
+        spinnerTermSeason.error = null
         etStartTime.error = null
         etEndTime.error = null
         etSessionCount.error = null
+
+        val classCode = etClassCode.text?.toString()?.trim().orEmpty()
+        if (classCode.isBlank()) {
+            etClassCode.error = "کد دستی کلاس الزامی است"
+            etClassCode.requestFocus()
+            return
+        }
 
         val className = spinnerClassName.text?.toString()?.trim().orEmpty()
         if (className !in SchoolClassCatalog.classNames && className != existingClass?.className) {
@@ -151,6 +184,33 @@ class AddEditClassActivity : AppCompatActivity() {
             return
         }
 
+        val bookName = etBookName.text?.toString()?.trim().orEmpty()
+        if (bookName.isBlank()) {
+            etBookName.error = "نام کتاب الزامی است"
+            etBookName.requestFocus()
+            return
+        }
+
+        val classLevel = etClassLevel.text?.toString()?.trim().orEmpty()
+        if (classLevel.isBlank()) {
+            etClassLevel.error = "سطح کلاس الزامی است"
+            etClassLevel.requestFocus()
+            return
+        }
+
+        val termYear = etTermYear.text?.toString()?.trim().orEmpty()
+        if (termYear.isBlank()) {
+            etTermYear.error = "سال ترم الزامی است"
+            etTermYear.requestFocus()
+            return
+        }
+
+        val termSeason = spinnerTermSeason.text?.toString()?.trim().orEmpty()
+        if (termSeason !in listOf("بهار", "تابستان", "پاییز", "زمستان")) {
+            spinnerTermSeason.error = "فصل ترم را انتخاب کنید"
+            spinnerTermSeason.requestFocus()
+            return
+        }
         val startTime = ClassTimeUtils.parse(etStartTime.text?.toString().orEmpty())
         if (startTime == null) {
             etStartTime.error = "ساعت شروع نامعتبر است"
@@ -200,10 +260,26 @@ class AddEditClassActivity : AppCompatActivity() {
             daysOfWeek = selectedDays.joinToString("، "),
             sessionCount = sessionCount,
             teacherPhone = old?.teacherPhone,
+            teacherId = old?.teacherId,
+            teacherName = old?.teacherName.orEmpty(),
             status = old?.status ?: ClassStatus.ACTIVE,
             createdAt = old?.createdAt ?: AppDatabase.today(),
-            completedAt = old?.completedAt
+            completedAt = old?.completedAt,
+            classCode = classCode,
+            bookName = bookName,
+            classLevel = classLevel,
+            termYear = termYear,
+            termSeason = termSeason
         )
+
+        val duplicateCode = AppDatabase.getAllClasses(true).any {
+            it.id != model.id && it.classCode.equals(model.classCode, ignoreCase = true)
+        }
+        if (duplicateCode) {
+            etClassCode.error = "این کد کلاس قبلاً ثبت شده است"
+            etClassCode.requestFocus()
+            return
+        }
 
         val duplicate = AppDatabase.getAllClasses(false).any {
             it.id != model.id &&

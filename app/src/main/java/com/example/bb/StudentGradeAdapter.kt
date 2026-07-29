@@ -75,11 +75,18 @@ class StudentGradeAdapter(
                 maxScoresList += criterion.maxScore
             }
 
+            val reportClass = AppDatabase.getAllClasses(true)
+                .firstOrNull { it.className == className }
             context.startActivity(
                 Intent(context, ReportCardViewActivity::class.java)
                     .putExtra("STUDENT_ID", student.studentCode)
                     .putExtra("STUDENT_NAME", student.name)
+                    .putExtra("CLASS_CODE", reportClass?.classCode.orEmpty())
                     .putExtra("CLASS_NAME", className)
+                    .putExtra("BOOK_NAME", reportClass?.bookName.orEmpty())
+                    .putExtra("CLASS_LEVEL", reportClass?.classLevel.orEmpty())
+                    .putExtra("TERM_YEAR", reportClass?.termYear.orEmpty())
+                    .putExtra("TERM_SEASON", reportClass?.termSeason.orEmpty())
                     .putExtra("REPORT_DATE", AppDatabase.today())
                     .putStringArrayListExtra("CRITERIA_NAMES", criteriaNames)
                     .putIntegerArrayListExtra("SCORES_LIST", scoresList)

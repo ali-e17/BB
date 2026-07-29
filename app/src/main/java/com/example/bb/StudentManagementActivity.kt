@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import retrofit2.Call
 import retrofit2.Callback
@@ -344,6 +345,59 @@ class StudentManagementActivity : AppCompatActivity() {
                 Intent(this, AddEditStudentActivity::class.java)
                     .putExtra("STUDENT_DATA", student)
             )
+        }
+
+        view.findViewById<MaterialButton>(R.id.btnDialogTrashStudent).setOnClickListener {
+            val reasonInput = android.widget.EditText(this).apply { hint = "علت حذف (اختیاری)" }
+            MaterialAlertDialogBuilder(this)
+                .setTitle("انتقال به سطل زباله")
+                .setMessage("دانش‌آموز از فهرست‌های فعال حذف می‌شود، ولی سوابق او حفظ خواهد شد.")
+                .setView(reasonInput)
+                .setNegativeButton("انصراف", null)
+                .setPositiveButton("انتقال") { _, _ ->
+                    RetrofitClient.instance.trashEntity(TrashRequest("student", student.id, reasonInput.text.toString().trim()))
+                        .enqueue(object : Callback<ApiResponse> {
+                            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                                val body = response.body()
+                                Toast.makeText(this@StudentManagementActivity, body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
+                                if (response.isSuccessful && body?.status == "success") { dialog.dismiss(); refreshStudents() }
+                            }
+                            override fun onFailure(call: Call<ApiResponse>, t: Throwable) { Toast.makeText(this@StudentManagementActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show() }
+                        })
+                }.show()
+        }
+
+        val resetPassword = view.findViewById<MaterialButton>(R.id.btnDialogResetPassword)
+        resetPassword.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("ساخت رمز موقت")
+                .setMessage("رمز فعلی قابل مشاهده نیست. یک رمز موقت جدید ساخته شود؟")
+                .setNegativeButton("انصراف", null)
+                .setPositiveButton("ساخت رمز") { _, _ ->
+                    resetPassword.isEnabled = false
+                    RetrofitClient.instance.adminResetPassword(
+                        AdminResetPasswordRequest("STUDENT", student.id)
+                    ).enqueue(object : Callback<AdminResetPasswordResponse> {
+                        override fun onResponse(call: Call<AdminResetPasswordResponse>, response: Response<AdminResetPasswordResponse>) {
+                            resetPassword.isEnabled = true
+                            val body = response.body()
+                            if (response.isSuccessful && body?.status == "success" && !body.temporaryPassword.isNullOrBlank()) {
+                                MaterialAlertDialogBuilder(this@StudentManagementActivity)
+                                    .setTitle("رمز موقت ${student.name}")
+                                    .setMessage("${body.temporaryPassword}\n\nاین رمز فقط همین یک‌بار نمایش داده می‌شود. کاربر بعد از ورود مجبور به تغییر آن است.")
+                                    .setPositiveButton("متوجه شدم", null)
+                                    .show()
+                            } else {
+                                Toast.makeText(this@StudentManagementActivity, body?.message ?: "ساخت رمز موقت انجام نشد", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        override fun onFailure(call: Call<AdminResetPasswordResponse>, t: Throwable) {
+                            resetPassword.isEnabled = true
+                            Toast.makeText(this@StudentManagementActivity, "خطا در اتصال به سرور", Toast.LENGTH_LONG).show()
+                        }
+                    })
+                }
+                .show()
         }
 
         dialog.show()

@@ -100,7 +100,9 @@
                     android:textStyle="bold"
                     android:textColorHint="@color/hint_color"
                     android:textDirection="ltr"
-                    android:inputType="phone" />
+                    android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
+                    android:inputType="number"
+                    android:maxLength="10" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout

@@ -36,7 +36,7 @@ class TeacherAdapter(
         holder.avatar.setImageResource(if (res != 0) res else R.drawable.avatar_teacher_1)
         holder.name.text = teacher.name
         holder.phone.text = "شماره تماس: ${teacher.phone}"
-        val count = AppDatabase.getTeacherClasses(teacher.phone).size
+        val count = AppDatabase.getTeacherClassesById(teacher.id).size
         holder.classBadge.text = if (count == 0) "بدون کلاس" else "$count کلاس فعال"
         holder.archivedBadge.visibility = if (teacher.isActive) View.GONE else View.VISIBLE
         holder.itemRoot.alpha = if (teacher.isActive) 1f else .7f

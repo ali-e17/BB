@@ -27,9 +27,7 @@ class MainActivity : AppCompatActivity() {
         val roleString = intent.getStringExtra("USER_ROLE")
             ?: prefs.getString("CURRENT_USER_ROLE", "STUDENT")
             ?: "STUDENT"
-        val username = intent.getStringExtra("USERNAME")
-            ?: prefs.getString("CURRENT_USERNAME", "")
-            .orEmpty()
+        val currentUserId = prefs.getString("CURRENT_USER_ID", "").orEmpty()
 
         currentUserRole = runCatching { UserRole.valueOf(roleString.uppercase()) }
             .getOrDefault(UserRole.STUDENT)
@@ -95,11 +93,16 @@ class MainActivity : AppCompatActivity() {
                 )
                 clickedItem.title.contains("کارنامه") || clickedItem.title.contains("نمر") -> {
                     when (currentUserRole) {
-                        UserRole.ADMIN -> startActivity(Intent(this, ReportCardSetupActivity::class.java))
-                        UserRole.STUDENT -> showStudentReportCards(username)
-                        else -> Unit
+                        UserRole.ADMIN, UserRole.TEACHER -> startActivity(Intent(this, ReportCardSetupActivity::class.java))
+                        UserRole.STUDENT -> showStudentReportCards()
                     }
                 }
+                clickedItem.title.contains("سابقه") -> startActivity(
+                    Intent(this, TermHistoryActivity::class.java)
+                        .putExtra(TermHistoryActivity.EXTRA_ROLE, currentUserRole.name)
+                        .putExtra(TermHistoryActivity.EXTRA_ID, currentUserId)
+                )
+                clickedItem.title.contains("سطل") -> startActivity(Intent(this, TrashBinActivity::class.java))
                 clickedItem.title.contains("دانش‌آموزان") -> startActivity(Intent(this, StudentManagementActivity::class.java))
                 clickedItem.title.contains("حضور") -> startActivity(Intent(this, AttendanceActivity::class.java))
                 clickedItem.title.contains("کلاس‌ها") -> startActivity(Intent(this, ClassManagementActivity::class.java))
@@ -139,12 +142,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildDashboardItems(): List<DashboardItem> = when (currentUserRole) {
         UserRole.STUDENT -> listOf(
-            DashboardItem("کارنامه و نمرات", "مشاهده کارنامه‌های صادرشده", android.R.drawable.ic_menu_sort_by_size),
+            DashboardItem("کارنامه و نمرات", "مشاهده کارنامه‌های منتشرشده", android.R.drawable.ic_menu_sort_by_size),
+            DashboardItem("سابقه ترم‌ها", "کلاس‌ها، حضورغیاب و کارنامه‌های قبلی", android.R.drawable.ic_menu_recent_history),
             DashboardItem("دیکشنری آفلاین", "جست‌وجوی لغات بدون اینترنت", android.R.drawable.ic_menu_search),
             DashboardItem("اعلانات", "پیام‌ها و تکالیف جدید", android.R.drawable.ic_menu_agenda)
         )
         UserRole.TEACHER -> listOf(
             DashboardItem("حضور و غیاب", "ثبت وضعیت جلسه‌های کلاس", android.R.drawable.ic_menu_recent_history),
+            DashboardItem("صدور کارنامه", "ثبت نمره کلاس‌های خودتان", android.R.drawable.ic_menu_edit),
+            DashboardItem("سابقه کلاس‌ها", "کلاس‌های فعال و پایان‌یافته", android.R.drawable.ic_menu_recent_history),
             DashboardItem("اعلانات", "ارسال پیام برای کلاس‌ها", android.R.drawable.ic_dialog_email)
         )
         UserRole.ADMIN -> listOf(
@@ -153,37 +159,36 @@ class MainActivity : AppCompatActivity() {
             DashboardItem("مدیریت کلاس‌ها", "تعریف کلاس و زمان‌بندی", android.R.drawable.ic_input_add),
             DashboardItem("مدیریت حضور و غیاب", "بازبینی جلسات و خروجی اکسل", android.R.drawable.ic_menu_recent_history),
             DashboardItem("اعلانات", "ارسال پیام به کلاس‌ها", android.R.drawable.ic_menu_send),
-            DashboardItem("مدیریت اساتید", "افزودن و مدیریت دسترسی استاد", android.R.drawable.ic_menu_myplaces)
+            DashboardItem("مدیریت اساتید", "افزودن و مدیریت دسترسی استاد", android.R.drawable.ic_menu_myplaces),
+            DashboardItem("سطل زباله", "بازیابی یا حذف قطعی رکوردهای اشتباه", android.R.drawable.ic_menu_delete)
         )
     }
 
-    private fun showStudentReportCards(phone: String) {
-        val student = AppDatabase.getStudentByUsername(phone) ?: run {
-            Toast.makeText(this, "اطلاعات دانش‌آموز هنوز همگام نشده است", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val reports = AppDatabase.getReportCardsForStudent(student.id)
-        if (reports.isEmpty()) {
-            Toast.makeText(this, "هنوز کارنامه‌ای برای شما منتشر نشده است", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val labels = reports.map { report ->
-            "${AppDatabase.getClassNameById(report.classId) ?: "کلاس"} - ${report.updatedAt}"
-        }.toTypedArray()
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("کارنامه‌های منتشرشده")
-            .setItems(labels) { _, position ->
-                val report = reports[position]
-                startActivity(Intent(this, ReportCardViewActivity::class.java).apply {
-                    putExtra("STUDENT_ID", student.studentCode)
-                    putExtra("STUDENT_NAME", student.name)
-                    putExtra("CLASS_NAME", AppDatabase.getClassNameById(report.classId) ?: "کلاس")
-                    putExtra("REPORT_DATE", report.updatedAt)
-                    putStringArrayListExtra("CRITERIA_NAMES", ArrayList(report.criteria.map { it.name }))
-                    putIntegerArrayListExtra("SCORES_LIST", ArrayList(report.criteria.map { report.scores[it.id] ?: 0 }))
-                    putIntegerArrayListExtra("MAX_SCORES_LIST", ArrayList(report.criteria.map { it.maxScore }))
-                })
+    private fun showStudentReportCards() {
+        RetrofitClient.instance.getReportCards().enqueue(object : retrofit2.Callback<List<ReportCardDto>> {
+            override fun onResponse(call: retrofit2.Call<List<ReportCardDto>>, response: retrofit2.Response<List<ReportCardDto>>) {
+                val reports = if (response.isSuccessful) response.body().orEmpty() else emptyList()
+                if (reports.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "هنوز کارنامه‌ای برای شما منتشر نشده است", Toast.LENGTH_SHORT).show()
+                    return
+                }
+                val labels = reports.map { r ->
+                    val term = listOf(r.termSeason, r.termYear).filter { it.isNotBlank() }.joinToString(" ")
+                    listOf(r.className, term, "نمره ${formatScore(r.totalScore)}").filter { it.isNotBlank() }.joinToString(" • ")
+                }.toTypedArray()
+                androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("کارنامه‌های منتشرشده")
+                    .setItems(labels) { _, position ->
+                        startActivity(Intent(this@MainActivity, ReportCardViewActivity::class.java)
+                            .putExtra(ReportCardViewActivity.EXTRA_REPORT_CARD_ID, reports[position].id))
+                    }.show()
             }
-            .show()
+            override fun onFailure(call: retrofit2.Call<List<ReportCardDto>>, t: Throwable) {
+                Toast.makeText(this@MainActivity, "دریافت کارنامه‌ها انجام نشد", Toast.LENGTH_LONG).show()
+            }
+        })
     }
+
+    private fun formatScore(v: Double): String = if (v % 1.0 == 0.0) v.toInt().toString() else "%.2f".format(v)
+
 }

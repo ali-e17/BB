@@ -52,7 +52,7 @@ class AddEditTeacherActivity : AppCompatActivity() {
                     val normalized=p.removePrefix("0")
                     val model=TeacherModel(
                         id=editing?.id?:UUID.randomUUID().toString(), firstName=f,lastName=l,phone=normalized,
-                        nationalId=n,password=if(editing==null)n else "",isActive=editing?.isActive?:true,classIds=editing?.classIds.orEmpty(),
+                        nationalId=n,password="",isActive=editing?.isActive?:true,classIds=editing?.classIds.orEmpty(),
                         avatarName=editing?.avatarName?:"avatar_teacher_${(1..6).random()}"
                     )
                     setSaving(save,progress,true)

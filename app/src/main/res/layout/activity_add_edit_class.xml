@@ -69,6 +69,31 @@
 
             <TextView
                 style="@style/ClassFormLabel"
+                android:text="کد دستی کلاس" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/ClassFormOutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="مثلاً 1405-SP-A1-01">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etClassCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical"
+                    android:imeOptions="actionNext"
+                    android:inputType="text"
+                    android:maxLength="50"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:singleLine="true"
+                    android:textColor="@color/main_text"
+                    android:textDirection="ltr" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/ClassFormLabel"
                 android:text="نام کلاس" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -87,6 +112,105 @@
                     android:textColor="@color/main_text"
                     android:textDirection="firstStrong" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/ClassFormLabel"
+                android:layout_marginTop="14dp"
+                android:text="نام کتاب" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/ClassFormOutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="نام کتاب را آزادانه وارد کنید">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBookName"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapSentences"
+                    android:maxLength="150"
+                    android:maxLines="1"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textColor="@color/main_text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/ClassFormLabel"
+                android:layout_marginTop="14dp"
+                android:text="سطح کلاس" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/ClassFormOutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="مثلاً Beginner 1">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etClassLevel"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:maxLength="100"
+                    android:maxLines="1"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textColor="@color/main_text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/ClassFormOutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:hint="سال ترم">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTermYear"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:digits="0123456789۰۱۲۳۴۵۶۷۸۹"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:maxLength="4"
+                        android:singleLine="true"
+                        android:textColor="@color/main_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/ClassFormOutlinedBox.ExposedDropdown"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:hint="فصل ترم">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/spinnerTermSeason"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:gravity="center_vertical"
+                        android:inputType="none"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textColor="@color/main_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <TextView
                 style="@style/ClassFormSectionTitle"

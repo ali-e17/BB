@@ -36,7 +36,7 @@ class TeacherHistoryActivity : AppCompatActivity() {
         rvHistory.adapter = HistoryAdapter()
 
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        currentTeacherPhone = prefs.getString("CURRENT_USERNAME", "").orEmpty()
+        currentTeacherPhone = prefs.getString("CURRENT_PHONE", "").orEmpty()
 
         fetchHistory()
     }
