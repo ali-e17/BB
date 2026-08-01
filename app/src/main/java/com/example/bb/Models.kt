@@ -74,11 +74,12 @@ data class ClassModel(
     var completedAt: String? = null,
     var classCode: String = "",
     var bookName: String = "",
-    var classLevel: String = "",
     var termYear: String = "",
     var termSeason: String = "",
     var teacherId: String? = null,
-    var teacherName: String = ""
+    var teacherName: String = "",
+    var minPassingScore: Double = 80.0,      // 🌟 اضافه شد
+    var minConditionalScore: Double = 70.0    // 🌟 اضافه شد
 ) : Serializable {
     val classTime: String
         get() = "$daysOfWeek | $startTime تا $endTime | $sessionCount جلسه"
@@ -392,8 +393,8 @@ object AppDatabase
             val normalizedPhone = normalizePhone(teacher.phone)
             teacher.classIds = classes.filter {
                 it.status == ClassStatus.ACTIVE &&
-                    (it.teacherId == teacher.id ||
-                        (it.teacherId.isNullOrBlank() && normalizePhone(it.teacherPhone.orEmpty()) == normalizedPhone))
+                        (it.teacherId == teacher.id ||
+                                (it.teacherId.isNullOrBlank() && normalizePhone(it.teacherPhone.orEmpty()) == normalizedPhone))
             }.joinToString(",") { it.id }
         }
     }
@@ -637,7 +638,9 @@ object AppDatabase
         // 🌟 ذخیره آواتار اساتید در جیسون لوکال
         root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("classIds", t.classIds).put("isActive", t.isActive).put("avatarName", t.avatarName ?: "avatar_teacher_1")) } })
 
-        root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt).put("classCode", c.classCode).put("bookName", c.bookName).put("classLevel", c.classLevel).put("termYear", c.termYear).put("termSeason", c.termSeason).put("teacherId", c.teacherId).put("teacherName", c.teacherName)) } })
+        // 🌟 حذف کلاس لول و جایگزینی با مینیمم‌های نمرات جدید کلاس
+        root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt).put("classCode", c.classCode).put("bookName", c.bookName).put("termYear", c.termYear).put("termSeason", c.termSeason).put("teacherId", c.teacherId).put("teacherName", c.teacherName).put("minPassingScore", c.minPassingScore).put("minConditionalScore", c.minConditionalScore)) } })
+
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
         root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
         root.put("announcements", JSONArray().apply {
@@ -766,6 +769,8 @@ object AppDatabase
                 avatarName = o.optString("avatarName", "avatar_teacher_1") // 🌟 بازیابی آواتار اساتید
             )
         }
+
+        // 🌟 حذف کلاس لول و خواندن مینیمم‌های جدید کارنامه
         root.optJSONArray("classes").forEachObject { o ->
             classes += ClassModel(
                 id = o.optString("id"),
@@ -780,13 +785,15 @@ object AppDatabase
                 completedAt = o.optNullableString("completedAt"),
                 classCode = o.optString("classCode"),
                 bookName = o.optString("bookName"),
-                classLevel = o.optString("classLevel"),
                 termYear = o.optString("termYear"),
                 termSeason = o.optString("termSeason"),
                 teacherId = o.optNullableString("teacherId"),
-                teacherName = o.optString("teacherName")
+                teacherName = o.optString("teacherName"),
+                minPassingScore = o.optDouble("minPassingScore", 80.0),
+                minConditionalScore = o.optDouble("minConditionalScore", 70.0)
             )
         }
+
         root.optJSONArray("enrollments").forEachObject { o -> enrollments += EnrollmentModel(o.optString("id"), o.optString("studentId"), o.optString("classId"), o.optString("startedAt"), o.optNullableString("endedAt")) }
         root.optJSONArray("attendance").forEachObject { o ->
             val items = mutableListOf<AttendanceItem>()

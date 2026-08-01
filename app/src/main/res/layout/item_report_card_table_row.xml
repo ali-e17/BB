@@ -3,55 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="#FFFFFF"
-    android:baselineAligned="false"
-    android:minHeight="42dp"
     android:orientation="horizontal"
+    android:layoutDirection="ltr"
     android:weightSum="4">
 
-    <TextView
-        android:id="@+id/txtTableSubject"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="2.2"
-        android:breakStrategy="simple"
-        android:gravity="center"
-        android:hyphenationFrequency="none"
-        android:maxLines="2"
-        android:paddingHorizontal="6dp"
-        android:paddingVertical="7dp"
-        android:textColor="#111827"
-        android:textDirection="firstStrong"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <View
-        android:layout_width="1dp"
-        android:layout_height="match_parent"
-        android:background="#E5E7EB" />
-
-    <TextView
-        android:id="@+id/txtTableScore"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.9"
-        android:gravity="center"
-        android:padding="6dp"
-        android:textColor="#111827"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <View
-        android:layout_width="1dp"
-        android:layout_height="match_parent"
-        android:background="#E5E7EB" />
-
-    <TextView
-        android:id="@+id/txtTableOutOf"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.9"
-        android:gravity="center"
-        android:padding="6dp"
-        android:textColor="#4B5563"
-        android:textSize="11sp" />
+    <TextView android:id="@+id/txtTableSubject" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="2" android:gravity="center_vertical|start" android:paddingHorizontal="8dp" android:paddingVertical="8dp" android:textColor="#111827" android:textSize="12sp" android:textStyle="bold" />
+    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E5E7EB" />
+    <TextView android:id="@+id/txtTableScore" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:padding="8dp" android:textColor="#111827" android:textSize="12sp" android:textStyle="bold" />
+    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E5E7EB" />
+    <TextView android:id="@+id/txtTableOutOf" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:padding="8dp" android:textColor="#4B5563" android:textSize="12sp" />
 </LinearLayout>

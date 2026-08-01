@@ -158,20 +158,21 @@ class ClassManagementActivity : AppCompatActivity() {
 
 
     private fun confirmTrashClass(model: ClassModel) {
-        val input = android.widget.EditText(this).apply { hint = "علت حذف (اختیاری)" }
         AlertDialog.Builder(this)
-            .setTitle("انتقال به سطل زباله")
-            .setMessage("این گزینه برای رکوردی است که اشتباهی ساخته شده. سوابق موجود حذف نمی‌شوند.")
-            .setView(input)
-            .setPositiveButton("انتقال") { _, _ ->
-                RetrofitClient.instance.trashEntity(TrashRequest("class", model.id, input.text.toString().trim()))
+            .setTitle("حذف قطعی کلاس")
+            .setMessage("آیا از حذف قطعی کلاس «${model.className}» مطمئن هستید؟ با این کار تمام سوابق، حضور و غیاب‌ها و کارنامه‌های این کلاس از دیتابیس پاک شده و دیگر قابل بازگشت نخواهد بود.")
+            .setPositiveButton("حذف قطعی") { _, _ ->
+                setLoading(true)
+                RetrofitClient.instance.hardDeleteClass(HardDeleteClassRequest(model.id))
                     .enqueue(object : Callback<ApiResponse> {
                         override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                            setLoading(false)
                             val body = response.body()
                             Toast.makeText(this@ClassManagementActivity, body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
                             if (response.isSuccessful && body?.status == "success") fetchClasses()
                         }
                         override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                            setLoading(false)
                             Toast.makeText(this@ClassManagementActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
                         }
                     })

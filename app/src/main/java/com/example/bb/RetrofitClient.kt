@@ -16,6 +16,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import java.net.InetAddress
 
+data class HardDeleteClassRequest(val id: String)
+
 data class ApiResponse(
     val status: String = "",
     val message: String = "",
@@ -84,6 +86,8 @@ data class TermHistoryItem(
 data class TermHistoryResponse(val status:String="",val role:String="",val items:List<TermHistoryItem> = emptyList())
 
 interface ApiService {
+    @POST("delete_class.php")
+    fun hardDeleteClass(@Body request: HardDeleteClassRequest): Call<ApiResponse>
     @POST("login.php") fun login(@Body request:LoginRequest):Call<LoginResponse>
     @POST("logout.php") fun logout():Call<ApiResponse>
     @GET("get_profile.php") fun getProfile():Call<ProfileResponse>

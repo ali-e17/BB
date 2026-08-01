@@ -28,8 +28,6 @@ class ReportCardSetupActivity : AppCompatActivity() {
     private lateinit var selectedInfo: TextView
     private lateinit var componentContainer: LinearLayout
     private lateinit var totalText: TextView
-    private lateinit var passInput: TextInputEditText
-    private lateinit var conditionalInput: TextInputEditText
     private lateinit var addButton: MaterialButton
     private lateinit var continueButton: MaterialButton
     private lateinit var progress: View
@@ -37,16 +35,16 @@ class ReportCardSetupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report_card_setup)
+
         findViewById<ImageView>(R.id.btnSetupBack).setOnClickListener { finish() }
         classDropdown = findViewById(R.id.dropdownClassTarget)
         selectedInfo = findViewById(R.id.txtSelectedClassInfo)
         componentContainer = findViewById(R.id.containerFields)
         totalText = findViewById(R.id.txtTotalSumValue)
-        passInput = findViewById(R.id.etPassNoStarMin)
-        conditionalInput = findViewById(R.id.etConditionalMin)
         addButton = findViewById(R.id.btnAddCriterion)
         continueButton = findViewById(R.id.btnSaveLayout)
         progress = findViewById(R.id.progressReportSetup)
+
         val role = getSharedPreferences("LocalAppPrefs", MODE_PRIVATE).getString("CURRENT_USER_ROLE", "STUDENT")
         findViewById<MaterialButton>(R.id.btnEditResultMessages).apply {
             visibility = if (role == "ADMIN") View.VISIBLE else View.GONE
@@ -73,7 +71,7 @@ class ReportCardSetupActivity : AppCompatActivity() {
                     val userId = prefs.getString("CURRENT_USER_ID", "").orEmpty()
                     classes += response.body().orEmpty().filter {
                         it.status == ClassStatus.ACTIVE &&
-                            (role == "ADMIN" || (role == "TEACHER" && it.teacherId == userId))
+                                (role == "ADMIN" || (role == "TEACHER" && it.teacherId == userId))
                     }
                 }
                 classDropdown.setAdapter(ArrayAdapter(this@ReportCardSetupActivity, android.R.layout.simple_dropdown_item_1line, classes.map { it.className }))
@@ -102,13 +100,9 @@ class ReportCardSetupActivity : AppCompatActivity() {
                 components.clear()
                 if (response.isSuccessful && config != null) {
                     configRevision = config.revision
-                    passInput.setText(format(config.passWithoutStarMin))
-                    conditionalInput.setText(format(config.conditionalMin))
                     components += config.components.sortedBy { it.sortOrder }.map { EditableComponent(it.id, it.title, it.maxScore) }
                 } else {
                     configRevision = 0
-                    passInput.setText("78")
-                    conditionalInput.setText("70")
                     components += listOf(
                         EditableComponent(UUID.randomUUID().toString(), "Work Book", 15.0),
                         EditableComponent(UUID.randomUUID().toString(), "Class Activity", 15.0),
@@ -158,10 +152,22 @@ class ReportCardSetupActivity : AppCompatActivity() {
     private fun updateTotal() {
         syncRowsSafe()
         val total = components.sumOf { it.maxScore }
-        totalText.text = "مجموع بارم: ${format(total)} از ۱۰۰"
-        totalText.setTextColor(if (kotlin.math.abs(total - 100.0) < 0.001) 0xFF027A48.toInt() else 0xFFB42318.toInt())
-    }
 
+        // نمایش به صورت انگلیسی و فرمت 100 / 100
+        totalText.text = "${format(total)} / 100"
+
+        // اگر دقیقا 100 بود رنگش سبز میشه و دکمه ذخیره فعال میشه
+        if (kotlin.math.abs(total - 100.0) < 0.001) {
+            totalText.setTextColor(0xFF10B981.toInt()) // رنگ سبز
+            continueButton.isEnabled = true
+            continueButton.alpha = 1.0f
+        } else {
+            // در غیر این صورت قرمز میشه و دکمه خاموش میمونه
+            totalText.setTextColor(0xFFEF4444.toInt()) // رنگ قرمز
+            continueButton.isEnabled = false
+            continueButton.alpha = 0.5f
+        }
+    }
     private fun syncRowsSafe() {
         for (i in 0 until componentContainer.childCount) {
             val row = componentContainer.getChildAt(i)
@@ -175,16 +181,18 @@ class ReportCardSetupActivity : AppCompatActivity() {
     private fun saveAndContinue() {
         val c = selectedClass ?: return Toast.makeText(this, "کلاس را انتخاب کنید", Toast.LENGTH_SHORT).show()
         syncRows()
-        val pass = passInput.text?.toString()?.toDoubleOrNull()
-        val conditional = conditionalInput.text?.toString()?.toDoubleOrNull()
+
+        // خواندن مستقیم مقادیر از کلاس انتخاب شده
+        val pass = c.minPassingScore
+        val conditional = c.minConditionalScore
+
         when {
             components.isEmpty() || components.size > 8 -> return toast("تعداد معیارها باید بین ۱ تا ۸ باشد")
             components.any { it.title.isBlank() || it.maxScore <= 0 } -> return toast("نام و بارم همه معیارها را کامل کنید")
             components.map { it.title.lowercase() }.distinct().size != components.size -> return toast("نام معیار تکراری است")
             kotlin.math.abs(components.sumOf { it.maxScore } - 100.0) > 0.001 -> return toast("مجموع بارم‌ها باید دقیقاً ۱۰۰ باشد")
-            pass == null || conditional == null || conditional < 0 || conditional >= pass || pass >= 83 -> return toast("مرزها باید ۰ ≤ مشروطی < قبولی بدون ستاره < ۸۳ باشند")
         }
-        val request = SaveReportConfigRequest(c.id, pass!!, conditional!!, configRevision, components.mapIndexed { index, x -> ReportComponentDto(x.id, x.title, x.maxScore, index + 1) })
+        val request = SaveReportConfigRequest(c.id, pass, conditional, configRevision, components.mapIndexed { index, x -> ReportComponentDto(x.id, x.title, x.maxScore, index + 1) })
         setLoading(true)
         RetrofitClient.instance.saveReportConfig(request).enqueue(object : Callback<SaveReportConfigResponse> {
             override fun onResponse(call: Call<SaveReportConfigResponse>, response: Response<SaveReportConfigResponse>) {
@@ -199,12 +207,11 @@ class ReportCardSetupActivity : AppCompatActivity() {
         })
     }
 
-    private fun buildClassInfo(c: ClassModel): String = listOf(
+    private fun buildClassInfo(c: ClassModel): String = listOfNotNull(
         c.classCode.takeIf(String::isNotBlank)?.let { "کد $it" },
         c.bookName.takeIf(String::isNotBlank)?.let { "کتاب $it" },
-        c.classLevel.takeIf(String::isNotBlank)?.let { "سطح $it" },
         listOf(c.termSeason, c.termYear).filter(String::isNotBlank).joinToString(" ").takeIf(String::isNotBlank)
-    ).filterNotNull().joinToString("  •  ").ifBlank { "اطلاعات تکمیلی این کلاس هنوز کامل نشده" }
+    ).joinToString("  •  ").ifBlank { "اطلاعات تکمیلی این کلاس هنوز کامل نشده" }
 
     private fun setLoading(value: Boolean) { progress.visibility = if (value) View.VISIBLE else View.GONE; continueButton.isEnabled = !value }
     private fun format(v: Double) = if (v % 1.0 == 0.0) v.toInt().toString() else "%.2f".format(v)

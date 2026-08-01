@@ -77,6 +77,7 @@ class StudentGradeAdapter(
 
             val reportClass = AppDatabase.getAllClasses(true)
                 .firstOrNull { it.className == className }
+
             context.startActivity(
                 Intent(context, ReportCardViewActivity::class.java)
                     .putExtra("STUDENT_ID", student.studentCode)
@@ -84,7 +85,7 @@ class StudentGradeAdapter(
                     .putExtra("CLASS_CODE", reportClass?.classCode.orEmpty())
                     .putExtra("CLASS_NAME", className)
                     .putExtra("BOOK_NAME", reportClass?.bookName.orEmpty())
-                    .putExtra("CLASS_LEVEL", reportClass?.classLevel.orEmpty())
+                    // 🌟 خط مربوط به classLevel کلاً حذف شد
                     .putExtra("TERM_YEAR", reportClass?.termYear.orEmpty())
                     .putExtra("TERM_SEASON", reportClass?.termSeason.orEmpty())
                     .putExtra("REPORT_DATE", AppDatabase.today())
