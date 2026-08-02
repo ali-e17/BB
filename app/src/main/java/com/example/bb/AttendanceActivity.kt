@@ -507,44 +507,62 @@ class AttendanceActivity : AppCompatActivity() {
     }
 
     private fun downloadAttendanceExcel(model: ClassModel) {
-        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        val token = prefs.getString("API_TOKEN", "").orEmpty()
-        if (token.isBlank()) {
-            Toast.makeText(this, "نشست ورود معتبر نیست؛ یک‌بار خارج و دوباره وارد شوید", Toast.LENGTH_LONG).show()
-            return
-        }
+        Toast.makeText(this, "در حال دریافت گزارش از سرور...", Toast.LENGTH_SHORT).show()
 
-        val safeClassName = model.className
-            .replace(Regex("[^A-Za-z0-9\u0600-\u06FF_-]+"), "_")
-            .trim('_')
-            .take(60)
-            .ifBlank { "class" }
-        val timePart = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US)
-            .format(Calendar.getInstance().time)
-        val fileName = "attendance_${safeClassName}_$timePart.xlsx"
+        RetrofitClient.instance.downloadAttendanceExcel(model.id).enqueue(object : Callback<okhttp3.ResponseBody> {
+            override fun onResponse(call: Call<okhttp3.ResponseBody>, response: Response<okhttp3.ResponseBody>) {
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
 
-        val request = DownloadManager.Request(
-            Uri.parse(RetrofitClient.attendanceExportUrl(model.id))
-        ).apply {
-            addRequestHeader("Authorization", "Bearer $token")
-            setMimeType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            setTitle("خروجی حضور و غیاب ${model.className}")
-            setDescription("در حال ساخت و دانلود گزارش اکسل")
-            setNotificationVisibility(
-                DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
-            )
-            setAllowedOverMetered(true)
-            setAllowedOverRoaming(true)
-            setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-        }
+                    val contentType = body.contentType()?.toString()?.lowercase(Locale.ROOT) ?: ""
+                    if (contentType.contains("text/html") || contentType.contains("application/json")) {
+                        val errorText = body.string()
+                        runOnUiThread {
+                            androidx.appcompat.app.AlertDialog.Builder(this@AttendanceActivity)
+                                .setTitle("ارور از سمت سرور")
+                                .setMessage(errorText)
+                                .setPositiveButton("بستن", null)
+                                .show()
+                        }
+                        return
+                    }
 
-        val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        manager.enqueue(request)
-        Toast.makeText(
-            this,
-            "دانلود گزارش شروع شد؛ فایل در پوشه Downloads ذخیره می‌شود",
-            Toast.LENGTH_LONG
-        ).show()
+                    Thread {
+                        try {
+                            val safeClassName = model.className.replace(Regex("[^A-Za-z0-9\u0600-\u06FF_-]+"), "_").trim('_')
+                            val timePart = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Calendar.getInstance().time)
+
+                            // 🌟 اینجا پسوند رو کردیم csv
+                            val fileName = "attendance_${safeClassName}_$timePart.xlsx"
+
+                            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                            downloadsDir.mkdirs()
+                            val file = java.io.File(downloadsDir, fileName)
+
+                            body.byteStream().use { inputStream ->
+                                java.io.FileOutputStream(file).use { outputStream ->
+                                    inputStream.copyTo(outputStream)
+                                }
+                            }
+
+                            runOnUiThread {
+                                Toast.makeText(this@AttendanceActivity, "گزارش با موفقیت در پوشه Downloads ذخیره شد", Toast.LENGTH_LONG).show()
+                            }
+                        } catch (e: Exception) {
+                            runOnUiThread {
+                                Toast.makeText(this@AttendanceActivity, "خطا در ذخیره فایل: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }.start()
+                } else {
+                    Toast.makeText(this@AttendanceActivity, "خطا در دریافت (کد ${response.code()})", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            override fun onFailure(call: Call<okhttp3.ResponseBody>, t: Throwable) {
+                Toast.makeText(this@AttendanceActivity, "ارتباط با سرور برای دانلود قطع شد", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 
     private fun showFinalizeDatePicker(session: AttendanceSessionResponse) {

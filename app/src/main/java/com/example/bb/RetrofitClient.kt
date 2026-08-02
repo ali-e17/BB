@@ -1,5 +1,6 @@
 package com.example.bb
 
+import okhttp3.ResponseBody
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
@@ -87,7 +88,9 @@ data class TermHistoryItem(
 )
 data class TermHistoryResponse(val status:String="",val role:String="",val items:List<TermHistoryItem> = emptyList())
 
-interface ApiService {
+interface ApiService
+{
+
     @POST("delete_student.php")
     fun hardDeleteStudent(@Body request: HardDeleteStudentRequest): Call<ApiResponse>
 
@@ -147,7 +150,14 @@ interface ApiService {
     @GET("get_term_history.php") fun getTermHistory(@Query("role") role:String,@Query("id") id:String):Call<TermHistoryResponse>
     @GET("get_result_messages.php") fun getResultMessages():Call<ResultMessagesResponse>
     @POST("save_result_messages.php") fun saveResultMessages(@Body request:SaveResultMessagesRequest):Call<ApiResponse>
+
+    @Streaming
+    @GET("export_attendance_excel.php")
+    fun downloadAttendanceExcel(@Query("class_id") classId: String): Call<okhttp3.ResponseBody>
 }
+
+
+
 
 private class SessionInterceptor(private val context:Context):Interceptor {
     private val prefs=context.getSharedPreferences("LocalAppPrefs",Context.MODE_PRIVATE)
