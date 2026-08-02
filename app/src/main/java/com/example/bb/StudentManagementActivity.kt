@@ -348,14 +348,12 @@ class StudentManagementActivity : AppCompatActivity() {
         }
 
         view.findViewById<MaterialButton>(R.id.btnDialogTrashStudent).setOnClickListener {
-            val reasonInput = android.widget.EditText(this).apply { hint = "علت حذف (اختیاری)" }
             MaterialAlertDialogBuilder(this)
-                .setTitle("انتقال به سطل زباله")
-                .setMessage("دانش‌آموز از فهرست‌های فعال حذف می‌شود، ولی سوابق او حفظ خواهد شد.")
-                .setView(reasonInput)
+                .setTitle("حذف قطعی دانش‌آموز")
+                .setMessage("آیا از حذف قطعی این دانش‌آموز مطمئن هستید؟ تمام سوابق، حضور و غیاب و کارنامه‌های او برای همیشه پاک خواهند شد.")
                 .setNegativeButton("انصراف", null)
-                .setPositiveButton("انتقال") { _, _ ->
-                    RetrofitClient.instance.trashEntity(TrashRequest("student", student.id, reasonInput.text.toString().trim()))
+                .setPositiveButton("حذف قطعی") { _, _ ->
+                    RetrofitClient.instance.hardDeleteStudent(HardDeleteStudentRequest(student.id))
                         .enqueue(object : Callback<ApiResponse> {
                             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                                 val body = response.body()

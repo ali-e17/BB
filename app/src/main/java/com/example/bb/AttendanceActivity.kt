@@ -166,10 +166,17 @@ class AttendanceActivity : AppCompatActivity() {
             return
         }
 
-        val classNames = availableClasses.map { it.className }
-        spinnerClass.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, classNames)
-        )
+        // فرمت‌دهی جدید ترم کلاس
+        val classNames = availableClasses.map {
+            val termInfo = listOf(it.termSeason, it.termYear).filter { s -> s.isNotBlank() }.joinToString(" - ")
+            if (termInfo.isNotBlank()) "${it.className} - $termInfo" else it.className
+        }
+
+        // تنظیمات استایل آبی آسمانی و فونت جمع‌وجور
+        spinnerClass.setTextColor(android.graphics.Color.parseColor("#9ad9f5"))
+        spinnerClass.textSize = 14f
+
+        spinnerClass.setAdapter(createSkyBlueAdapter(this, classNames))
         spinnerClass.setOnItemClickListener { _, _, position, _ ->
             selectClass(availableClasses[position])
         }
@@ -187,6 +194,24 @@ class AttendanceActivity : AppCompatActivity() {
         recycler.adapter = null
         hideEmpty()
         loadOverview()
+    }
+
+    private fun createSkyBlueAdapter(context: Context, items: List<String>): ArrayAdapter<String> {
+        return object : ArrayAdapter<String>(context, android.R.layout.simple_dropdown_item_1line, items) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent) as TextView
+                view.setTextColor(android.graphics.Color.parseColor("#9ad9f5"))
+                view.textSize = 14f
+                return view
+            }
+
+            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getDropDownView(position, convertView, parent) as TextView
+                view.setTextColor(android.graphics.Color.parseColor("#0ea5e9"))
+                view.textSize = 14f
+                return view
+            }
+        }
     }
 
     private fun loadOverview(preferredSessionNumber: Int? = null) {

@@ -52,6 +52,6 @@
         android:id="@+id/btnDialogTrashTeacher"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp"
-        android:text="انتقال به سطل زباله" android:textAllCaps="false" android:textColor="#B42318"
+        android:text="حذف" android:textAllCaps="false" android:textColor="#B42318"
         app:cornerRadius="12dp" app:strokeColor="#B42318" />
 </LinearLayout>

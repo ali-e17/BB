@@ -233,11 +233,6 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            TITLE_TRASH -> {
-                startActivity(
-                    Intent(this, TrashBinActivity::class.java)
-                )
-            }
 
             TITLE_STUDENT_MANAGEMENT -> {
                 startActivity(
@@ -330,11 +325,6 @@ class MainActivity : AppCompatActivity() {
                     R.drawable.home_issue_report
                 ),
                 DashboardItem(
-                    TITLE_CLASS_HISTORY,
-                    "مشاهده کلاس‌ها و ترم‌های قبلی",
-                    R.drawable.home_classes
-                ),
-                DashboardItem(
                     TITLE_ANNOUNCEMENTS,
                     "مشاهده و ارسال اعلانات",
                     R.drawable.home_announcements
@@ -371,11 +361,6 @@ class MainActivity : AppCompatActivity() {
                     TITLE_TEACHER_MANAGEMENT,
                     "افزودن و مدیریت اساتید",
                     R.drawable.home_teachers
-                ),
-                DashboardItem(
-                    TITLE_TRASH,
-                    "بازیابی یا حذف دائمی اطلاعات",
-                    android.R.drawable.ic_menu_delete
                 )
             )
         }

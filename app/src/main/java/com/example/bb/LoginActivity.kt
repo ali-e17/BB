@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen // 🌟 اینپورت لایبرری اسپلش
 import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
@@ -21,6 +22,18 @@ import java.util.Locale
 class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 🌟 مرحله ۱: خواندن تم ذخیره شده در اپلیکیشن و اعمال آن قبل از هر چیز
+        val themePrefs = getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE)
+        if (themePrefs.contains("IS_DARK_MODE")) {
+            val isDarkModeSaved = themePrefs.getBoolean("IS_DARK_MODE", false)
+            AppCompatDelegate.setDefaultNightMode(
+                if (isDarkModeSaved) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            )
+        }
+
+        // 🌟 مرحله ۲: فعال‌سازی اسپلش اسکرین (حالا با تم تنظیم شده در بالا هماهنگ است)
+        val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
@@ -33,7 +46,7 @@ class LoginActivity : AppCompatActivity() {
 
         val savedToken = prefs.getString("API_TOKEN", "").orEmpty()
         val hasSession = prefs.getBoolean("IS_LOGGED_IN", false) &&
-            savedToken.isNotBlank() && !isTokenExpired(prefs.getString("API_TOKEN_EXPIRES_AT", null))
+                savedToken.isNotBlank() && !isTokenExpired(prefs.getString("API_TOKEN_EXPIRES_AT", null))
 
         if (hasSession) {
             if (prefs.getBoolean("MUST_CHANGE_PASSWORD", false)) {
@@ -177,7 +190,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun isDarkMode(): Boolean =
         resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
-            Configuration.UI_MODE_NIGHT_YES
+                Configuration.UI_MODE_NIGHT_YES
 
     private fun updateThemeIcon(view: ImageView) {
         view.setImageResource(if (isDarkMode()) R.drawable.ic_sun else R.drawable.ic_moon)

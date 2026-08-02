@@ -17,6 +17,8 @@ import retrofit2.http.*
 import java.net.InetAddress
 
 data class HardDeleteClassRequest(val id: String)
+data class HardDeleteStudentRequest(val id: String)
+data class HardDeleteTeacherRequest(val id: String)
 
 data class ApiResponse(
     val status: String = "",
@@ -86,6 +88,13 @@ data class TermHistoryItem(
 data class TermHistoryResponse(val status:String="",val role:String="",val items:List<TermHistoryItem> = emptyList())
 
 interface ApiService {
+    @POST("delete_student.php")
+    fun hardDeleteStudent(@Body request: HardDeleteStudentRequest): Call<ApiResponse>
+
+    @POST("delete_teacher.php")
+    fun hardDeleteTeacher(@Body request: HardDeleteTeacherRequest): Call<ApiResponse>
+
+
     @POST("delete_class.php")
     fun hardDeleteClass(@Body request: HardDeleteClassRequest): Call<ApiResponse>
     @POST("login.php") fun login(@Body request:LoginRequest):Call<LoginResponse>
