@@ -35,6 +35,11 @@ class ClassManagementActivity : AppCompatActivity() {
             startActivity(Intent(this, AddEditClassActivity::class.java))
         }
 
+        // 🌟 دکمه هدایت به صفحه کلاس‌های پایان‌یافته
+        findViewById<View>(R.id.btnViewCompletedClasses).setOnClickListener {
+            startActivity(Intent(this, CompletedClassesActivity::class.java))
+        }
+
         rvClasses = findViewById(R.id.rvLevels)
         progressLoading = findViewById(R.id.progressClasses)
         tvEmpty = findViewById(R.id.tvClassesEmpty)
@@ -102,6 +107,7 @@ class ClassManagementActivity : AppCompatActivity() {
             Intent(this, ClassDetailsActivity::class.java)
                 .putExtra(ClassDetailsActivity.EXTRA_CLASS_ID, model.id)
                 .putExtra(ClassDetailsActivity.EXTRA_CLASS_NAME, model.className)
+                .putExtra(ClassDetailsActivity.EXTRA_IS_EDITABLE, true) // 🌟 باز گذاشتن دسترسی برای کلاس‌های فعال
         )
     }
 
@@ -110,8 +116,8 @@ class ClassManagementActivity : AppCompatActivity() {
             .setTitle("پایان ترم")
             .setMessage(
                 "ترم «${model.className}» پایان یابد؟\n\n" +
-                    "سوابق دانش‌آموزان، حضور و غیاب و کارنامه‌ها حذف نمی‌شوند؛ " +
-                    "کلاس فقط از فهرست کلاس‌های فعال خارج می‌شود."
+                        "سوابق دانش‌آموزان، حضور و غیاب و کارنامه‌ها حذف نمی‌شوند؛ " +
+                        "کلاس فقط از فهرست کلاس‌های فعال خارج می‌شود."
             )
             .setPositiveButton("پایان ترم") { _, _ -> completeClass(model) }
             .setNegativeButton("انصراف", null)

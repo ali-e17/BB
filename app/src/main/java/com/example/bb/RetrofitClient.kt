@@ -150,7 +150,8 @@ interface ApiService
     @GET("get_term_history.php") fun getTermHistory(@Query("role") role:String,@Query("id") id:String):Call<TermHistoryResponse>
     @GET("get_result_messages.php") fun getResultMessages():Call<ResultMessagesResponse>
     @POST("save_result_messages.php") fun saveResultMessages(@Body request:SaveResultMessagesRequest):Call<ApiResponse>
-
+    @GET("get_completed_classes.php")
+    fun getCompletedClasses(): Call<List<ClassModel>>
     @Streaming
     @GET("export_attendance_excel.php")
     fun downloadAttendanceExcel(@Query("class_id") classId: String): Call<okhttp3.ResponseBody>

@@ -88,26 +88,34 @@
                 android:layout_marginTop="14dp"
                 android:orientation="horizontal"
                 android:weightSum="2">
-                <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:hint="سال ترم">
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTermYear" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹" android:gravity="center" android:inputType="number" android:maxLength="4" android:singleLine="true" android:textColor="@color/main_text" />
-                </com.google.android.material.textfield.TextInputLayout>
-                <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox.ExposedDropdown" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:hint="فصل ترم">
-                    <com.google.android.material.textfield.MaterialAutoCompleteTextView android:id="@+id/spinnerTermSeason" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:inputType="none" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="@color/main_text" />
-                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="سال ترم" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTermYear" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹" android:gravity="center" android:inputType="number" android:maxLength="4" android:singleLine="true" android:textColor="@color/main_text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="فصل ترم" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox.ExposedDropdown" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView android:id="@+id/spinnerTermSeason" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:inputType="none" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="@color/main_text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
             </LinearLayout>
 
             <TextView style="@style/ClassFormSectionTitle" android:text="ساعت برگزاری" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layoutDirection="ltr" android:orientation="horizontal" android:weightSum="2">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
-                    <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="ساعت شروع" />
-                    <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etStartTime" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:" android:gravity="center" android:imeOptions="actionNext" android:inputType="number" android:maxLength="5" android:singleLine="true" android:textColor="@color/main_text" android:textDirection="ltr" android:textSize="16sp" android:textStyle="bold" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
                     <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="ساعت پایان" />
                     <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/etEndTime" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:" android:gravity="center" android:imeOptions="actionNext" android:inputType="number" android:maxLength="5" android:singleLine="true" android:textColor="@color/main_text" android:textDirection="ltr" android:textSize="16sp" android:textStyle="bold" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="ساعت شروع" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etStartTime" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩:" android:gravity="center" android:imeOptions="actionNext" android:inputType="number" android:maxLength="5" android:singleLine="true" android:textColor="@color/main_text" android:textDirection="ltr" android:textSize="16sp" android:textStyle="bold" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -128,14 +136,22 @@
                 <com.google.android.material.textfield.TextInputEditText android:id="@+id/etSessionCount" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:imeOptions="actionNext" android:inputType="number" android:maxLength="3" paddingStart="16dp" paddingEnd="16dp" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <TextView style="@style/ClassFormSectionTitle" android:text="حدود نمرات کارنامه (پاسی و مشروطی)" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:weightSum="2" android:layout_marginBottom="26dp">
-                <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:hint="حد پایین قبولی">
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinPassingScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:inputType="numberDecimal" android:text="80" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold" />
-                </com.google.android.material.textfield.TextInputLayout>
-                <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:hint="حد پایین مشروطی">
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinConditionalScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:inputType="numberDecimal" android:text="70" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold" />
-                </com.google.android.material.textfield.TextInputLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:weightSum="2" android:layout_marginTop="18dp" android:layout_marginBottom="26dp">
+
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="حد پایین قبولی" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinPassingScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:inputType="numberDecimal" android:text="80" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
+                    <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="حد پایین مشروطی" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinConditionalScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:inputType="numberDecimal" android:text="70" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
             </LinearLayout>
 
             <FrameLayout android:layout_width="match_parent" android:layout_height="56dp">

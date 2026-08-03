@@ -49,6 +49,8 @@ class ClassDetailsActivity : AppCompatActivity() {
 
         classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
         className = intent.getStringExtra(EXTRA_CLASS_NAME).orEmpty().ifBlank { "اعضای کلاس" }
+        // 🌟 وضعیت قفل یا باز بودن کلاس از اکتیویتی قبلی دریافت میشه
+        isEditable = intent.getBooleanExtra(EXTRA_IS_EDITABLE, true)
 
         if (classId.isBlank()) {
             Toast.makeText(this, "شناسه کلاس مشخص نشده است", Toast.LENGTH_LONG).show()
@@ -57,7 +59,6 @@ class ClassDetailsActivity : AppCompatActivity() {
         }
 
         findViewById<ImageView>(R.id.btnDetailsBack).setOnClickListener { finish() }
-        findViewById<TextView>(R.id.txtClassName).text = className
 
         toggleGroup = findViewById(R.id.toggleClassStudents)
         btnMembersTab = findViewById(R.id.btnMembersTab)
@@ -85,16 +86,16 @@ class ClassDetailsActivity : AppCompatActivity() {
         etSearchStudent.doAfterTextChanged { renderCurrentList() }
 
         toggleGroup.check(R.id.btnMembersTab)
+
+        // 🌟 به محض ورود، رابط کاربری رو بر اساس باز یا قفل بودن آپدیت می‌کنیم
+        updateClassState()
         loadClassesThenStudents()
     }
 
     private fun loadClassesThenStudents() {
         setLoading(true)
         RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
-            override fun onResponse(
-                call: Call<List<ClassModel>>,
-                response: Response<List<ClassModel>>
-            ) {
+            override fun onResponse(call: Call<List<ClassModel>>, response: Response<List<ClassModel>>) {
                 if (response.isSuccessful) {
                     val serverClasses = response.body().orEmpty()
                     classesById.clear()
@@ -123,13 +124,11 @@ class ClassDetailsActivity : AppCompatActivity() {
     private fun updateClassState() {
         val model = classesById[classId] ?: AppDatabase.getClassById(classId)
         val tvClassTeacherName = findViewById<TextView>(R.id.tvClassTeacherName)
+        val tvClassName = findViewById<TextView>(R.id.txtClassName)
 
         if (model != null) {
             className = model.className
-            isEditable = model.status == ClassStatus.ACTIVE
-            findViewById<TextView>(R.id.txtClassName).text = className
 
-            // 🌟 فقط نمایش نام استاد (بدون قابلیت تغییر از اینجا)
             tvClassTeacherName.visibility = View.VISIBLE
             if (!model.teacherPhone.isNullOrBlank()) {
                 val teacher = AppDatabase.getAllTeachers().find { it.phone == model.teacherPhone }
@@ -139,11 +138,15 @@ class ClassDetailsActivity : AppCompatActivity() {
             }
         }
 
-        btnAddStudentsTab.isEnabled = isEditable
-        btnAddStudentsTab.alpha = if (isEditable) 1f else 0.45f
+        tvClassName.text = if (isEditable) className else "$className (پایان‌یافته)"
 
-        if (!isEditable && screenMode == ScreenMode.ADD_STUDENT) {
-            toggleGroup.check(R.id.btnMembersTab)
+        // 🌟 اگر قفل باشد (پایان یافته)، تمام تب‌ها مخفی می‌شوند
+        if (!isEditable) {
+            toggleGroup.visibility = View.GONE
+            screenMode = ScreenMode.MEMBERS
+        } else {
+            toggleGroup.visibility = View.VISIBLE
+            btnAddStudentsTab.isEnabled = true
         }
 
         updateModeUi()
@@ -151,20 +154,16 @@ class ClassDetailsActivity : AppCompatActivity() {
 
     private fun fetchStudents() {
         RetrofitClient.instance.getStudents().enqueue(object : Callback<List<StudentModel>> {
-            override fun onResponse(
-                call: Call<List<StudentModel>>,
-                response: Response<List<StudentModel>>
-            ) {
+            override fun onResponse(call: Call<List<StudentModel>>, response: Response<List<StudentModel>>) {
                 setLoading(false)
-                if (!response.isSuccessful) {
+                if (response.isSuccessful) {
+                    allStudents.clear()
+                    allStudents.addAll(response.body().orEmpty())
+                    AppDatabase.replaceStudents(allStudents)
+                    renderCurrentList()
+                } else {
                     useLocalStudents("سرور لیست دانش‌آموزان را برنگرداند")
-                    return
                 }
-
-                allStudents.clear()
-                allStudents.addAll(response.body().orEmpty())
-                AppDatabase.replaceStudents(allStudents)
-                renderCurrentList()
             }
 
             override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
@@ -210,15 +209,14 @@ class ClassDetailsActivity : AppCompatActivity() {
             source
                 .filter {
                     query.isBlank() ||
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.studentCode.contains(query, ignoreCase = true) ||
-                        it.phone.contains(query)
+                            it.name.contains(query, ignoreCase = true) ||
+                            it.studentCode.contains(query, ignoreCase = true) ||
+                            it.phone.contains(query)
                 }
                 .sortedWith(
                     when (screenMode) {
                         ScreenMode.MEMBERS -> compareBy<StudentModel> { it.name.lowercase() }
-                        ScreenMode.ADD_STUDENT -> compareBy<StudentModel> { !it.classId.isNullOrBlank() }
-                            .thenBy { it.name.lowercase() }
+                        ScreenMode.ADD_STUDENT -> compareBy<StudentModel> { !it.classId.isNullOrBlank() }.thenBy { it.name.lowercase() }
                     }
                 )
                 .toList()
@@ -226,16 +224,8 @@ class ClassDetailsActivity : AppCompatActivity() {
 
         rvStudents.adapter?.notifyDataSetChanged()
         tvEmptyState.text = when (screenMode) {
-            ScreenMode.MEMBERS -> if (query.isBlank()) {
-                "هنوز دانش‌آموزی در این کلاس ثبت نشده است"
-            } else {
-                "عضوی مطابق جست‌وجوی شما پیدا نشد"
-            }
-            ScreenMode.ADD_STUDENT -> if (query.isBlank()) {
-                "دانش‌آموز فعالی برای افزودن وجود ندارد"
-            } else {
-                "دانش‌آموزی مطابق جست‌وجوی شما پیدا نشد"
-            }
+            ScreenMode.MEMBERS -> if (query.isBlank()) "هنوز دانش‌آموزی در این کلاس ثبت نشده است" else "عضوی مطابق جست‌وجوی شما پیدا نشد"
+            ScreenMode.ADD_STUDENT -> if (query.isBlank()) "دانش‌آموز فعالی برای افزودن وجود ندارد" else "دانش‌آموزی مطابق جست‌وجوی شما پیدا نشد"
         }
         tvEmptyState.visibility = if (visibleStudents.isEmpty()) View.VISIBLE else View.GONE
     }
@@ -243,8 +233,7 @@ class ClassDetailsActivity : AppCompatActivity() {
     private fun createStudentsAdapter(): RecyclerView.Adapter<StudentViewHolder> =
         object : RecyclerView.Adapter<StudentViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StudentViewHolder {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_student_manage, parent, false)
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.item_student_manage, parent, false)
                 return StudentViewHolder(view)
             }
 
@@ -258,24 +247,26 @@ class ClassDetailsActivity : AppCompatActivity() {
                             append("کد: ${student.studentCode.ifBlank { "ندارد" }}")
                             append(" | شماره: ${student.phone}")
                         }
-                        holder.btnAction.text = "حذف"
-                        holder.btnAction.isEnabled = isEditable && !requestInFlight
-                        holder.btnAction.setOnClickListener { confirmRemoveStudent(student) }
+
+                        // 🌟 قفل کردن دکمه حذف برای کلاس‌های پایان‌یافته
+                        if (isEditable) {
+                            holder.btnAction.visibility = View.VISIBLE
+                            holder.btnAction.text = "حذف"
+                            holder.btnAction.isEnabled = !requestInFlight
+                            holder.btnAction.setOnClickListener { confirmRemoveStudent(student) }
+                        } else {
+                            holder.btnAction.visibility = View.GONE
+                        }
                     }
 
                     ScreenMode.ADD_STUDENT -> {
-                        val currentClassName = student.classId?.let {
-                            classesById[it]?.className ?: AppDatabase.getClassNameById(it)
-                        }
+                        val currentClassName = student.classId?.let { classesById[it]?.className ?: AppDatabase.getClassNameById(it) }
                         holder.tvDescription.text = buildString {
                             append("کد: ${student.studentCode.ifBlank { "ندارد" }}")
                             append(" | ")
-                            if (student.classId.isNullOrBlank()) {
-                                append("بدون کلاس")
-                            } else {
-                                append("کلاس فعلی: ${currentClassName ?: "نامشخص"}")
-                            }
+                            if (student.classId.isNullOrBlank()) append("بدون کلاس") else append("کلاس فعلی: ${currentClassName ?: "نامشخص"}")
                         }
+                        holder.btnAction.visibility = View.VISIBLE
                         holder.btnAction.text = if (student.classId.isNullOrBlank()) "افزودن" else "انتقال"
                         holder.btnAction.isEnabled = isEditable && !requestInFlight
                         holder.btnAction.setOnClickListener { confirmAddOrTransfer(student) }
@@ -292,20 +283,11 @@ class ClassDetailsActivity : AppCompatActivity() {
             updateStudentClass(student, classId, "دانش‌آموز به کلاس اضافه شد")
             return
         }
-
-        val currentClassName = classesById[currentClassId]?.className
-            ?: AppDatabase.getClassNameById(currentClassId)
-            ?: "کلاس قبلی"
-
+        val currentClassName = classesById[currentClassId]?.className ?: AppDatabase.getClassNameById(currentClassId) ?: "کلاس قبلی"
         AlertDialog.Builder(this)
             .setTitle("انتقال دانش‌آموز")
-            .setMessage(
-                "${student.name} اکنون عضو «$currentClassName» است. " +
-                    "با ادامه، از کلاس قبلی خارج و به «$className» منتقل می‌شود."
-            )
-            .setPositiveButton("انتقال") { _, _ ->
-                updateStudentClass(student, classId, "دانش‌آموز به کلاس جدید منتقل شد")
-            }
+            .setMessage("${student.name} اکنون عضو «$currentClassName» است. با ادامه، از کلاس قبلی خارج و به «$className» منتقل می‌شود.")
+            .setPositiveButton("انتقال") { _, _ -> updateStudentClass(student, classId, "دانش‌آموز به کلاس جدید منتقل شد") }
             .setNegativeButton("انصراف", null)
             .show()
     }
@@ -314,56 +296,35 @@ class ClassDetailsActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("حذف از کلاس")
             .setMessage("${student.name} از کلاس «$className» خارج شود؟")
-            .setPositiveButton("خارج کردن") { _, _ ->
-                updateStudentClass(student, null, "دانش‌آموز از کلاس خارج شد")
-            }
+            .setPositiveButton("خارج کردن") { _, _ -> updateStudentClass(student, null, "دانش‌آموز از کلاس خارج شد") }
             .setNegativeButton("انصراف", null)
             .show()
     }
 
-    private fun updateStudentClass(
-        student: StudentModel,
-        targetClassId: String?,
-        successMessage: String
-    ) {
+    private fun updateStudentClass(student: StudentModel, targetClassId: String?, successMessage: String) {
         if (requestInFlight) return
         requestInFlight = true
         renderCurrentList()
 
-        RetrofitClient.instance.assignClass(
-            AssignClassRequest(studentId = student.id, classId = targetClassId)
-        ).enqueue(object : Callback<ApiResponse> {
-            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                requestInFlight = false
-                val body = response.body()
-                if (response.isSuccessful && body?.status == "success") {
-                    Toast.makeText(
-                        this@ClassDetailsActivity,
-                        body.message.ifBlank { successMessage },
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    fetchStudents()
-                } else {
-                    renderCurrentList()
-                    Toast.makeText(
-                        this@ClassDetailsActivity,
-                        body?.message?.takeIf { it.isNotBlank() }
-                            ?: "تغییر عضویت در سرور ثبت نشد",
-                        Toast.LENGTH_LONG
-                    ).show()
+        RetrofitClient.instance.assignClass(AssignClassRequest(studentId = student.id, classId = targetClassId))
+            .enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                    requestInFlight = false
+                    val body = response.body()
+                    if (response.isSuccessful && body?.status == "success") {
+                        Toast.makeText(this@ClassDetailsActivity, body.message.ifBlank { successMessage }, Toast.LENGTH_SHORT).show()
+                        fetchStudents()
+                    } else {
+                        renderCurrentList()
+                        Toast.makeText(this@ClassDetailsActivity, body?.message?.takeIf { it.isNotBlank() } ?: "تغییر عضویت در سرور ثبت نشد", Toast.LENGTH_LONG).show()
+                    }
                 }
-            }
-
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                requestInFlight = false
-                renderCurrentList()
-                Toast.makeText(
-                    this@ClassDetailsActivity,
-                    "ارتباط با سرور برای تغییر عضویت برقرار نشد",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        })
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                    requestInFlight = false
+                    renderCurrentList()
+                    Toast.makeText(this@ClassDetailsActivity, "ارتباط با سرور برای تغییر عضویت برقرار نشد", Toast.LENGTH_LONG).show()
+                }
+            })
     }
 
     private fun setLoading(loading: Boolean) {
@@ -380,5 +341,6 @@ class ClassDetailsActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CLASS_ID = "CLASS_ID"
         const val EXTRA_CLASS_NAME = "CLASS_NAME"
+        const val EXTRA_IS_EDITABLE = "IS_EDITABLE" // 🌟 ثابت جدید برای اینتنت
     }
 }
