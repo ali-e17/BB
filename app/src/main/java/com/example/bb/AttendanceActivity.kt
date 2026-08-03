@@ -514,7 +514,7 @@ class AttendanceActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
 
-                    val contentType = body.contentType()?.toString()?.lowercase(Locale.ROOT) ?: ""
+                    val contentType = body.contentType()?.toString()?.lowercase(java.util.Locale.ROOT) ?: ""
                     if (contentType.contains("text/html") || contentType.contains("application/json")) {
                         val errorText = body.string()
                         runOnUiThread {
@@ -530,18 +530,38 @@ class AttendanceActivity : AppCompatActivity() {
                     Thread {
                         try {
                             val safeClassName = model.className.replace(Regex("[^A-Za-z0-9\u0600-\u06FF_-]+"), "_").trim('_')
-                            val timePart = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Calendar.getInstance().time)
-
-                            // 🌟 اینجا پسوند رو کردیم csv
+                            val timePart = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(java.util.Calendar.getInstance().time)
                             val fileName = "attendance_${safeClassName}_$timePart.xlsx"
 
-                            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                            downloadsDir.mkdirs()
-                            val file = java.io.File(downloadsDir, fileName)
+                            // 🌟 نوع فایل (اکسل) رو برای اندروید مشخص می‌کنیم
+                            val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
                             body.byteStream().use { inputStream ->
-                                java.io.FileOutputStream(file).use { outputStream ->
-                                    inputStream.copyTo(outputStream)
+                                val outputStream: java.io.OutputStream?
+
+                                // 🌟 بررسی نسخه اندروید
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                    // 🌟 روش مدرن MediaStore برای اندروید 10 به بالا (بدون نیاز به پرمیشن)
+                                    val resolver = contentResolver
+                                    val contentValues = android.content.ContentValues().apply {
+                                        put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                                        put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                                        put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                                    }
+
+                                    val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                                    outputStream = uri?.let { resolver.openOutputStream(it) }
+                                } else {
+                                    // 🌟 روش کلاسیک برای اندروید 9 و پایین‌تر
+                                    val downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+                                    downloadsDir.mkdirs()
+                                    val file = java.io.File(downloadsDir, fileName)
+                                    outputStream = java.io.FileOutputStream(file)
+                                }
+
+                                // 🌟 کپی کردن اطلاعات از سرور به داخل فایل ساخته شده در گوشی
+                                outputStream?.use { out ->
+                                    inputStream.copyTo(out)
                                 }
                             }
 
