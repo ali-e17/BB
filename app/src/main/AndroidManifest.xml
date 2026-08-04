@@ -118,5 +118,9 @@
             android:name=".TrashBinActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".TermHistoryActivity"
+            android:exported="false" />
+
     </application>
 </manifest>
