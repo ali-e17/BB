@@ -1,10 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background">
-    <ImageView android:id="@+id/btnResultMessagesBack" android:layout_width="48dp" android:layout_height="48dp" android:layout_margin="14dp" android:padding="12dp" android:src="@android:drawable/ic_menu_revert" app:tint="@color/main_text" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="متن نتیجه‌های کارنامه" android:textColor="@color/title_blue" android:textSize="19sp" android:textStyle="bold" app:layout_constraintTop_toTopOf="@id/btnResultMessagesBack" app:layout_constraintBottom_toBottomOf="@id/btnResultMessagesBack" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
-    <ScrollView android:layout_width="0dp" android:layout_height="0dp" app:layout_constraintTop_toBottomOf="@id/btnResultMessagesBack" app:layout_constraintBottom_toTopOf="@id/btnSaveResultMessages" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
-        <LinearLayout android:id="@+id/containerResultMessages" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layoutDirection="rtl" android:padding="18dp" />
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/app_global_background"
+    android:layoutDirection="rtl">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/topBarResultMessages"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="20dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/btnResultMessagesBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="بازگشت"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@color/main_text" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="متن پیام‌های نتیجه"
+                android:textColor="@color/title_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/txtResultMessagesHelp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="right"
+        android:text="این متن‌ها براساس وضعیت نهایی محاسبه‌شده توسط سرور روی کارنامه دانش‌آموز نمایش داده می‌شوند."
+        android:textColor="@color/sub_text"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topBarResultMessages" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@id/resultMessageActions"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txtResultMessagesHelp">
+
+        <LinearLayout
+            android:id="@+id/containerResultMessages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layoutDirection="rtl"
+            android:orientation="vertical"
+            android:paddingStart="18dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="14dp" />
     </ScrollView>
-    <com.google.android.material.button.MaterialButton android:id="@+id/btnSaveResultMessages" android:layout_width="0dp" android:layout_height="50dp" android:layout_margin="16dp" android:text="ذخیره متن‌ها" android:textAllCaps="false" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
-    <com.google.android.material.progressindicator.CircularProgressIndicator android:id="@+id/progressResultMessages" android:layout_width="44dp" android:layout_height="44dp" android:visibility="gone" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/resultMessageActions"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRestoreDefaultMessages"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="متن‌های تأییدشده"
+            android:textAllCaps="false"
+            android:textColor="@color/title_blue"
+            android:textSize="12sp"
+            app:cornerRadius="14dp"
+            app:strokeColor="@color/title_blue" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveResultMessages"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/brand_orange"
+            android:text="ذخیره متن‌ها"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressResultMessages"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:visibility="gone"
+        app:indicatorColor="@color/brand_orange"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

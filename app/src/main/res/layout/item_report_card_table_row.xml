@@ -1,15 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#FFFFFF"
-    android:orientation="horizontal"
+    android:layout_height="match_parent"
     android:layoutDirection="ltr"
-    android:weightSum="4">
+    android:orientation="vertical">
 
-    <TextView android:id="@+id/txtTableSubject" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="2" android:gravity="center_vertical|start" android:paddingHorizontal="8dp" android:paddingVertical="8dp" android:textColor="#111827" android:textSize="12sp" android:textStyle="bold" />
-    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E5E7EB" />
-    <TextView android:id="@+id/txtTableScore" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:padding="8dp" android:textColor="#111827" android:textSize="12sp" android:textStyle="bold" />
-    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E5E7EB" />
-    <TextView android:id="@+id/txtTableOutOf" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:padding="8dp" android:textColor="#4B5563" android:textSize="12sp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/txtTableSubject"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2.2"
+            android:breakStrategy="simple"
+            android:gravity="center_vertical|start"
+            android:hyphenationFrequency="none"
+            android:maxLines="2"
+            android:paddingHorizontal="6dp"
+            android:textColor="#111827"
+            android:textDirection="firstStrong"
+            android:textStyle="bold"
+            app:autoSizeMaxTextSize="10sp"
+            app:autoSizeMinTextSize="7sp"
+            app:autoSizeStepGranularity="1sp"
+            app:autoSizeTextType="uniform" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#CBD5E1" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/txtTableScore"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.9"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingHorizontal="3dp"
+            android:textColor="#111827"
+            android:textStyle="bold"
+            app:autoSizeMaxTextSize="10sp"
+            app:autoSizeMinTextSize="7sp"
+            app:autoSizeStepGranularity="1sp"
+            app:autoSizeTextType="uniform" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#CBD5E1" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/txtTableOutOf"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.9"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingHorizontal="3dp"
+            android:textColor="#475467"
+            app:autoSizeMaxTextSize="10sp"
+            app:autoSizeMinTextSize="7sp"
+            app:autoSizeStepGranularity="1sp"
+            app:autoSizeTextType="uniform" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#D7E2F2" />
+
 </LinearLayout>

@@ -1,54 +1,651 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F3F4F6"
+    android:background="@drawable/app_global_background"
     android:layoutDirection="rtl">
 
-    <ImageView android:id="@+id/btnReportBack" android:layout_width="48dp" android:layout_height="48dp" android:layout_margin="14dp" android:padding="12dp" android:src="@android:drawable/ic_menu_revert" app:tint="@color/main_text" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" android:background="?attr/selectableItemBackgroundBorderless"/>
-    <com.google.android.material.button.MaterialButton android:id="@+id/btnSaveReportPdf" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="42dp" android:layout_marginEnd="14dp" android:text="ذخیره PDF" android:textAllCaps="false" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="@id/btnReportBack" app:layout_constraintBottom_toBottomOf="@id/btnReportBack" />
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/reportToolbar"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="16dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="7dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:fillViewport="true" app:layout_constraintTop_toBottomOf="@id/btnReportBack" app:layout_constraintBottom_toBottomOf="parent">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <LinearLayout android:id="@+id/reportPrintableArea" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layoutDirection="ltr" android:layout_margin="16dp" android:background="#FFFFFF" android:padding="16dp" android:elevation="4dp">
+            <ImageView
+                android:id="@+id/btnReportBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="بازگشت"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@color/main_text" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="Bayan-E-Bartar Language School" android:textColor="#1E3A8A" android:textSize="18sp" android:textStyle="bold" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="آموزشگاه زبان‌های خارجی بیان برتر" android:textColor="#374151" android:textSize="12sp" android:layout_marginTop="4dp"/>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#9CA3AF" android:layout_marginVertical="12dp" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="Report Card" android:textColor="#1E3A8A" android:textSize="16sp" android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="پیش‌نمایش کارنامه"
+                android:textColor="@color/title_blue"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/bg_input_field" android:padding="12dp" android:layout_marginTop="16dp">
-                <TextView android:id="@+id/txtStudentId" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Student ID: " android:textColor="#111827" android:textSize="13sp" />
-                <TextView android:id="@+id/txtStudentName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Name: " android:textColor="#111827" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="6dp"/>
-            </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveReportPdf"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="12dp"
+                android:text="PDF"
+                android:textAllCaps="false"
+                android:textColor="@color/title_blue"
+                app:cornerRadius="12dp"
+                app:strokeColor="@color/title_blue" />
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:background="@drawable/bg_input_field" android:padding="12dp" android:layout_marginTop="8dp" android:weightSum="3">
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Term" android:textSize="10sp" android:textColor="#6B7280" />
-                    <TextView android:id="@+id/txtTerm" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="—" android:textSize="12sp" android:textColor="#111827" android:textStyle="bold"/>
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Class Code" android:textSize="10sp" android:textColor="#6B7280" />
-                    <TextView android:id="@+id/txtClassCode" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="—" android:textSize="12sp" android:textColor="#111827" android:textStyle="bold"/>
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Text Book" android:textSize="10sp" android:textColor="#6B7280" />
-                    <TextView android:id="@+id/txtBook" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="—" android:textSize="12sp" android:textColor="#111827" android:textStyle="bold"/>
-                </LinearLayout>
-            </LinearLayout>
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/reportToolbar">
 
-            <LinearLayout android:id="@+id/containerReportScores" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="16dp" android:background="#E5E7EB" android:padding="1dp" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="12dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="24dp">
 
-            <TextView android:id="@+id/txtReportMessage" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:background="#F9FAFB" android:padding="12dp" android:text="VERY GOOD! This is to certify that you have participated in the term..." android:textColor="#1F2937" android:textSize="11sp" />
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="5dp"
+                app:cardElevation="10dp">
 
-            <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:layout_marginBottom="16dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentLeft="true" android:text="Supervisor's Signature" android:textSize="10sp" android:textColor="#1E3A8A"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentRight="true" android:text="Teacher's Signature" android:textSize="10sp" android:textColor="#1E3A8A"/>
-                <TextView android:id="@+id/txtReportDate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerHorizontal="true" android:layout_marginTop="20dp" android:text="Date: —" android:textSize="11sp" android:textColor="#4B5563"/>
-            </RelativeLayout>
-        </LinearLayout>
+                <com.example.bb.A4PaperLayout
+                    android:id="@+id/reportPrintableArea"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#FFFFFF"
+                    android:layoutDirection="ltr">
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guideHeaderBottom"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        app:layout_constraintGuide_percent="0.145" />
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guideTitleBottom"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        app:layout_constraintGuide_percent="0.205" />
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guideBodyBottom"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        app:layout_constraintGuide_percent="0.735" />
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guideMessageBottom"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        app:layout_constraintGuide_percent="0.89" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/reportHeader"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="10dp"
+                        app:layout_constraintBottom_toTopOf="@id/guideHeaderBottom"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:id="@+id/imgReportLogo"
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:adjustViewBounds="true"
+                            android:contentDescription="لوگوی آموزشگاه"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/final50cm"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/imgReportLogo"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:maxLines="2"
+                                android:text="Bayan-E-Bartar Language School"
+                                android:textColor="#2B4E78"
+                                android:textStyle="bold"
+                                app:autoSizeMaxTextSize="14sp"
+                                app:autoSizeMinTextSize="10sp"
+                                app:autoSizeStepGranularity="1sp"
+                                app:autoSizeTextType="uniform" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:gravity="center"
+                                android:maxLines="2"
+                                android:text="آموزشگاه زبان‌های خارجی بیان برتر"
+                                android:textColor="#2B4E78"
+                                android:textDirection="rtl"
+                                android:textStyle="bold"
+                                app:autoSizeMaxTextSize="11sp"
+                                app:autoSizeMinTextSize="8sp"
+                                app:autoSizeStepGranularity="1sp"
+                                app:autoSizeTextType="uniform" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:gravity="center"
+                                android:maxLines="2"
+                                android:text="bayanebartar95@gmail.com  |  031-42660690"
+                                android:textColor="#667085"
+                                app:autoSizeMaxTextSize="8.5sp"
+                                app:autoSizeMinTextSize="6.5sp"
+                                app:autoSizeStepGranularity="1sp"
+                                app:autoSizeTextType="uniform" />
+                        </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <LinearLayout
+                        android:id="@+id/reportTitleArea"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="3dp"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toTopOf="@id/guideTitleBottom"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/guideHeaderBottom">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="2dp"
+                            android:background="#2B4E78" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:background="#FFF4EB"
+                            android:gravity="center"
+                            android:text="OFFICIAL REPORT CARD"
+                            android:textColor="#FF6E14"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/reportBody"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="4dp"
+                        app:layout_constraintBottom_toTopOf="@id/guideBodyBottom"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/guideTitleBottom">
+
+                        <androidx.constraintlayout.widget.Guideline
+                            android:id="@+id/guideBodyColumns"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            app:layout_constraintGuide_percent="0.56" />
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_marginEnd="4dp"
+                            app:cardBackgroundColor="#FFFFFF"
+                            app:cardCornerRadius="4dp"
+                            app:cardElevation="0dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/guideBodyColumns"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:strokeColor="#2B4E78"
+                            app:strokeWidth="1dp">
+
+                            <LinearLayout
+                                android:id="@+id/containerReportScores"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_marginStart="4dp"
+                            android:baselineAligned="false"
+                            android:orientation="vertical"
+                            android:weightSum="4.5"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="@id/guideBodyColumns"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1.05"
+                                app:cardBackgroundColor="#FFFFFF"
+                                app:cardCornerRadius="4dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#2B4E78"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout style="@style/ReportInfoRowCompact">
+                                        <TextView style="@style/ReportInfoLabelCompact" android:text="Student ID" />
+                                        <androidx.appcompat.widget.AppCompatTextView
+                                            android:id="@+id/txtStudentId"
+                                            style="@style/ReportInfoValueCompact"
+                                            android:text="—"
+                                            app:autoSizeMaxTextSize="8.5sp"
+                                            app:autoSizeMinTextSize="6sp"
+                                            app:autoSizeStepGranularity="1sp"
+                                            app:autoSizeTextType="uniform" />
+                                    </LinearLayout>
+
+                                    <View style="@style/ReportInfoDividerCompact" />
+
+                                    <LinearLayout style="@style/ReportInfoRowCompact">
+                                        <TextView style="@style/ReportInfoLabelCompact" android:text="Student Name" />
+                                        <androidx.appcompat.widget.AppCompatTextView
+                                            android:id="@+id/txtStudentName"
+                                            style="@style/ReportInfoValueCompact"
+                                            android:text="—"
+                                            app:autoSizeMaxTextSize="8.5sp"
+                                            app:autoSizeMinTextSize="6sp"
+                                            app:autoSizeStepGranularity="1sp"
+                                            app:autoSizeTextType="uniform" />
+                                    </LinearLayout>
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="4dp" />
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="2.1"
+                                app:cardBackgroundColor="#FFFFFF"
+                                app:cardCornerRadius="4dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#2B4E78"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout style="@style/ReportInfoRowCompact">
+                                        <TextView style="@style/ReportInfoLabelCompact" android:text="Class Code" />
+                                        <androidx.appcompat.widget.AppCompatTextView
+                                            android:id="@+id/txtClassCode"
+                                            style="@style/ReportInfoValueCompact"
+                                            android:text="—"
+                                            app:autoSizeMaxTextSize="8.5sp"
+                                            app:autoSizeMinTextSize="6sp"
+                                            app:autoSizeStepGranularity="1sp"
+                                            app:autoSizeTextType="uniform" />
+                                    </LinearLayout>
+                                    <View style="@style/ReportInfoDividerCompact" />
+                                    <LinearLayout style="@style/ReportInfoRowCompact">
+                                        <TextView style="@style/ReportInfoLabelCompact" android:text="Class" />
+                                        <androidx.appcompat.widget.AppCompatTextView
+                                            android:id="@+id/txtClassName"
+                                            style="@style/ReportInfoValueCompact"
+                                            android:text="—"
+                                            app:autoSizeMaxTextSize="8.5sp"
+                                            app:autoSizeMinTextSize="6sp"
+                                            app:autoSizeStepGranularity="1sp"
+                                            app:autoSizeTextType="uniform" />
+                                    </LinearLayout>
+                                    <View style="@style/ReportInfoDividerCompact" />
+                                    <LinearLayout style="@style/ReportInfoRowCompact">
+                                        <TextView style="@style/ReportInfoLabelCompact" android:text="Level" />
+                                        <androidx.appcompat.widget.AppCompatTextView
+                                            android:id="@+id/txtClassLevel"
+                                            style="@style/ReportInfoValueCompact"
+                                            android:text="—"
+                                            app:autoSizeMaxTextSize="8.5sp"
+                                            app:autoSizeMinTextSize="6sp"
+                                            app:autoSizeStepGranularity="1sp"
+                                            app:autoSizeTextType="uniform" />
+                                    </LinearLayout>
+                                    <View style="@style/ReportInfoDividerCompact" />
+                                    <LinearLayout style="@style/ReportInfoRowCompact">
+                                        <TextView style="@style/ReportInfoLabelCompact" android:text="Term" />
+                                        <androidx.appcompat.widget.AppCompatTextView
+                                            android:id="@+id/txtTerm"
+                                            style="@style/ReportInfoValueCompact"
+                                            android:text="—"
+                                            app:autoSizeMaxTextSize="8.5sp"
+                                            app:autoSizeMinTextSize="6sp"
+                                            app:autoSizeStepGranularity="1sp"
+                                            app:autoSizeTextType="uniform" />
+                                    </LinearLayout>
+                                    <View style="@style/ReportInfoDividerCompact" />
+                                    <LinearLayout style="@style/ReportInfoRowCompact">
+                                        <TextView style="@style/ReportInfoLabelCompact" android:text="Text Book" />
+                                        <androidx.appcompat.widget.AppCompatTextView
+                                            android:id="@+id/txtBook"
+                                            style="@style/ReportInfoValueCompact"
+                                            android:text="—"
+                                            app:autoSizeMaxTextSize="8.5sp"
+                                            app:autoSizeMinTextSize="6sp"
+                                            app:autoSizeStepGranularity="1sp"
+                                            app:autoSizeTextType="uniform" />
+                                    </LinearLayout>
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="4dp" />
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1.35"
+                                app:cardBackgroundColor="#F8FAFF"
+                                app:cardCornerRadius="5dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#D7E2F2"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:orientation="vertical"
+                                    android:paddingHorizontal="5dp"
+                                    android:paddingVertical="3dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:text="TOTAL SCORE"
+                                        android:textColor="#667085"
+                                        android:textSize="7.5sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/txtTotalScore"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:maxLines="1"
+                                        android:text="— / 100"
+                                        android:textColor="#FF6E14"
+                                        android:textSize="15sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/txtResultStatus"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:gravity="center"
+                                        android:maxLines="1"
+                                        android:paddingHorizontal="8dp"
+                                        android:paddingVertical="2dp"
+                                        android:text="—"
+                                        android:textSize="8sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/txtStars"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="1dp"
+                                        android:gravity="center"
+                                        android:maxLines="1"
+                                        android:text="☆☆☆☆☆"
+                                        android:textColor="#FF6E14"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/txtStarCaption"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:maxLines="1"
+                                        android:text="No Star"
+                                        android:textColor="#667085"
+                                        android:textSize="7sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/reportMessageCard"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="4dp"
+                        app:cardBackgroundColor="#FFF9F5"
+                        app:cardCornerRadius="5dp"
+                        app:cardElevation="0dp"
+                        app:layout_constraintBottom_toTopOf="@id/guideMessageBottom"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/guideBodyBottom"
+                        app:strokeColor="#FFD5B8"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal">
+
+                            <View
+                                android:layout_width="4dp"
+                                android:layout_height="match_parent"
+                                android:background="#FF6E14" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/txtReportMessage"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:breakStrategy="simple"
+                                android:fontFamily="serif"
+                                android:gravity="center"
+                                android:hyphenationFrequency="none"
+                                android:lineSpacingExtra="1dp"
+                                android:maxLines="6"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="4dp"
+                                android:text="—"
+                                android:textColor="#344054"
+                                android:textDirection="ltr"
+                                app:autoSizeMaxTextSize="10sp"
+                                app:autoSizeMinTextSize="7sp"
+                                app:autoSizeStepGranularity="1sp"
+                                app:autoSizeTextType="uniform" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:id="@+id/reportFooter"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="5dp"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/guideMessageBottom">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:baselineAligned="false"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:gravity="bottom|center_horizontal"
+                                android:orientation="vertical"
+                                android:paddingHorizontal="8dp">
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:background="#98A2B3" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:gravity="center"
+                                    android:maxLines="1"
+                                    android:text="Manager's Signature"
+                                    android:textColor="#2B4E78"
+                                    android:textSize="8sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="14dp"
+                                android:layout_height="1dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:gravity="bottom|center_horizontal"
+                                android:orientation="vertical"
+                                android:paddingHorizontal="8dp">
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:background="#98A2B3" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:gravity="center"
+                                    android:maxLines="1"
+                                    android:text="Teacher's Signature"
+                                    android:textColor="#2B4E78"
+                                    android:textSize="8sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txtReportDate"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:text="Date: —"
+                            android:textColor="#667085"
+                            android:textSize="8sp" />
+                    </LinearLayout>
+
+                </com.example.bb.A4PaperLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
     </ScrollView>
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator android:id="@+id/progressReportView" android:layout_width="44dp" android:layout_height="44dp" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" android:visibility="gone"/>
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressReportView"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:visibility="gone"
+        app:indicatorColor="@color/brand_orange"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

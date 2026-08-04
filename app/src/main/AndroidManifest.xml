@@ -119,6 +119,8 @@
             android:exported="false" />
 
         <activity
+            android:name=".ResultMessagesActivity"
+            android:exported="false" />
             android:name=".TermHistoryActivity"
             android:exported="false" />
 
