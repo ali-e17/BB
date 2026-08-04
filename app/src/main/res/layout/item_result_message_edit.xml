@@ -15,37 +15,61 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="13dp">
+        android:padding="12dp">
 
-        <TextView
-            android:id="@+id/txtResultMessageLabel"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="right"
-            android:textColor="@color/title_blue"
-            android:textDirection="rtl"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/txtResultMessageHint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:gravity="right"
-            android:text="متن نمایش‌داده‌شده در کارنامه"
-            android:textColor="@color/sub_text"
-            android:textSize="10.5sp" />
+            <View
+                android:layout_width="4dp"
+                android:layout_height="40dp"
+                android:background="@color/brand_orange" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtResultMessageLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:textColor="@color/title_blue"
+                    android:textDirection="rtl"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtResultMessageHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="right"
+                    android:text="پیام نمایش‌داده‌شده در کارنامه"
+                    android:textColor="@color/sub_text"
+                    android:textSize="10.5sp" />
+            </LinearLayout>
+        </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="متن انگلیسی پیام"
+            android:layout_marginTop="10dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
             app:boxStrokeColor="@color/brand_orange"
             app:counterEnabled="true"
-            app:counterMaxLength="320">
+            app:counterMaxLength="320"
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etResultMessage"
@@ -56,10 +80,12 @@
                 android:hyphenationFrequency="none"
                 android:inputType="textMultiLine"
                 android:maxLength="320"
-                android:maxLines="8"
-                android:minLines="4"
+                android:maxLines="7"
+                android:minLines="3"
+                android:padding="12dp"
                 android:textColor="@color/input_text"
-                android:textDirection="ltr" />
+                android:textDirection="ltr"
+                android:textSize="12sp" />
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 

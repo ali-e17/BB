@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/app_global_background"
+    android:fitsSystemWindows="true"
     android:layoutDirection="rtl">
 
     <com.google.android.material.card.MaterialCardView
@@ -322,6 +323,8 @@
                                         <androidx.appcompat.widget.AppCompatTextView
                                             android:id="@+id/txtStudentName"
                                             style="@style/ReportInfoValueCompact"
+                                            android:gravity="center_vertical|right"
+                                            android:textAlignment="viewEnd"
                                             android:text="—"
                                             app:autoSizeMaxTextSize="8.5sp"
                                             app:autoSizeMinTextSize="6sp"
@@ -391,6 +394,8 @@
                                         <androidx.appcompat.widget.AppCompatTextView
                                             android:id="@+id/txtTerm"
                                             style="@style/ReportInfoValueCompact"
+                                            android:gravity="center_vertical|right"
+                                            android:textAlignment="viewEnd"
                                             android:text="—"
                                             app:autoSizeMaxTextSize="8.5sp"
                                             app:autoSizeMinTextSize="6sp"
@@ -458,6 +463,7 @@
                                         android:id="@+id/txtResultStatus"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
+                                        android:includeFontPadding="false"
                                         android:layout_marginTop="2dp"
                                         android:gravity="center"
                                         android:maxLines="1"
@@ -471,7 +477,8 @@
                                         android:id="@+id/txtStars"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginTop="1dp"
+                                        android:layout_marginTop="3dp"
+                                        android:includeFontPadding="false"
                                         android:gravity="center"
                                         android:maxLines="1"
                                         android:text="☆☆☆☆☆"
@@ -479,15 +486,6 @@
                                         android:textSize="14sp"
                                         android:textStyle="bold" />
 
-                                    <TextView
-                                        android:id="@+id/txtStarCaption"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center"
-                                        android:maxLines="1"
-                                        android:text="No Star"
-                                        android:textColor="#667085"
-                                        android:textSize="7sp" />
                                 </LinearLayout>
                             </com.google.android.material.card.MaterialCardView>
                         </LinearLayout>
