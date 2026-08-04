@@ -1,5 +1,6 @@
 package com.example.bb
 
+import android.widget.Toast
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -10,6 +11,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
+import java.util.Locale
 
 class DictionaryActivity : AppCompatActivity() {
 
@@ -18,6 +21,12 @@ class DictionaryActivity : AppCompatActivity() {
     private lateinit var etSearch: EditText
     private lateinit var rvResults: RecyclerView
     private lateinit var txtEmptyState: TextView
+    private lateinit var btnRandomWord: MaterialButton
+
+    // 🌟 لیست سیاه محلی جهت مچ‌گیری از کلمات نامناسب احتمالی دیتابیس
+    private val blacklistedWords = setOf(
+        "fuck", "shit", "bitch", "asshole", "crap", "dick", "pussy", "bastard", "slut"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,10 +39,41 @@ class DictionaryActivity : AppCompatActivity() {
         etSearch = findViewById(R.id.etSearchWord)
         rvResults = findViewById(R.id.rvResults)
         txtEmptyState = findViewById(R.id.txtEmptyState)
+        btnRandomWord = findViewById(R.id.btnRandomWord)
 
         adapter = DictionaryAdapter(emptyList())
         rvResults.layoutManager = LinearLayoutManager(this)
         rvResults.adapter = adapter
+
+        // 🌟 منطق دکمه کلمه تصادفی
+        btnRandomWord.setOnClickListener {
+            var foundSafeWord = false
+            var attempts = 0
+            var randomEntry: DictionaryEntry? = null
+
+            // تلاش مجدد در پس‌زمینه در صورت برخورد با کلمات لیست سیاه (حداکثر 10 بار)
+            while (!foundSafeWord && attempts < 10) {
+                randomEntry = dbHelper.getRandomWord()
+                val wordLower = randomEntry?.word?.lowercase(Locale.ROOT).orEmpty().trim()
+
+                if (randomEntry != null && !blacklistedWords.contains(wordLower)) {
+                    foundSafeWord = true
+                }
+                attempts++
+            }
+
+            if (randomEntry != null && foundSafeWord) {
+                // پاک کردن متن باکس سرچ برای جلوگیری از فعال شدن ناخواسته TextWatcher
+                etSearch.text = null
+
+                // نمایش اطلاعات کلمه رندوم در همان کارت نمایش سرچ عادی
+                adapter.updateData(listOf(randomEntry))
+                txtEmptyState.visibility = View.GONE
+                rvResults.visibility = View.VISIBLE
+            } else {
+                Toast.makeText(this, "لغتی پیدا نشد، دوباره تلاش کنید", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
