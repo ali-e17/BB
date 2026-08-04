@@ -246,14 +246,6 @@ class ReportCardViewActivity : AppCompatActivity() {
             )
         }
 
-        findViewById<TextView>(R.id.txtStarCaption).text = when {
-            starCount == 5 -> "5 Stars"
-            starCount in 1..4 -> "$starCount Stars"
-            card.resultCode == "CONDITIONAL" -> "Conditional"
-            card.resultCode == "FAILED" -> "Fail"
-            card.resultCode == "INCOMPLETE" -> "Incomplete"
-            else -> "No Star"
-        }
     }
 
     private fun resolvedStarCount(card: ReportCardDto): Int {

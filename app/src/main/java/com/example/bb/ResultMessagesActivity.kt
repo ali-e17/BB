@@ -1,5 +1,6 @@
 package com.example.bb
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -33,6 +34,10 @@ class ResultMessagesActivity : AppCompatActivity() {
     private lateinit var progress: View
     private val inputs = linkedMapOf<String, TextInputEditText>()
 
+    private val prefs by lazy {
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result_messages)
@@ -48,8 +53,9 @@ class ResultMessagesActivity : AppCompatActivity() {
         saveButton.setOnClickListener { submit() }
         restoreButton.setOnClickListener {
             render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
-            toast("هشت متن تأییدشده جای‌گذاری شدند؛ برای ثبت در سرور، ذخیره را بزنید")
+            toast("متن‌های اصلی جای‌گذاری شدند؛ برای ثبت نهایی، ذخیره را بزنید")
         }
+
         load()
     }
 
@@ -64,7 +70,17 @@ class ResultMessagesActivity : AppCompatActivity() {
                 ) {
                     setLoading(false)
                     val serverValues = response.body()?.messages.orEmpty()
-                    render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES + serverValues)
+                    val appliedVersion = prefs.getInt(KEY_MESSAGES_VERSION, 0)
+
+                    if (appliedVersion < APPROVED_MESSAGES_VERSION) {
+                        render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
+                        applyApprovedMessagesOnce()
+                    } else {
+                        render(
+                            ReportCardViewActivity.DEFAULT_RESULT_MESSAGES +
+                                serverValues
+                        )
+                    }
                 }
 
                 override fun onFailure(
@@ -72,15 +88,57 @@ class ResultMessagesActivity : AppCompatActivity() {
                     t: Throwable
                 ) {
                     setLoading(false)
-                    render(emptyMap())
+                    render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
                     toast(
-                        "دریافت متن‌ها انجام نشد؛ متن‌های پیش‌فرض نمایش داده شدند"
+                        "متن‌های اصلی نمایش داده شدند؛ برای ثبت روی سرور، ذخیره را بزنید"
                     )
                 }
             })
     }
 
-    private fun render(serverValues: Map<String, String>) {
+    /**
+     * در اولین ورود پس از این نسخه، هشت متن تاییدشده کاربر را یک بار روی سرور
+     * ذخیره می‌کند. بعد از آن، ویرایش‌های بعدی مدیر محفوظ می‌مانند.
+     */
+    private fun applyApprovedMessagesOnce() {
+        setLoading(true)
+
+        RetrofitClient.instance.saveResultMessages(
+            SaveResultMessagesRequest(
+                ReportCardViewActivity.DEFAULT_RESULT_MESSAGES
+            )
+        ).enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(
+                call: Call<ApiResponse>,
+                response: Response<ApiResponse>
+            ) {
+                setLoading(false)
+                val body = response.body()
+
+                if (response.isSuccessful && body?.status == "success") {
+                    prefs.edit()
+                        .putInt(
+                            KEY_MESSAGES_VERSION,
+                            APPROVED_MESSAGES_VERSION
+                        )
+                        .apply()
+                    toast("هشت متن تاییدشده با موفقیت اعمال شدند")
+                } else {
+                    toast(
+                        body?.message
+                            ?: "ثبت خودکار متن‌ها انجام نشد؛ دکمه ذخیره را بزنید"
+                    )
+                }
+            }
+
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                setLoading(false)
+                toast("ثبت خودکار انجام نشد؛ متن‌ها آماده‌اند، ذخیره را بزنید")
+            }
+        })
+    }
+
+    private fun render(values: Map<String, String>) {
         container.removeAllViews()
         inputs.clear()
 
@@ -105,17 +163,18 @@ class ResultMessagesActivity : AppCompatActivity() {
                     "برای نمره پایین‌تر از حد مشروطی کلاس"
 
                 "PASS_NO_STAR" ->
-                    "برای نمره زیر ۸۳ که از حد قبولی کلاس کمتر نیست"
+                    "برای قبولی بدون ستاره و بالاتر از حد قبولی کلاس"
 
                 else ->
-                    "متن نمایش‌داده‌شده برای $label"
+                    "پیام نمایش‌داده‌شده در کارنامه"
             }
 
-            val input =
-                row.findViewById<TextInputEditText>(R.id.etResultMessage)
+            val input = row.findViewById<TextInputEditText>(
+                R.id.etResultMessage
+            )
 
             input.setText(
-                serverValues[code]
+                values[code]
                     ?.trim()
                     ?.takeIf { it.isNotBlank() }
                     ?: ReportCardViewActivity.DEFAULT_RESULT_MESSAGES
@@ -151,12 +210,18 @@ class ResultMessagesActivity : AppCompatActivity() {
             ) {
                 setLoading(false)
                 val body = response.body()
-                toast(body?.message ?: "ذخیره انجام نشد")
 
-                if (response.isSuccessful &&
-                    body?.status == "success"
-                ) {
+                if (response.isSuccessful && body?.status == "success") {
+                    prefs.edit()
+                        .putInt(
+                            KEY_MESSAGES_VERSION,
+                            APPROVED_MESSAGES_VERSION
+                        )
+                        .apply()
+                    toast(body.message.ifBlank { "متن‌ها ذخیره شدند" })
                     finish()
+                } else {
+                    toast(body?.message ?: "ذخیره متن‌ها انجام نشد")
                 }
             }
 
@@ -171,17 +236,18 @@ class ResultMessagesActivity : AppCompatActivity() {
     }
 
     private fun setLoading(value: Boolean) {
-        progress.visibility =
-            if (value) View.VISIBLE else View.GONE
+        progress.visibility = if (value) View.VISIBLE else View.GONE
         saveButton.isEnabled = !value
         restoreButton.isEnabled = !value
     }
 
     private fun toast(message: String) {
-        Toast.makeText(
-            this,
-            message,
-            Toast.LENGTH_LONG
-        ).show()
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    companion object {
+        private const val PREFS_NAME = "ReportCardMessagePrefs"
+        private const val KEY_MESSAGES_VERSION = "APPROVED_MESSAGES_VERSION"
+        private const val APPROVED_MESSAGES_VERSION = 1
     }
 }
