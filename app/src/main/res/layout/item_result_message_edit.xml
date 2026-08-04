@@ -1,7 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="12dp">
-    <TextView android:id="@+id/txtResultMessageLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="right" android:textColor="@color/main_text" android:textSize="14sp" android:textStyle="bold" />
-    <com.google.android.material.textfield.TextInputLayout xmlns:app="http://schemas.android.com/apk/res-auto" style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp">
-        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etResultMessage" android:layout_width="match_parent" android:layout_height="wrap_content" android:minLines="3" android:maxLines="6" android:gravity="right|top" android:inputType="textMultiLine" />
-    </com.google.android.material.textfield.TextInputLayout>
-</LinearLayout>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="15dp"
+    app:cardElevation="1dp"
+    app:strokeColor="#203559B8"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="13dp">
+
+        <TextView
+            android:id="@+id/txtResultMessageLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:textColor="@color/title_blue"
+            android:textDirection="rtl"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtResultMessageHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="right"
+            android:text="متن نمایش‌داده‌شده در کارنامه"
+            android:textColor="@color/sub_text"
+            android:textSize="10.5sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="متن انگلیسی پیام"
+            app:boxStrokeColor="@color/brand_orange"
+            app:counterEnabled="true"
+            app:counterMaxLength="320">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etResultMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:breakStrategy="simple"
+                android:gravity="left|top"
+                android:hyphenationFrequency="none"
+                android:inputType="textMultiLine"
+                android:maxLength="320"
+                android:maxLines="8"
+                android:minLines="4"
+                android:textColor="@color/input_text"
+                android:textDirection="ltr" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

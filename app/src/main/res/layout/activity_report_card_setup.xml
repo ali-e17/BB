@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,15 +9,17 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/topBarSetup"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="16dp"
+        android:layout_marginEnd="20dp"
         app:cardBackgroundColor="@color/card_background"
         app:cardCornerRadius="20dp"
         app:cardElevation="8dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:strokeWidth="0dp">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -26,11 +29,10 @@
                 android:id="@+id/btnSetupBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
+                android:contentDescription="بازگشت"
                 android:padding="12dp"
                 android:src="@android:drawable/ic_menu_revert"
                 app:tint="@color/main_text" />
@@ -39,7 +41,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="تنظیم معیارهای کارنامه"
+                android:text="تنظیم کارنامه"
                 android:textColor="@color/title_blue"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -47,76 +49,287 @@
     </com.google.android.material.card.MaterialCardView>
 
     <ScrollView
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
         android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBarSetup">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="انتخاب کلاس هدف"
-                app:boxStrokeColor="@color/brand_orange"
-                app:hintTextColor="@color/title_blue">
-
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/dropdownClassTarget"
-                    android:layout_width="match_parent"
-                    android:layout_height="58dp"
-                    android:gravity="right|center_vertical"
-                    android:inputType="none"
-                    android:paddingTop="12dp"
-                    android:textColor="@color/main_text"
-                    android:textDirection="rtl" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/txtSelectedClassInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="right"
-                android:text="لطفاً کلاس مورد نظر خود را انتخاب کنید"
-                android:textColor="@color/sub_text"
-                android:textSize="13sp" />
+            android:paddingStart="18dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="28dp">
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardTotalSum"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
-                app:strokeWidth="0dp">
+                app:strokeColor="#203559B8"
+                app:strokeWidth="1dp">
 
-                <TextView
-                    android:id="@+id/txtTotalSumValue"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:padding="16dp"
-                    android:text="0 / 100"
-                    android:textColor="#EF4444"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="۱  انتخاب کلاس"
+                        android:textColor="@color/title_blue"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="←"
+                        android:textColor="@color/sub_text"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="۲  تنظیم معیارها"
+                        android:textColor="@color/brand_orange"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="←"
+                        android:textColor="@color/sub_text"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="۳  ثبت نمرات"
+                        android:textColor="@color/sub_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="18dp"
                 android:gravity="right"
-                android:text="معیارهای نمره‌دهی کارنامه"
+                android:text="کلاس مورد نظر"
+                android:textColor="@color/main_text"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="68dp"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="13dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/brand_orange"
+                app:strokeWidth="1dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingStart="14dp"
+                    android:paddingTop="7dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="5dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        android:text="انتخاب کلاس"
+                        android:textColor="@color/title_blue"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/dropdownClassTarget"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_gravity="bottom"
+                        android:background="@android:color/transparent"
+                        android:clickable="true"
+                        android:cursorVisible="false"
+                        android:drawableEnd="@drawable/ic_arrow_down_clean"
+                        android:drawablePadding="10dp"
+                        android:focusable="true"
+                        android:gravity="right|center_vertical"
+                        android:hint="یک کلاس را انتخاب کنید"
+                        android:inputType="none"
+                        android:maxLines="1"
+                        android:paddingStart="2dp"
+                        android:paddingEnd="2dp"
+                        android:textColor="@color/main_text"
+                        android:textColorHint="@color/hint_color"
+                        android:textDirection="rtl"
+                        android:textSize="14sp" />
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="1dp"
+                app:strokeColor="#203559B8"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/txtSelectedClassInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:lineSpacingExtra="2dp"
+                        android:text="لطفاً کلاس مورد نظر خود را انتخاب کنید"
+                        android:textColor="@color/main_text"
+                        android:textDirection="rtl"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/txtPassRule"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_input_field"
+                            android:gravity="center"
+                            android:minHeight="42dp"
+                            android:padding="8dp"
+                            android:text="حد قبولی: —"
+                            android:textColor="@color/title_blue"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="8dp"
+                            android:layout_height="1dp" />
+
+                        <TextView
+                            android:id="@+id/txtConditionalRule"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_input_field"
+                            android:gravity="center"
+                            android:minHeight="42dp"
+                            android:padding="8dp"
+                            android:text="حد مشروطی: —"
+                            android:textColor="@color/brand_orange"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTotalSum"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#203559B8"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="right"
+                            android:text="مجموع بارم‌ها"
+                            android:textColor="@color/main_text"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtTotalSumValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 / 100"
+                            android:textColor="#EF4444"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progressTotalScore"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="10dp"
+                        android:max="100"
+                        android:progress="0"
+                        app:indicatorColor="@color/brand_orange"
+                        app:trackColor="#E9EEF7"
+                        app:trackCornerRadius="4dp" />
+
+                    <TextView
+                        android:id="@+id/txtTotalHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:gravity="right"
+                        android:text="مجموع باید دقیقاً ۱۰۰ باشد"
+                        android:textColor="@color/sub_text"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:gravity="right"
+                android:text="معیارهای نمره‌دهی"
                 android:textColor="@color/main_text"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -126,7 +339,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:gravity="right"
-                android:text="حداکثر ۸ معیار مجاز است. مجموع بارم‌ها باید دقیقاً ۱۰۰ گردد."
+                android:text="بین ۱ تا ۸ معیار تعریف کنید. نام معیارها باید یکتا و مجموع بارم‌ها دقیقاً ۱۰۰ باشد."
                 android:textColor="@color/sub_text"
                 android:textSize="12sp" />
 
@@ -143,13 +356,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
                 android:layout_gravity="left"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="10dp"
                 android:text="افزودن معیار جدید"
                 android:textAllCaps="false"
                 android:textColor="@color/title_blue"
                 android:textSize="12sp"
-                app:cornerRadius="10dp"
+                app:cornerRadius="11dp"
                 app:icon="@android:drawable/ic_input_add"
+                app:iconTint="@color/title_blue"
                 app:strokeColor="@color/title_blue" />
 
             <com.google.android.material.button.MaterialButton
@@ -157,24 +371,24 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginTop="24dp"
-                android:text="ویرایش متن پیام‌های وضعیت کارنامه"
+                android:layout_marginTop="20dp"
+                android:text="ویرایش متن پیام‌های نتیجه"
                 android:textAllCaps="false"
-                android:textColor="@color/main_text"
-                android:textSize="12sp"
+                android:textColor="@color/title_blue"
+                android:textSize="13sp"
                 app:cornerRadius="12dp"
-                app:strokeColor="@color/sub_text" />
+                app:strokeColor="@color/title_blue" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveLayout"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="54dp"
                 android:layout_marginTop="12dp"
                 android:backgroundTint="@color/brand_orange"
                 android:text="ذخیره و ورود به لیست نمرات"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 app:cornerRadius="14dp" />
 
@@ -184,7 +398,9 @@
                 android:layout_height="36dp"
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"
-                android:visibility="gone" />
+                android:visibility="gone"
+                app:indicatorColor="@color/brand_orange" />
         </LinearLayout>
     </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

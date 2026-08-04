@@ -118,5 +118,8 @@
             android:name=".TrashBinActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ResultMessagesActivity"
+            android:exported="false" />
     </application>
 </manifest>
