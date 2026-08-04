@@ -43,6 +43,26 @@ class DictionaryDatabaseHelper(context: Context) {
         return results
     }
 
+    // 🌟 متد جدید برای دریافت یک کلمه تصادفی و فیلتر کلمات خیلی کوتاه نامناسب در سطح SQL
+    fun getRandomWord(): DictionaryEntry? {
+        var entry: DictionaryEntry? = null
+        // فیلتر کردن طول کلمات بالای ۳ حرف برای حذف مخفف‌ها و لغات نامناسب کوتاه احتمالی
+        val cursor = db.rawQuery(
+            "SELECT word, definition, wordtype FROM entries WHERE length(word) > 3 ORDER BY RANDOM() LIMIT 1",
+            null
+        )
+        cursor.use {
+            if (it.moveToFirst()) {
+                entry = DictionaryEntry(
+                    word = it.getString(0),
+                    definition = it.getString(1),
+                    partOfSpeech = it.getString(2)
+                )
+            }
+        }
+        return entry
+    }
+
     fun close() {
         db.close()
     }

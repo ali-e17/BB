@@ -121,5 +121,8 @@
         <activity
             android:name=".ResultMessagesActivity"
             android:exported="false" />
+            android:name=".TermHistoryActivity"
+            android:exported="false" />
+
     </application>
 </manifest>

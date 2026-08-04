@@ -3,12 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="8dp"
+    android:layout_marginHorizontal="10dp"
+    android:layout_marginVertical="7dp"
     android:layoutDirection="rtl"
     app:cardBackgroundColor="@color/card_background"
     app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
+    app:cardElevation="3dp"
     app:strokeWidth="0dp">
 
     <LinearLayout
@@ -21,62 +21,55 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- وضعیت -->
             <TextView
-                android:id="@+id/txtHistoryStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:text="وضعیت"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <!-- نام کلاس -->
-            <TextView
-                android:id="@+id/txtHistoryTitle"
+                android:id="@+id/tvHistoryClassName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/tvHistoryStatus"
+                android:layout_marginEnd="8dp"
                 android:text="نام کلاس"
                 android:textColor="@color/title_blue"
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/tvHistoryStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="جاری"
+                android:textSize="14sp"
+                android:textStyle="bold" />
         </RelativeLayout>
+
         <TextView
-            android:id="@+id/txtHistoryMeta"
+            android:id="@+id/tvHistoryBook"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:lineSpacingExtra="4dp"
-            android:text="کد: • کتاب: • سطح:"
+            android:text="کتاب: نامشخص"
             android:textColor="@color/main_text"
             android:textSize="13sp" />
 
         <TextView
-            android:id="@+id/txtHistoryStats"
+            android:id="@+id/tvHistoryTerm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="غیبت: ۰ • تأخیر: ۰"
-            android:textColor="@color/sub_text"
-            android:textSize="12sp" />
+            android:layout_marginTop="6dp"
+            android:text="ترم: سال و فصل"
+            android:textColor="@color/main_text"
+            android:textSize="13sp" />
 
         <TextView
-            android:id="@+id/txtHistoryResult"
+            android:id="@+id/tvHistorySchedule"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:paddingVertical="4dp"
-            android:text="مشاهده کارنامه"
-            android:textColor="@color/brand_orange"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:layout_marginTop="6dp"
+            android:text="برگزاری: روزها و ساعت"
+            android:textColor="@color/sub_text"
+            android:textSize="12sp" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
