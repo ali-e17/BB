@@ -43,6 +43,7 @@ class GradeEntryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_grade_entry)
+        SystemBarInsets.apply(this, findViewById(R.id.rootGradeEntry))
 
         classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
         className = intent.getStringExtra(EXTRA_CLASS_NAME).orEmpty()
@@ -70,7 +71,7 @@ class GradeEntryActivity : AppCompatActivity() {
         adapter = RosterAdapter()
         rvStudents.adapter = adapter
 
-        draftButton.setOnClickListener { save(false, "") }
+        draftButton.setOnClickListener { save(publish = false) }
         publishButton.setOnClickListener { requestPublish() }
 
         updateSummary()
@@ -117,6 +118,7 @@ class GradeEntryActivity : AppCompatActivity() {
 
                     adapter.notifyDataSetChanged()
                     updateSummary()
+                    updateActionButtons()
 
                     if (students.isEmpty()) {
                         toast("دانش‌آموزی در سابقه این کلاس ثبت نشده است")
@@ -138,9 +140,7 @@ class GradeEntryActivity : AppCompatActivity() {
 
         val components = config?.components.orEmpty()
         val incomplete = students.any { student ->
-            components.any { component ->
-                student.scores[component.id] == null
-            }
+            components.any { component -> student.scores[component.id] == null }
         }
 
         if (incomplete) {
@@ -148,64 +148,42 @@ class GradeEntryActivity : AppCompatActivity() {
             return
         }
 
-        val hasPublished = students.any { it.status == "PUBLISHED" }
-
-        if (!hasPublished) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("انتشار کارنامه‌ها")
-                .setMessage(
-                    "آیا از انتشار کارنامه‌ها اطمینان دارید؟ پس از انتشار، " +
-                        "دانش‌آموزان قادر به مشاهده نتایج خود خواهند بود."
-                )
-                .setNegativeButton("انصراف", null)
-                .setPositiveButton("انتشار نهایی") { _, _ ->
-                    save(true, "")
+        val isRepublish = students.any { it.status == "PUBLISHED" }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(if (isRepublish) "انتشار مجدد کارنامه‌ها" else "انتشار کارنامه‌ها")
+            .setMessage(
+                if (isRepublish) {
+                    "نسخه جدید جایگزین نسخه قبلی می‌شود و دانش‌آموز آخرین نتیجه را خواهد دید. ادامه می‌دهید؟"
+                } else {
+                    "پس از انتشار، دانش‌آموزان قادر به مشاهده نتایج خود خواهند بود. ادامه می‌دهید؟"
                 }
-                .show()
-        } else {
-            val input = android.widget.EditText(this).apply {
-                hint = "علت ویرایش کارنامه منتشرشده"
+            )
+            .setNegativeButton("انصراف", null)
+            .setPositiveButton(if (isRepublish) "انتشار مجدد" else "انتشار نهایی") { _, _ ->
+                save(publish = true)
             }
-
-            MaterialAlertDialogBuilder(this)
-                .setTitle("ویرایش نسخه منتشرشده")
-                .setMessage(
-                    "شما در حال ویرایش کارنامه‌ای هستید که قبلاً منتشر شده است. " +
-                        "ذکر علت ویرایش الزامی است."
-                )
-                .setView(input)
-                .setNegativeButton("انصراف", null)
-                .setPositiveButton("انتشار مجدد") { _, _ ->
-                    val reason = input.text.toString().trim()
-                    if (reason.isBlank()) {
-                        toast("علت ویرایش الزامی است")
-                    } else {
-                        save(true, reason)
-                    }
-                }
-                .show()
-        }
+            .show()
     }
 
-    private fun save(publish: Boolean, reason: String) {
+    private fun save(publish: Boolean) {
         rvStudents.clearFocus()
+        val currentConfig = config ?: return toast("تنظیمات کارنامه دریافت نشده است")
 
         val payload = students.map { student ->
             SaveReportStudentRequest(
-                student.id,
-                student.revision,
-                student.scores.toMap()
+                studentId = student.id,
+                expectedRevision = student.revision,
+                scores = student.scores.toMap()
             )
         }
 
         setLoading(true)
-
         RetrofitClient.instance.saveReportCards(
             SaveReportCardsRequest(
-                classId,
-                publish,
-                reason,
-                payload
+                classId = classId,
+                expectedConfigRevision = currentConfig.revision,
+                publish = publish,
+                students = payload
             )
         ).enqueue(object : Callback<ApiResponse> {
             override fun onResponse(
@@ -214,6 +192,7 @@ class GradeEntryActivity : AppCompatActivity() {
             ) {
                 setLoading(false)
                 val body = response.body()
+                val apiError = ApiErrorParser.parse(response)
 
                 if (response.isSuccessful && body?.status == "success") {
                     toast(
@@ -224,8 +203,15 @@ class GradeEntryActivity : AppCompatActivity() {
                         }
                     )
                     loadRoster()
-                } else {
-                    toast(body?.message ?: "ذخیره نمرات انجام نشد")
+                    return
+                }
+
+                toast(body?.message ?: apiError?.message ?: "ذخیره نمرات انجام نشد")
+                if (apiError?.code == "CONFIG_REVISION_CONFLICT" ||
+                    apiError?.code == "REVISION_CONFLICT" ||
+                    response.code() == 409
+                ) {
+                    loadRoster()
                 }
             }
 
@@ -253,10 +239,26 @@ class GradeEntryActivity : AppCompatActivity() {
         incompleteCountText.text = (students.size - ready).toString()
     }
 
+    private fun updateActionButtons() {
+        val hasPublished = students.any { it.status == "PUBLISHED" }
+        val hasStudents = students.isNotEmpty()
+        draftButton.visibility = if (hasPublished) View.GONE else View.VISIBLE
+        publishButton.text = if (hasPublished) "انتشار مجدد" else "انتشار نهایی"
+        draftButton.isEnabled = hasStudents
+        publishButton.isEnabled = hasStudents
+        draftButton.alpha = if (hasStudents) 1f else 0.55f
+        publishButton.alpha = if (hasStudents) 1f else 0.55f
+    }
+
     private fun setLoading(value: Boolean) {
         progress.visibility = if (value) View.VISIBLE else View.GONE
-        draftButton.isEnabled = !value
-        publishButton.isEnabled = !value
+        rvStudents.isEnabled = !value
+        if (value) {
+            draftButton.isEnabled = false
+            publishButton.isEnabled = false
+        } else {
+            updateActionButtons()
+        }
     }
 
     private fun format(value: Double): String =

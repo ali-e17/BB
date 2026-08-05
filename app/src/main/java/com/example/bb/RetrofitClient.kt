@@ -68,8 +68,13 @@ data class SaveReportConfigResponse(val status:String="",val message:String="",v
 data class ReportRosterStudent(val id:String="",val name:String="",val studentCode:String="",val cardId:String?=null,val status:String="EMPTY",val revision:Int=0,val totalScore:Double=0.0,val resultCode:String?=null,val starCount:Int=0,val scores:Map<String,Double> = emptyMap())
 data class ReportRosterResponse(val status:String="",val message:String?=null,val config:ReportConfigDto?=null,val students:List<ReportRosterStudent> = emptyList())
 data class SaveReportStudentRequest(val studentId:String,val expectedRevision:Int,val scores:Map<String,Double?>)
-data class SaveReportCardsRequest(val classId:String,val publish:Boolean,val editReason:String,val students:List<SaveReportStudentRequest>)
-data class ReportScoreDto(val componentId:String="",val title:String="",val maxScore:Double=0.0,val score:Double=0.0)
+data class SaveReportCardsRequest(
+    val classId:String,
+    val expectedConfigRevision:Int,
+    val publish:Boolean,
+    val students:List<SaveReportStudentRequest>
+)
+data class ReportScoreDto(val componentId:String="",val title:String="",val maxScore:Double=0.0,val score:Double=0.0,val sortOrder:Int=0)
 data class ReportCardDto(
     val id:String="",val classId:String="",val studentId:String="",val studentCode:String="",val studentName:String="",
     val classCode:String="",val className:String="",val bookName:String="",val classLevel:String="",val termYear:String="",val termSeason:String="",
@@ -77,6 +82,25 @@ data class ReportCardDto(
     val revision:Int=0,val publishedAt:String?=null,val updatedAt:String?=null,val scores:List<ReportScoreDto> = emptyList()
 )
 data class ReportCardResponse(val status:String="",val message:String?=null,val card:ReportCardDto?=null)
+
+data class CurrentReportItem(
+    val classId:String="",
+    val classCode:String="",
+    val className:String="",
+    val classLevel:String="",
+    val bookName:String="",
+    val termYear:String="",
+    val termSeason:String="",
+    val state:String="PENDING",
+    val message:String="",
+    val card:ReportCardDto?=null
+)
+data class CurrentReportsResponse(
+    val status:String="",
+    val message:String="",
+    val items:List<CurrentReportItem> = emptyList()
+)
+
 data class ResultMessagesResponse(val status:String="", val messages:Map<String,String> = emptyMap())
 data class SaveResultMessagesRequest(val messages:Map<String,String>)
 data class TermHistoryItem(
@@ -147,6 +171,7 @@ interface ApiService
     @POST("save_report_cards.php") fun saveReportCards(@Body request:SaveReportCardsRequest):Call<ApiResponse>
     @GET("get_report_cards.php") fun getReportCards(@Query("class_id") classId:String?=null,@Query("student_id") studentId:String?=null):Call<List<ReportCardDto>>
     @GET("get_report_card.php") fun getReportCard(@Query("id") id:String):Call<ReportCardResponse>
+    @GET("get_current_report_cards.php") fun getCurrentReportCards():Call<CurrentReportsResponse>
     @GET("get_term_history.php") fun getTermHistory(@Query("role") role:String,@Query("id") id:String):Call<TermHistoryResponse>
     @GET("get_result_messages.php") fun getResultMessages():Call<ResultMessagesResponse>
     @POST("save_result_messages.php") fun saveResultMessages(@Body request:SaveResultMessagesRequest):Call<ApiResponse>

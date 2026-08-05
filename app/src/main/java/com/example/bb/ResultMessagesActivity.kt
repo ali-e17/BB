@@ -1,6 +1,5 @@
 package com.example.bb
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -34,13 +33,10 @@ class ResultMessagesActivity : AppCompatActivity() {
     private lateinit var progress: View
     private val inputs = linkedMapOf<String, TextInputEditText>()
 
-    private val prefs by lazy {
-        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result_messages)
+        SystemBarInsets.apply(this, findViewById(R.id.rootResultMessages))
 
         findViewById<ImageView>(R.id.btnResultMessagesBack)
             .setOnClickListener { finish() }
@@ -69,17 +65,16 @@ class ResultMessagesActivity : AppCompatActivity() {
                     response: Response<ResultMessagesResponse>
                 ) {
                     setLoading(false)
-                    val serverValues = response.body()?.messages.orEmpty()
-                    val appliedVersion = prefs.getInt(KEY_MESSAGES_VERSION, 0)
-
-                    if (appliedVersion < APPROVED_MESSAGES_VERSION) {
-                        render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
-                        applyApprovedMessagesOnce()
-                    } else {
+                    val body = response.body()
+                    val apiError = ApiErrorParser.parse(response)
+                    if (response.isSuccessful && body?.status == "success") {
                         render(
                             ReportCardViewActivity.DEFAULT_RESULT_MESSAGES +
-                                serverValues
+                                body.messages
                         )
+                    } else {
+                        render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
+                        toast(apiError?.message ?: "دریافت متن‌ها انجام نشد؛ متن‌های اصلی نمایش داده شدند")
                     }
                 }
 
@@ -89,53 +84,9 @@ class ResultMessagesActivity : AppCompatActivity() {
                 ) {
                     setLoading(false)
                     render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
-                    toast(
-                        "متن‌های اصلی نمایش داده شدند؛ برای ثبت روی سرور، ذخیره را بزنید"
-                    )
+                    toast("ارتباط با سرور برقرار نشد؛ متن‌های اصلی نمایش داده شدند")
                 }
             })
-    }
-
-    /**
-     * در اولین ورود پس از این نسخه، هشت متن تاییدشده کاربر را یک بار روی سرور
-     * ذخیره می‌کند. بعد از آن، ویرایش‌های بعدی مدیر محفوظ می‌مانند.
-     */
-    private fun applyApprovedMessagesOnce() {
-        setLoading(true)
-
-        RetrofitClient.instance.saveResultMessages(
-            SaveResultMessagesRequest(
-                ReportCardViewActivity.DEFAULT_RESULT_MESSAGES
-            )
-        ).enqueue(object : Callback<ApiResponse> {
-            override fun onResponse(
-                call: Call<ApiResponse>,
-                response: Response<ApiResponse>
-            ) {
-                setLoading(false)
-                val body = response.body()
-
-                if (response.isSuccessful && body?.status == "success") {
-                    prefs.edit()
-                        .putInt(
-                            KEY_MESSAGES_VERSION,
-                            APPROVED_MESSAGES_VERSION
-                        )
-                        .apply()
-                    toast("هشت متن تاییدشده با موفقیت اعمال شدند")
-                } else {
-                    toast(
-                        body?.message
-                            ?: "ثبت خودکار متن‌ها انجام نشد؛ دکمه ذخیره را بزنید"
-                    )
-                }
-            }
-
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                setLoading(false)
-                toast("ثبت خودکار انجام نشد؛ متن‌ها آماده‌اند، ذخیره را بزنید")
-            }
-        })
     }
 
     private fun render(values: Map<String, String>) {
@@ -210,18 +161,13 @@ class ResultMessagesActivity : AppCompatActivity() {
             ) {
                 setLoading(false)
                 val body = response.body()
+                val apiError = ApiErrorParser.parse(response)
 
                 if (response.isSuccessful && body?.status == "success") {
-                    prefs.edit()
-                        .putInt(
-                            KEY_MESSAGES_VERSION,
-                            APPROVED_MESSAGES_VERSION
-                        )
-                        .apply()
                     toast(body.message.ifBlank { "متن‌ها ذخیره شدند" })
                     finish()
                 } else {
-                    toast(body?.message ?: "ذخیره متن‌ها انجام نشد")
+                    toast(body?.message ?: apiError?.message ?: "ذخیره متن‌ها انجام نشد")
                 }
             }
 
@@ -243,11 +189,5 @@ class ResultMessagesActivity : AppCompatActivity() {
 
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    companion object {
-        private const val PREFS_NAME = "ReportCardMessagePrefs"
-        private const val KEY_MESSAGES_VERSION = "APPROVED_MESSAGES_VERSION"
-        private const val APPROVED_MESSAGES_VERSION = 1
     }
 }

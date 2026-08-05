@@ -68,6 +68,7 @@ data class ClassModel(
     var endTime: String,
     var daysOfWeek: String,
     var sessionCount: Int,
+    var classLevel: String = "",
     var teacherPhone: String? = null,
     var status: ClassStatus = ClassStatus.ACTIVE,
     var createdAt: String = AppDatabase.today(),
@@ -639,7 +640,7 @@ object AppDatabase
         root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("classIds", t.classIds).put("isActive", t.isActive).put("avatarName", t.avatarName ?: "avatar_teacher_1")) } })
 
         // 🌟 حذف کلاس لول و جایگزینی با مینیمم‌های نمرات جدید کلاس
-        root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt).put("classCode", c.classCode).put("bookName", c.bookName).put("termYear", c.termYear).put("termSeason", c.termSeason).put("teacherId", c.teacherId).put("teacherName", c.teacherName).put("minPassingScore", c.minPassingScore).put("minConditionalScore", c.minConditionalScore)) } })
+        root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("classLevel", c.classLevel).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt).put("classCode", c.classCode).put("bookName", c.bookName).put("termYear", c.termYear).put("termSeason", c.termSeason).put("teacherId", c.teacherId).put("teacherName", c.teacherName).put("minPassingScore", c.minPassingScore).put("minConditionalScore", c.minConditionalScore)) } })
 
         root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
         root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
@@ -770,11 +771,12 @@ object AppDatabase
             )
         }
 
-        // 🌟 حذف کلاس لول و خواندن مینیمم‌های جدید کارنامه
+        // بازیابی کامل اطلاعات کلاس، شامل Level و مرزهای کارنامه
         root.optJSONArray("classes").forEachObject { o ->
             classes += ClassModel(
                 id = o.optString("id"),
                 className = o.optString("className"),
+                classLevel = o.optString("classLevel", o.optString("className")),
                 startTime = o.optString("startTime"),
                 endTime = o.optString("endTime"),
                 daysOfWeek = o.optString("daysOfWeek"),

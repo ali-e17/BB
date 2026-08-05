@@ -31,6 +31,7 @@ class ReportCardSetupActivity : AppCompatActivity() {
     private var selectedClass: ClassModel? = null
     private var configRevision = 0
     private var loading = false
+    private var configCall: Call<ReportConfigResponse>? = null
 
     private lateinit var classDropdown: MaterialAutoCompleteTextView
     private lateinit var selectedInfo: TextView
@@ -47,6 +48,7 @@ class ReportCardSetupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report_card_setup)
+        SystemBarInsets.apply(this, findViewById(R.id.rootReportCardSetup))
 
         findViewById<ImageView>(R.id.btnSetupBack).setOnClickListener { finish() }
 
@@ -176,41 +178,46 @@ class ReportCardSetupActivity : AppCompatActivity() {
     }
 
     private fun loadConfig(classId: String) {
+        configCall?.cancel()
         setLoading(true)
 
-        RetrofitClient.instance.getReportConfig(classId)
-            .enqueue(object : Callback<ReportConfigResponse> {
-                override fun onResponse(
-                    call: Call<ReportConfigResponse>,
-                    response: Response<ReportConfigResponse>
-                ) {
-                    setLoading(false)
-                    val config = response.body()?.config
-                    components.clear()
+        val request = RetrofitClient.instance.getReportConfig(classId)
+        configCall = request
+        request.enqueue(object : Callback<ReportConfigResponse> {
+            override fun onResponse(
+                call: Call<ReportConfigResponse>,
+                response: Response<ReportConfigResponse>
+            ) {
+                if (selectedClass?.id != classId) return
+                setLoading(false)
 
-                    if (response.isSuccessful && config != null) {
-                        configRevision = config.revision
-                        components += config.components
-                            .sortedBy { it.sortOrder }
-                            .map {
-                                EditableComponent(it.id, it.title, it.maxScore)
-                            }
-                    } else {
-                        configRevision = 0
-                        components += defaultComponents()
-                    }
-
-                    renderComponents()
+                val body = response.body()
+                val apiError = ApiErrorParser.parse(response)
+                if (!response.isSuccessful || body?.status != "success") {
+                    toast(body?.message ?: apiError?.message ?: "دریافت تنظیمات کارنامه انجام نشد")
+                    return
                 }
 
-                override fun onFailure(call: Call<ReportConfigResponse>, t: Throwable) {
-                    setLoading(false)
-                    toast("دریافت تنظیمات کارنامه انجام نشد")
-                    components.clear()
+                components.clear()
+                val config = body.config
+                if (config != null) {
+                    configRevision = config.revision
+                    components += config.components
+                        .sortedBy { it.sortOrder }
+                        .map { EditableComponent(it.id, it.title, it.maxScore) }
+                } else {
+                    configRevision = 0
                     components += defaultComponents()
-                    renderComponents()
                 }
-            })
+                renderComponents()
+            }
+
+            override fun onFailure(call: Call<ReportConfigResponse>, t: Throwable) {
+                if (call.isCanceled || selectedClass?.id != classId) return
+                setLoading(false)
+                toast("دریافت تنظیمات کارنامه انجام نشد")
+            }
+        })
     }
 
     private fun defaultComponents(): List<EditableComponent> = listOf(
@@ -412,8 +419,11 @@ class ReportCardSetupActivity : AppCompatActivity() {
                 ) {
                     setLoading(false)
                     val body = response.body()
+                    val apiError = ApiErrorParser.parse(response)
 
                     if (response.isSuccessful && body?.status == "success") {
+                        configRevision = body.revision
+                        toast(body.message.ifBlank { "تنظیمات کارنامه ذخیره شد" })
                         startActivity(
                             Intent(
                                 this@ReportCardSetupActivity,
@@ -428,8 +438,9 @@ class ReportCardSetupActivity : AppCompatActivity() {
                                     selected.className
                                 )
                         )
+                        finish()
                     } else {
-                        toast(body?.message ?: "ذخیره تنظیمات انجام نشد")
+                        toast(body?.message ?: apiError?.message ?: "ذخیره تنظیمات انجام نشد")
                     }
                 }
 
@@ -456,6 +467,9 @@ class ReportCardSetupActivity : AppCompatActivity() {
             append("کد کلاس: ")
             append(selected.classCode.ifBlank { "—" })
             append('\n')
+            append("سطح: ")
+            append(selected.classLevel.ifBlank { "—" })
+            append('\n')
             append("کتاب: ")
             append(selected.bookName.ifBlank { "—" })
             append('\n')
@@ -479,6 +493,11 @@ class ReportCardSetupActivity : AppCompatActivity() {
 
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onDestroy() {
+        configCall?.cancel()
+        super.onDestroy()
     }
 
     private data class EditableComponent(
