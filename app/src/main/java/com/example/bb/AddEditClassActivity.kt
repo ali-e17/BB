@@ -25,6 +25,7 @@ class AddEditClassActivity : AppCompatActivity() {
     private lateinit var tvTitle: TextView
     private lateinit var etClassCode: TextInputEditText
     private lateinit var spinnerClassName: MaterialAutoCompleteTextView
+    private lateinit var etClassLevel: TextInputEditText
     private lateinit var etBookName: TextInputEditText
     private lateinit var etTermYear: TextInputEditText
     private lateinit var spinnerTermSeason: MaterialAutoCompleteTextView
@@ -40,12 +41,14 @@ class AddEditClassActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_class)
+        SystemBarInsets.apply(this, findViewById(R.id.rootAddEditClass))
 
         findViewById<ImageView>(R.id.btnClassEditBack).setOnClickListener { finish() }
 
         tvTitle = findViewById(R.id.tvClassEditTitle)
         etClassCode = findViewById(R.id.etClassCode)
         spinnerClassName = findViewById(R.id.spinnerClassName)
+        etClassLevel = findViewById(R.id.etClassLevel)
         etBookName = findViewById(R.id.etBookName)
         etTermYear = findViewById(R.id.etTermYear)
         spinnerTermSeason = findViewById(R.id.spinnerTermSeason)
@@ -118,6 +121,7 @@ class AddEditClassActivity : AppCompatActivity() {
 
         etClassCode.setText(model.classCode)
         spinnerClassName.setText(model.className, false)
+        etClassLevel.setText(model.classLevel)
         etBookName.setText(model.bookName)
         etTermYear.setText(model.termYear)
         spinnerTermSeason.setText(model.termSeason, false)
@@ -137,6 +141,7 @@ class AddEditClassActivity : AppCompatActivity() {
     private fun validateAndSave() {
         etClassCode.error = null
         spinnerClassName.error = null
+        etClassLevel.error = null
         etBookName.error = null
         etTermYear.error = null
         spinnerTermSeason.error = null
@@ -157,6 +162,13 @@ class AddEditClassActivity : AppCompatActivity() {
         if (className !in SchoolClassCatalog.classNames && className != existingClass?.className) {
             spinnerClassName.error = "نام کلاس را از فهرست انتخاب کنید"
             spinnerClassName.requestFocus()
+            return
+        }
+
+        val classLevel = etClassLevel.text?.toString()?.trim().orEmpty()
+        if (classLevel.isBlank()) {
+            etClassLevel.error = "سطح کلاس الزامی است"
+            etClassLevel.requestFocus()
             return
         }
 
@@ -189,12 +201,33 @@ class AddEditClassActivity : AppCompatActivity() {
             return
         }
 
-        val sessionCount = etSessionCount.text?.toString()?.trim()?.toIntOrNull() ?: 1
+        val sessionCount = etSessionCount.text?.toString()?.trim()?.toIntOrNull()
+        if (sessionCount == null || sessionCount < 1) {
+            etSessionCount.error = "تعداد جلسات باید حداقل ۱ باشد"
+            etSessionCount.requestFocus()
+            return
+        }
 
-        // 🌟 اعتبارسنجی محدوده‌های نمراتی جدید شما
-        val minPass = etMinPassingScore.text?.toString()?.toDoubleOrNull() ?: 80.0
-        val minCond = etMinConditionalScore.text?.toString()?.toDoubleOrNull() ?: 70.0
+        val minPassRaw = etMinPassingScore.text?.toString()?.trim().orEmpty()
+        val minCondRaw = etMinConditionalScore.text?.toString()?.trim().orEmpty()
+        val minPass = minPassRaw.toDoubleOrNull()
+        val minCond = minCondRaw.toDoubleOrNull()
 
+        if (minPass == null) {
+            etMinPassingScore.error = "حد قبولی را به‌صورت عدد وارد کنید"
+            etMinPassingScore.requestFocus()
+            return
+        }
+        if (minCond == null) {
+            etMinConditionalScore.error = "حد مشروطی را به‌صورت عدد وارد کنید"
+            etMinConditionalScore.requestFocus()
+            return
+        }
+        if (minCond < 0.0 || minPass <= 0.0) {
+            etMinConditionalScore.error = "مرزهای نمره نمی‌توانند منفی باشند"
+            etMinConditionalScore.requestFocus()
+            return
+        }
         if (minPass >= 83.0) {
             etMinPassingScore.error = "حد پایین قبولی باید حتماً کمتر از ۸۳ باشد"
             etMinPassingScore.requestFocus()
@@ -212,6 +245,11 @@ class AddEditClassActivity : AppCompatActivity() {
             if (chip.isChecked) selectedDays += chip.text.toString()
         }
 
+        if (selectedDays.isEmpty()) {
+            Toast.makeText(this, "حداقل یک روز برگزاری را انتخاب کنید", Toast.LENGTH_LONG).show()
+            return
+        }
+
         val old = existingClass
         val model = ClassModel(
             id = old?.id ?: UUID.randomUUID().toString(),
@@ -220,6 +258,7 @@ class AddEditClassActivity : AppCompatActivity() {
             endTime = endTime.formatted,
             daysOfWeek = selectedDays.joinToString("، "),
             sessionCount = sessionCount,
+            classLevel = classLevel,
             teacherPhone = old?.teacherPhone,
             teacherId = old?.teacherId,
             teacherName = old?.teacherName.orEmpty(),
@@ -245,10 +284,13 @@ class AddEditClassActivity : AppCompatActivity() {
                     AppDatabase.upsertClass(model)
                     setResult(RESULT_OK); finish()
                 } else {
-                    Toast.makeText(this@AddEditClassActivity, response.body()?.message ?: "خطا در ثبت", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@AddEditClassActivity, response.body()?.message ?: ApiErrorParser.parse(response)?.message ?: "خطا در ثبت", Toast.LENGTH_LONG).show()
                 }
             }
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) { setSavingState(false) }
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                setSavingState(false)
+                Toast.makeText(this@AddEditClassActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+            }
         })
     }
 
@@ -260,9 +302,18 @@ class AddEditClassActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body()?.status == "success") {
                     AppDatabase.upsertClass(model)
                     setResult(RESULT_OK); finish()
+                } else {
+                    Toast.makeText(
+                        this@AddEditClassActivity,
+                        response.body()?.message ?: ApiErrorParser.parse(response)?.message ?: "ویرایش کلاس انجام نشد",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) { setSavingState(false) }
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                setSavingState(false)
+                Toast.makeText(this@AddEditClassActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+            }
         })
     }
 

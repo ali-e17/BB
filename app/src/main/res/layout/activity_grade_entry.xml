@@ -2,10 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootGradeEntry"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/app_global_background"
-    android:fitsSystemWindows="true"
     android:layoutDirection="rtl">
 
     <com.google.android.material.card.MaterialCardView
@@ -30,12 +30,12 @@
                 android:id="@+id/btnGradeBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentStart="true"
+                android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="بازگشت"
                 android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
+                android:src="@drawable/ic_arrow_back_left"
                 app:tint="@color/main_text" />
 
             <LinearLayout

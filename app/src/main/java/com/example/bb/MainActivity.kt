@@ -418,80 +418,99 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * دریافت و نمایش کارنامه‌های دانش‌آموز
+     * وضعیت کارنامه کلاس یا کلاس‌های فعال دانش‌آموز را نمایش می‌دهد.
+     * ترم‌های قبلی از صفحه سوابق تحصیلی قابل دسترسی هستند.
      */
     private fun showStudentReportCards() {
         RetrofitClient.instance
-            .getReportCards()
-            .enqueue(object : Callback<List<ReportCardDto>> {
+            .getCurrentReportCards()
+            .enqueue(object : Callback<CurrentReportsResponse> {
 
                 override fun onResponse(
-                    call: Call<List<ReportCardDto>>,
-                    response: Response<List<ReportCardDto>>
+                    call: Call<CurrentReportsResponse>,
+                    response: Response<CurrentReportsResponse>
                 ) {
-                    val reports =
-                        if (response.isSuccessful) {
-                            response.body().orEmpty()
-                        } else {
-                            emptyList()
-                        }
-
-                    if (reports.isEmpty()) {
+                    val body = response.body()
+                    val apiError = ApiErrorParser.parse(response)
+                    if (!response.isSuccessful || body?.status != "success") {
                         Toast.makeText(
                             this@MainActivity,
-                            "هنوز کارنامه‌ای برای شما منتشر نشده است",
-                            Toast.LENGTH_SHORT
+                            body?.message.ifNullOrBlank(apiError?.message.ifNullOrBlank("دریافت وضعیت کارنامه انجام نشد")),
+                            Toast.LENGTH_LONG
                         ).show()
                         return
                     }
 
-                    val labels = reports.map { report ->
-                        val term = listOf(
-                            report.termSeason,
-                            report.termYear
-                        )
+                    val items = body.items
+                    if (items.isEmpty()) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            body.message.ifBlank { "کلاس فعالی برای شما ثبت نشده است" },
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return
+                    }
+
+                    if (items.size == 1) {
+                        openCurrentReportItem(items.first())
+                        return
+                    }
+
+                    val labels = items.map { item ->
+                        val term = listOf(item.termSeason, item.termYear)
                             .filter { it.isNotBlank() }
                             .joinToString(" ")
-
-                        listOf(
-                            report.className,
-                            term,
-                            "نمره ${formatScore(report.totalScore)}"
-                        )
+                        val stateLabel = if (item.state == "PUBLISHED") {
+                            item.card?.let { "منتشرشده • نمره ${formatScore(it.totalScore)}" }
+                                ?: "منتشرشده"
+                        } else {
+                            "در انتظار انتشار"
+                        }
+                        listOf(item.className, item.classLevel, term, stateLabel)
                             .filter { it.isNotBlank() }
                             .joinToString(" • ")
                     }.toTypedArray()
 
                     AlertDialog.Builder(this@MainActivity)
-                        .setTitle("کارنامه‌های منتشرشده")
+                        .setTitle("کارنامه ترم فعلی")
                         .setItems(labels) { _, position ->
-                            startActivity(
-                                Intent(
-                                    this@MainActivity,
-                                    ReportCardViewActivity::class.java
-                                ).putExtra(
-                                    ReportCardViewActivity
-                                        .EXTRA_REPORT_CARD_ID,
-                                    reports[position].id
-                                )
-                            )
+                            openCurrentReportItem(items[position])
                         }
                         .setNegativeButton("بستن", null)
                         .show()
                 }
 
                 override fun onFailure(
-                    call: Call<List<ReportCardDto>>,
+                    call: Call<CurrentReportsResponse>,
                     throwable: Throwable
                 ) {
                     Toast.makeText(
                         this@MainActivity,
-                        "دریافت کارنامه‌ها انجام نشد",
+                        "ارتباط با سرور برقرار نشد",
                         Toast.LENGTH_LONG
                     ).show()
                 }
             })
     }
+
+    private fun openCurrentReportItem(item: CurrentReportItem) {
+        val card = item.card
+        if (item.state == "PUBLISHED" && card != null && card.id.isNotBlank()) {
+            startActivity(
+                Intent(this, ReportCardViewActivity::class.java)
+                    .putExtra(ReportCardViewActivity.EXTRA_REPORT_CARD_ID, card.id)
+            )
+        } else {
+            Toast.makeText(
+                this,
+                item.message.ifBlank { "کارنامه این ترم هنوز منتشر نشده است" },
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun String?.ifNullOrBlank(fallback: String): String =
+        this?.takeIf { it.isNotBlank() } ?: fallback
 
     private fun formatScore(value: Double): String {
         return if (value % 1.0 == 0.0) {

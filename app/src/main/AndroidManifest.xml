@@ -115,13 +115,15 @@
             android:exported="false" />
 
         <activity
-            android:name=".TrashBinActivity"
+            android:name=".ResultMessagesActivity"
             android:exported="false" />
 
         <activity
-            android:name=".ResultMessagesActivity"
-            android:exported="false" />
             android:name=".TermHistoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".TrashBinActivity"
             android:exported="false" />
 
     </application>
