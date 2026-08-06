@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootUpdateProfile"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/app_global_background"
-    android:fitsSystemWindows="true"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:paddingStart="24dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="28dp">
 
         <RelativeLayout
             android:id="@+id/updateProfileToolbar"
@@ -22,18 +26,12 @@
 
             <ImageView
                 android:id="@+id/btnUpdateProfileBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                style="@style/AppBackButton"
                 android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="@color/main_text"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"/>
+                android:layout_centerVertical="true" />
 
             <TextView
+                android:id="@+id/tvPasswordPageTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
@@ -47,110 +45,144 @@
             android:id="@+id/tvPasswordChangeNotice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/bg_unified_info_badge"
-            android:gravity="center"
+            android:gravity="right"
             android:padding="14dp"
-            android:text="این اولین ورود شماست. برای ادامه، رمز اولیه را تغییر دهید."
+            android:text="این اولین ورود شماست. برای ادامه، رمز اولیه یا موقت را تغییر دهید."
             android:textColor="@color/main_text"
+            android:textDirection="rtl"
             android:textSize="14sp"
             android:textStyle="bold"
             android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvPasswordRules"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_unified_info_badge"
+            android:gravity="right"
+            android:padding="14dp"
+            android:text="رمز جدید باید حداقل ۸ کاراکتر باشد، فاصله نداشته باشد و با رمز فعلی یا کد ملی شما یکسان نباشد."
+            android:textColor="@color/sub_text"
+            android:textDirection="rtl"
+            android:textSize="13sp" />
+
+        <TextView
+            style="@style/UnifiedFormLabel"
+            android:layout_marginTop="4dp"
+            android:text="رمز عبور فعلی" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutOldPassword"
             style="@style/UnifiedOutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="رمز عبور فعلی"
             android:layoutDirection="rtl"
-            app:hintTextColor="#FF6B00"
-            android:textColorHint="@color/hint_color"
-            app:boxStrokeColor="@color/unified_field_stroke"
-            app:passwordToggleEnabled="true"
-            app:passwordToggleTint="@color/title_blue"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusBottomEnd="12dp">
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/unified_field_stroke"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/title_blue"
+            app:errorEnabled="true"
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etOldPassword"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
+                android:gravity="left|center_vertical"
+                android:inputType="textPassword"
                 android:textColor="@color/input_text"
-                android:textStyle="bold"
                 android:textDirection="ltr"
-                android:inputType="textPassword" />
+                android:textStyle="bold" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            style="@style/UnifiedFormLabel"
+            android:text="رمز عبور جدید" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutNewPassword"
             style="@style/UnifiedOutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="رمز عبور جدید"
             android:layoutDirection="rtl"
-            app:hintTextColor="#FF6B00"
-            android:textColorHint="@color/hint_color"
-            app:boxStrokeColor="@color/unified_field_stroke"
-            app:passwordToggleEnabled="true"
-            app:passwordToggleTint="@color/title_blue"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusBottomEnd="12dp">
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/unified_field_stroke"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/title_blue"
+            app:errorEnabled="true"
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNewPassword"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
+                android:gravity="left|center_vertical"
+                android:inputType="textPassword"
                 android:textColor="@color/input_text"
-                android:textStyle="bold"
                 android:textDirection="ltr"
-                android:inputType="textPassword" />
+                android:textStyle="bold" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            style="@style/UnifiedFormLabel"
+            android:text="تکرار رمز عبور جدید" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutConfirmPassword"
             style="@style/UnifiedOutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:hint="تکرار رمز عبور جدید"
             android:layoutDirection="rtl"
-            app:hintTextColor="#FF6B00"
-            android:textColorHint="@color/hint_color"
-            app:boxStrokeColor="@color/unified_field_stroke"
-            app:passwordToggleEnabled="true"
-            app:passwordToggleTint="@color/title_blue"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusBottomEnd="12dp">
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="@color/unified_field_stroke"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/title_blue"
+            app:errorEnabled="true"
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etConfirmPassword"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
+                android:gravity="left|center_vertical"
+                android:inputType="textPassword"
                 android:textColor="@color/input_text"
-                android:textStyle="bold"
                 android:textDirection="ltr"
-                android:inputType="textPassword" />
+                android:textStyle="bold" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUpdatePassword"
             android:layout_width="match_parent"
             android:layout_height="52dp"
+            android:layout_marginTop="18dp"
+            android:backgroundTint="#FF6B00"
             android:text="تغییر رمز عبور"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
             android:textSize="15sp"
             android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#FF6B00"
             app:cornerRadius="12dp" />
 
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/progressUpdatePassword"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginTop="14dp"
+            android:visibility="gone"
+            app:indicatorColor="@color/title_blue"
+            app:trackColor="@android:color/transparent" />
     </LinearLayout>
 </ScrollView>

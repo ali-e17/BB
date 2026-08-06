@@ -8,7 +8,6 @@ import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -17,7 +16,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class TrashBinActivity : AppCompatActivity() {
+class TrashBinActivity : BaseActivity() {
     private lateinit var recycler: RecyclerView
     private lateinit var empty: TextView
     private lateinit var progress: View
@@ -45,13 +44,27 @@ class TrashBinActivity : AppCompatActivity() {
         RetrofitClient.instance.getTrash(entity).enqueue(object : Callback<List<TrashItem>> {
             override fun onResponse(call: Call<List<TrashItem>>, response: Response<List<TrashItem>>) {
                 progress.visibility = View.GONE
-                val list = if (response.isSuccessful) response.body().orEmpty() else emptyList()
+                if (!response.isSuccessful) {
+                    recycler.adapter = TrashAdapter(emptyList(), ::restore, ::permanentDelete)
+                    empty.visibility = View.VISIBLE
+                    Toast.makeText(
+                        this@TrashBinActivity,
+                        ApiErrorParser.userMessage(response, "دریافت سطل زباله انجام نشد"),
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return
+                }
+                val list = response.body().orEmpty()
                 recycler.adapter = TrashAdapter(list, ::restore, ::permanentDelete)
                 empty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
             }
             override fun onFailure(call: Call<List<TrashItem>>, t: Throwable) {
                 progress.visibility = View.GONE; empty.visibility = View.VISIBLE
-                Toast.makeText(this@TrashBinActivity, "دریافت سطل زباله انجام نشد", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@TrashBinActivity,
+                    ApiErrorParser.networkMessage(t, "دریافت سطل زباله"),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         })
     }
@@ -78,10 +91,23 @@ class TrashBinActivity : AppCompatActivity() {
     private fun simpleCallback(success: String) = object : Callback<ApiResponse> {
         override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
             val body = response.body()
-            Toast.makeText(this@TrashBinActivity, if (response.isSuccessful && body?.status == "success") success else body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this@TrashBinActivity,
+                if (response.isSuccessful && body?.status == "success") {
+                    body.message.ifBlank { success }
+                } else {
+                    body?.message?.takeIf { it.isNotBlank() }
+                        ?: ApiErrorParser.userMessage(response, "عملیات انجام نشد")
+                },
+                Toast.LENGTH_LONG
+            ).show()
             if (response.isSuccessful && body?.status == "success") load()
         }
-        override fun onFailure(call: Call<ApiResponse>, t: Throwable) = Toast.makeText(this@TrashBinActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+        override fun onFailure(call: Call<ApiResponse>, t: Throwable) = Toast.makeText(
+            this@TrashBinActivity,
+            ApiErrorParser.networkMessage(t),
+            Toast.LENGTH_LONG
+        ).show()
     }
 
     private class TrashAdapter(

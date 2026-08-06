@@ -199,7 +199,11 @@ private class SessionInterceptor(private val context:Context):Interceptor {
             }
         } else if(response.code==428) {
             Handler(Looper.getMainLooper()).post {
-                context.startActivity(Intent(context,ForceChangePasswordActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                context.startActivity(Intent(context, UpdateProfileActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    putExtra(UpdateProfileActivity.EXTRA_FORCE_PASSWORD_CHANGE, true)
+                    putExtra(UpdateProfileActivity.EXTRA_OPEN_MAIN_AFTER_CHANGE, true)
+                })
             }
         }
         return response

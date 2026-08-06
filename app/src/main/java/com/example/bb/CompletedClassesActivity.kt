@@ -8,8 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -17,7 +16,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class CompletedClassesActivity : AppCompatActivity() {
+class CompletedClassesActivity : BaseActivity() {
 
     private val completedClasses = arrayListOf<ClassModel>()
     private lateinit var rvClasses: RecyclerView
@@ -57,13 +56,21 @@ class CompletedClassesActivity : AppCompatActivity() {
                     val serverClasses = response.body().orEmpty()
                     renderClasses(serverClasses)
                 } else {
-                    Toast.makeText(this@CompletedClassesActivity, "سرور لیست کلاس‌ها را برنگرداند", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@CompletedClassesActivity,
+                        ApiErrorParser.userMessage(response, "دریافت کلاس‌های پایان‌یافته انجام نشد"),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 setLoading(false)
-                Toast.makeText(this@CompletedClassesActivity, "اتصال به سرور برقرار نشد", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@CompletedClassesActivity,
+                    ApiErrorParser.networkMessage(t, "دریافت کلاس‌های پایان‌یافته"),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         })
     }
@@ -85,7 +92,7 @@ class CompletedClassesActivity : AppCompatActivity() {
     }
 
     private fun confirmTrashClass(model: ClassModel) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("حذف قطعی کلاس")
             .setMessage("آیا از حذف قطعی کلاس «${model.className}» مطمئن هستید؟ با این کار تمام سوابق، حضور و غیاب‌ها و کارنامه‌های این کلاس از دیتابیس پاک شده و دیگر قابل بازگشت نخواهد بود.")
             .setPositiveButton("حذف قطعی") { _, _ ->
@@ -95,12 +102,25 @@ class CompletedClassesActivity : AppCompatActivity() {
                         override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                             setLoading(false)
                             val body = response.body()
-                            Toast.makeText(this@CompletedClassesActivity, body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this@CompletedClassesActivity,
+                                if (response.isSuccessful && body?.status == "success") {
+                                    body.message.ifBlank { "کلاس با موفقیت حذف شد" }
+                                } else {
+                                    body?.message?.takeIf { it.isNotBlank() }
+                                        ?: ApiErrorParser.userMessage(response, "حذف کلاس انجام نشد")
+                                },
+                                Toast.LENGTH_LONG
+                            ).show()
                             if (response.isSuccessful && body?.status == "success") fetchCompletedClasses()
                         }
                         override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                             setLoading(false)
-                            Toast.makeText(this@CompletedClassesActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this@CompletedClassesActivity,
+                                ApiErrorParser.networkMessage(t, "حذف کلاس"),
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     })
             }.setNegativeButton("انصراف", null).show()

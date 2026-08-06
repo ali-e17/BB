@@ -7,8 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,7 +19,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class AssignClassActivity : AppCompatActivity() {
+class AssignClassActivity : BaseActivity() {
 
     private enum class ScreenMode { ASSIGNED, ADD_CLASS }
 
@@ -214,7 +213,7 @@ class AssignClassActivity : AppCompatActivity() {
         }
         val conflictingClass = assignedClasses.firstOrNull { schedulesOverlap(it, model) }
         if (conflictingClass != null) {
-            AlertDialog.Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle("تداخل برنامه استاد")
                 .setMessage(
                     "زمان این کلاس با «${conflictingClass.className}» تداخل دارد. " +
@@ -229,7 +228,7 @@ class AssignClassActivity : AppCompatActivity() {
     }
 
     private fun confirmRemoveClass(model: ClassModel) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("حذف تخصیص استاد")
             .setMessage("کلاس «${model.className}» از این استاد گرفته شود؟")
             .setPositiveButton("حذف تخصیص") { _, _ ->

@@ -1,23 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background">
-    <ImageView android:id="@+id/btnTrashBack" android:layout_width="48dp" android:layout_height="48dp" android:layout_margin="16dp" android:padding="12dp"
-        android:src="@android:drawable/ic_menu_revert" app:tint="@color/main_text" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
-    <TextView android:id="@+id/txtTrashTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="سطل زباله"
-        android:textColor="@color/title_blue" android:textSize="20sp" android:textStyle="bold" app:layout_constraintTop_toTopOf="@id/btnTrashBack"
-        app:layout_constraintBottom_toBottomOf="@id/btnTrashBack" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
-    <com.google.android.material.textfield.TextInputLayout android:id="@+id/layoutTrashType" style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginHorizontal="20dp" android:layout_marginTop="12dp"
-        app:layout_constraintTop_toBottomOf="@id/btnTrashBack" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView android:id="@+id/dropdownTrashType" android:layout_width="match_parent"
-            android:layout_height="52dp" android:inputType="none" android:gravity="right|center_vertical" />
-    </com.google.android.material.textfield.TextInputLayout>
-    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvTrash" android:layout_width="0dp" android:layout_height="0dp" android:paddingTop="8dp"
-        android:clipToPadding="false" android:paddingBottom="24dp" app:layout_constraintTop_toBottomOf="@id/layoutTrashType" app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
-    <TextView android:id="@+id/txtTrashEmpty" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="سطل زباله خالی است"
-        android:textColor="@color/sub_text" android:visibility="gone" app:layout_constraintTop_toTopOf="@id/rvTrash" app:layout_constraintBottom_toBottomOf="@id/rvTrash"
-        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
-    <com.google.android.material.progressindicator.CircularProgressIndicator android:id="@+id/progressTrash" android:layout_width="44dp" android:layout_height="44dp"
-        app:layout_constraintTop_toTopOf="@id/rvTrash" app:layout_constraintBottom_toBottomOf="@id/rvTrash" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" />
+<?xml version='1.0' encoding='UTF-8'?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/rootTrashBin" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background">
+  <ImageView android:id="@+id/btnTrashBack" android:layout_marginTop="16dp" app:layout_constraintLeft_toLeftOf="parent" app:layout_constraintTop_toTopOf="parent" style="@style/AppBackButton"/>
+  <TextView android:id="@+id/txtTrashTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="سطل زباله" android:textColor="@color/title_blue" android:textSize="20sp" android:textStyle="bold" app:layout_constraintTop_toTopOf="@id/btnTrashBack" app:layout_constraintBottom_toBottomOf="@id/btnTrashBack" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+  <com.google.android.material.textfield.TextInputLayout android:id="@+id/layoutTrashType" style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginHorizontal="20dp" android:layout_marginTop="12dp" app:layout_constraintTop_toBottomOf="@id/btnTrashBack" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+    <com.google.android.material.textfield.MaterialAutoCompleteTextView android:id="@+id/dropdownTrashType" android:layout_width="match_parent" android:layout_height="52dp" android:inputType="none" android:gravity="right|center_vertical"/>
+  </com.google.android.material.textfield.TextInputLayout>
+  <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvTrash" android:layout_width="0dp" android:layout_height="0dp" android:paddingTop="8dp" android:clipToPadding="false" android:paddingBottom="24dp" app:layout_constraintTop_toBottomOf="@id/layoutTrashType" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+  <TextView android:id="@+id/txtTrashEmpty" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="سطل زباله خالی است" android:textColor="@color/sub_text" android:visibility="gone" app:layout_constraintTop_toTopOf="@id/rvTrash" app:layout_constraintBottom_toBottomOf="@id/rvTrash" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+  <com.google.android.material.progressindicator.CircularProgressIndicator android:id="@+id/progressTrash" android:layout_width="44dp" android:layout_height="44dp" app:layout_constraintTop_toTopOf="@id/rvTrash" app:layout_constraintBottom_toBottomOf="@id/rvTrash" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

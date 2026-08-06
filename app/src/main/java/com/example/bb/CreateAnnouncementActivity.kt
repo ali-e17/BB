@@ -14,7 +14,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
@@ -31,7 +30,7 @@ import retrofit2.Response
 import java.io.File
 import java.util.UUID
 
-class CreateAnnouncementActivity : AppCompatActivity() {
+class CreateAnnouncementActivity : BaseActivity() {
 
     private lateinit var role: UserRole
     private var currentUserId: String = ""

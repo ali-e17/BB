@@ -1,258 +1,36 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/app_global_background"
-    android:fitsSystemWindows="true"
-    android:layoutDirection="ltr">
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/topBar"
-        android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="20dp"
-        app:cardBackgroundColor="@color/card_background"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/btnDetailBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="بازگشت"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/main_text" />
-
-            <TextView
-                android:id="@+id/txtDetailToolbarTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="56dp"
-                android:layout_marginEnd="56dp"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="1"
-                android:textColor="@color/title_blue"
-                android:textDirection="firstStrong"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:fillViewport="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topBar">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layoutDirection="rtl"
-            android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingTop="18dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="24dp">
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/unified_border"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layoutDirection="rtl"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layoutDirection="rtl"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/txtDetailSender"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:ellipsize="end"
-                            android:gravity="right"
-                            android:maxEms="15"
-                            android:maxLines="1"
-                            android:textColor="@color/main_text"
-                            android:textDirection="rtl"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/txtDetailRole"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:background="@drawable/bg_role_badge"
-                            android:paddingHorizontal="8dp"
-                            android:paddingVertical="4dp"
-                            android:textColor="@color/title_blue"
-                            android:textDirection="rtl"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-
-                        <Space
-                            android:layout_width="0dp"
-                            android:layout_height="1dp"
-                            android:layout_weight="1" />
-
-                        <TextView
-                            android:id="@+id/txtDetailDate"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="18dp"
-                            android:maxLines="1"
-                            android:textColor="@color/sub_text"
-                            android:textDirection="ltr"
-                            android:textSize="11sp" />
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/txtDetailTarget"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:ellipsize="end"
-                        android:gravity="right"
-                        android:maxLines="2"
-                        android:textColor="@color/sub_text"
-                        android:textDirection="rtl"
-                        android:textSize="11sp" />
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/unified_border"
-                app:strokeWidth="1dp">
-
-                <TextView
-                    android:id="@+id/txtDetailBody"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="right|top"
-                    android:lineSpacingExtra="5dp"
-                    android:minHeight="120dp"
-                    android:padding="18dp"
-                    android:textColor="@color/main_text"
-                    android:textDirection="firstStrong"
-                    android:textIsSelectable="true"
-                    android:textSize="15sp" />
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardAttachment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/unified_border"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layoutDirection="rtl"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="14dp">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="right"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/txtFileName"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:ellipsize="middle"
-                            android:gravity="right"
-                            android:maxLines="1"
-                            android:textColor="@color/main_text"
-                            android:textDirection="firstStrong"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/txtFileTypeLabel"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:gravity="right"
-                            android:textColor="@color/sub_text"
-                            android:textDirection="rtl"
-                            android:textSize="11sp" />
-
-                    </LinearLayout>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnDownloadAttachment"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="12dp"
-                        android:text="دانلود پیوست"
-                        android:textAllCaps="false"
-                        android:textDirection="rtl"
-                        app:cornerRadius="10dp"
-                        app:icon="@android:drawable/ic_menu_save"
-                        app:iconGravity="textStart" />
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
+<?xml version='1.0' encoding='UTF-8'?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background" android:layoutDirection="ltr">
+  <com.google.android.material.card.MaterialCardView android:id="@+id/topBar" android:layout_width="0dp" android:layout_height="64dp" android:layout_marginStart="20dp" android:layout_marginTop="16dp" android:layout_marginEnd="20dp" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="20dp" app:cardElevation="10dp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
+    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="match_parent">
+      <ImageView android:id="@+id/btnDetailBack" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintLeft_toLeftOf="parent" app:layout_constraintTop_toTopOf="parent" style="@style/AppBackButton"/>
+      <TextView android:id="@+id/txtDetailToolbarTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="56dp" android:layout_marginEnd="56dp" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="@color/title_blue" android:textDirection="firstStrong" android:textSize="17sp" android:textStyle="bold" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+  </com.google.android.material.card.MaterialCardView>
+  <androidx.core.widget.NestedScrollView android:layout_width="0dp" android:layout_height="0dp" android:clipToPadding="false" android:fillViewport="true" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/topBar">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layoutDirection="rtl" android:orientation="vertical" android:paddingStart="20dp" android:paddingTop="18dp" android:paddingEnd="20dp" android:paddingBottom="24dp">
+      <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="15dp" app:cardElevation="0dp" app:strokeColor="@color/unified_border" app:strokeWidth="1dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layoutDirection="rtl" android:orientation="vertical" android:padding="14dp">
+          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layoutDirection="rtl" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/txtDetailSender" android:layout_width="wrap_content" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="right" android:maxEms="15" android:maxLines="1" android:textColor="@color/main_text" android:textDirection="rtl" android:textSize="13sp" android:textStyle="bold"/>
+            <TextView android:id="@+id/txtDetailRole" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:background="@drawable/bg_role_badge" android:paddingHorizontal="8dp" android:paddingVertical="4dp" android:textColor="@color/title_blue" android:textDirection="rtl" android:textSize="10sp" android:textStyle="bold"/>
+            <Space android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+            <TextView android:id="@+id/txtDetailDate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="18dp" android:maxLines="1" android:textColor="@color/sub_text" android:textDirection="ltr" android:textSize="11sp"/>
+          </LinearLayout>
+          <TextView android:id="@+id/txtDetailTarget" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:ellipsize="end" android:gravity="right" android:maxLines="2" android:textColor="@color/sub_text" android:textDirection="rtl" android:textSize="11sp"/>
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
+      </com.google.android.material.card.MaterialCardView>
+      <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="15dp" app:cardElevation="0dp" app:strokeColor="@color/unified_border" app:strokeWidth="1dp">
+        <TextView android:id="@+id/txtDetailBody" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="right|top" android:lineSpacingExtra="5dp" android:minHeight="120dp" android:padding="18dp" android:textColor="@color/main_text" android:textDirection="firstStrong" android:textIsSelectable="true" android:textSize="15sp"/>
+      </com.google.android.material.card.MaterialCardView>
+      <com.google.android.material.card.MaterialCardView android:id="@+id/cardAttachment" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:visibility="gone" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="15dp" app:cardElevation="0dp" app:strokeColor="@color/unified_border" app:strokeWidth="1dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layoutDirection="rtl" android:gravity="center_vertical" android:orientation="horizontal" android:padding="14dp">
+          <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="right" android:orientation="vertical">
+            <TextView android:id="@+id/txtFileName" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="middle" android:gravity="right" android:maxLines="1" android:textColor="@color/main_text" android:textDirection="firstStrong" android:textSize="13sp" android:textStyle="bold"/>
+            <TextView android:id="@+id/txtFileTypeLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:gravity="right" android:textColor="@color/sub_text" android:textDirection="rtl" android:textSize="11sp"/>
+          </LinearLayout>
+          <com.google.android.material.button.MaterialButton android:id="@+id/btnDownloadAttachment" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginStart="12dp" android:text="دانلود پیوست" android:textAllCaps="false" android:textDirection="rtl" app:cornerRadius="10dp" app:icon="@android:drawable/ic_menu_save" app:iconGravity="textStart"/>
+        </LinearLayout>
+      </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+  </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

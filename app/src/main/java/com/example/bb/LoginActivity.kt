@@ -8,7 +8,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen // 🌟 اینپورت لایبرری اسپلش
 import com.google.android.material.textfield.TextInputEditText
@@ -19,7 +18,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 🌟 مرحله ۱: خواندن تم ذخیره شده در اپلیکیشن و اعمال آن قبل از هر چیز
@@ -135,7 +134,8 @@ class LoginActivity : AppCompatActivity() {
                         } else {
                             Toast.makeText(
                                 this@LoginActivity,
-                                body?.message ?: "ورود انجام نشد (کد ${response.code()})",
+                                body?.message?.takeIf { it.isNotBlank() }
+                                    ?: ApiErrorParser.userMessage(response, "ورود انجام نشد. اطلاعات را بررسی کنید."),
                                 Toast.LENGTH_LONG
                             ).show()
                             etPassword.text?.clear()
@@ -145,7 +145,11 @@ class LoginActivity : AppCompatActivity() {
                     override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                         btnLogin.isEnabled = true
                         btnLogin.text = "ورود"
-                        Toast.makeText(this@LoginActivity, "خطا در اتصال به سرور", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@LoginActivity,
+                            ApiErrorParser.networkMessage(t, "ورود به حساب"),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 })
         }
@@ -159,7 +163,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun openForcedPasswordChange() {
-        startActivity(Intent(this, ForceChangePasswordActivity::class.java))
+        startActivity(Intent(this, UpdateProfileActivity::class.java).apply {
+            putExtra(UpdateProfileActivity.EXTRA_FORCE_PASSWORD_CHANGE, true)
+            putExtra(UpdateProfileActivity.EXTRA_OPEN_MAIN_AFTER_CHANGE, true)
+        })
     }
 
     private fun clearExpiredSession() {

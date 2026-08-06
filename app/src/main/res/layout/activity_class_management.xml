@@ -1,129 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/app_global_background"
-    android:fitsSystemWindows="true">
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/topBarClass"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/card_background"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:strokeWidth="0dp">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/btnClassMgmtBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="8dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="@color/main_text" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="مدیریت کلاس‌های آموزشگاه"
-                android:textColor="@color/title_blue"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-        android:id="@+id/tvActiveClassesTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="24dp"
-        android:text="کلاس‌های فعال"
-        android:textColor="@color/main_text"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topBarClass" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvLevels"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:clipToPadding="false"
-        android:paddingHorizontal="6dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="20dp"
-        app:layout_constraintBottom_toTopOf="@id/btnViewCompletedClasses"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvActiveClassesTitle" />
-
-    <TextView
-        android:id="@+id/tvClassesEmpty"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="هنوز کلاس فعالی ایجاد نشده است"
-        android:textColor="@color/sub_text"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/rvLevels"
-        app:layout_constraintEnd_toEndOf="@id/rvLevels"
-        app:layout_constraintStart_toStartOf="@id/rvLevels"
-        app:layout_constraintTop_toTopOf="@id/rvLevels" />
-
-    <ProgressBar
-        android:id="@+id/progressClasses"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnViewCompletedClasses"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="16dp"
-        android:text="مشاهده کلاس‌های پایان‌یافته"
-        android:textColor="@color/sub_text"
-        app:cornerRadius="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:strokeColor="@color/sub_text" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddClass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="24dp"
-        android:layout_marginBottom="16dp"
-        android:contentDescription="افزودن کلاس"
-        android:src="@android:drawable/ic_input_add"
-        app:backgroundTint="@color/brand_orange"
-        app:elevation="6dp"
-        app:layout_constraintBottom_toTopOf="@id/btnViewCompletedClasses"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:tint="@color/white" />
-
+<?xml version='1.0' encoding='UTF-8'?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background">
+  <com.google.android.material.card.MaterialCardView android:id="@+id/topBarClass" android:layout_width="match_parent" android:layout_height="64dp" android:layout_marginHorizontal="20dp" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="20dp" app:cardElevation="8dp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:strokeWidth="0dp">
+    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
+      <ImageView android:id="@+id/btnClassMgmtBack" android:layout_alignParentLeft="true" android:layout_centerVertical="true" style="@style/AppBackButton"/>
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true" android:text="مدیریت کلاس‌های آموزشگاه" android:textColor="@color/title_blue" android:textSize="18sp" android:textStyle="bold"/>
+    </RelativeLayout>
+  </com.google.android.material.card.MaterialCardView>
+  <TextView android:id="@+id/tvActiveClassesTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:layout_marginEnd="24dp" android:text="کلاس‌های فعال" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toBottomOf="@id/topBarClass"/>
+  <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvLevels" android:layout_width="match_parent" android:layout_height="0dp" android:layout_marginTop="12dp" android:clipToPadding="false" android:paddingHorizontal="6dp" android:paddingTop="6dp" android:paddingBottom="20dp" app:layout_constraintBottom_toTopOf="@id/btnViewCompletedClasses" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/tvActiveClassesTitle"/>
+  <TextView android:id="@+id/tvClassesEmpty" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" android:text="هنوز کلاس فعالی ایجاد نشده است" android:textColor="@color/sub_text" android:visibility="gone" app:layout_constraintBottom_toBottomOf="@id/rvLevels" app:layout_constraintEnd_toEndOf="@id/rvLevels" app:layout_constraintStart_toStartOf="@id/rvLevels" app:layout_constraintTop_toTopOf="@id/rvLevels"/>
+  <ProgressBar android:id="@+id/progressClasses" android:layout_width="44dp" android:layout_height="44dp" android:visibility="gone" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
+  <com.google.android.material.button.MaterialButton android:id="@+id/btnViewCompletedClasses" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginHorizontal="20dp" android:layout_marginBottom="16dp" android:text="مشاهده کلاس‌های پایان‌یافته" android:textColor="@color/sub_text" app:cornerRadius="12dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:strokeColor="@color/sub_text"/>
+  <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fabAddClass" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="24dp" android:layout_marginBottom="16dp" android:contentDescription="افزودن کلاس" android:src="@android:drawable/ic_input_add" app:backgroundTint="@color/brand_orange" app:elevation="6dp" app:layout_constraintBottom_toTopOf="@id/btnViewCompletedClasses" app:layout_constraintLeft_toLeftOf="parent" app:tint="@color/white"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

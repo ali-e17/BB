@@ -7,8 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,7 +19,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class ClassDetailsActivity : AppCompatActivity() {
+class ClassDetailsActivity : BaseActivity() {
 
     private enum class ScreenMode { MEMBERS, ADD_STUDENT }
 
@@ -284,7 +283,7 @@ class ClassDetailsActivity : AppCompatActivity() {
             return
         }
         val currentClassName = classesById[currentClassId]?.className ?: AppDatabase.getClassNameById(currentClassId) ?: "کلاس قبلی"
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("انتقال دانش‌آموز")
             .setMessage("${student.name} اکنون عضو «$currentClassName» است. با ادامه، از کلاس قبلی خارج و به «$className» منتقل می‌شود.")
             .setPositiveButton("انتقال") { _, _ -> updateStudentClass(student, classId, "دانش‌آموز به کلاس جدید منتقل شد") }
@@ -293,7 +292,7 @@ class ClassDetailsActivity : AppCompatActivity() {
     }
 
     private fun confirmRemoveStudent(student: StudentModel) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("حذف از کلاس")
             .setMessage("${student.name} از کلاس «$className» خارج شود؟")
             .setPositiveButton("خارج کردن") { _, _ -> updateStudentClass(student, null, "دانش‌آموز از کلاس خارج شد") }

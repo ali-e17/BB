@@ -7,6 +7,8 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
 
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.BB.MaterialAlertDialog</item>
+
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
@@ -31,4 +33,16 @@
         <item name="postSplashScreenTheme">@style/Theme.BB</item>
     </style>
     
+
+    <style name="ThemeOverlay.BB.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/card_background</item>
+        <item name="colorOnSurface">@color/main_text</item>
+        <item name="colorPrimary">@color/title_blue</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.BB.AlertDialog</item>
+    </style>
+
+    <style name="ShapeAppearance.BB.AlertDialog" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerSize">22dp</item>
+    </style>
+
 </resources>

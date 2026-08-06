@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
@@ -17,7 +16,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.Locale
 
-class TermHistoryActivity : AppCompatActivity() {
+class TermHistoryActivity : BaseActivity() {
     private lateinit var recycler: RecyclerView
     private lateinit var empty: TextView
     private lateinit var progress: View
@@ -25,7 +24,6 @@ class TermHistoryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_term_history)
-        SystemBarInsets.apply(this, findViewById(R.id.rootTermHistory))
         findViewById<ImageView>(R.id.btnHistoryBack).setOnClickListener { finish() }
         recycler = findViewById(R.id.rvTermHistory)
         empty = findViewById(R.id.txtHistoryEmpty)
@@ -54,13 +52,13 @@ class TermHistoryActivity : AppCompatActivity() {
                     empty.visibility = if (body.items.isEmpty()) View.VISIBLE else View.GONE
                 } else {
                     empty.visibility = View.VISIBLE
-                    empty.text = apiError?.message ?: "دریافت سابقه انجام نشد"
+                    empty.text = ApiErrorParser.userMessage(response, apiError, "دریافت سابقه تحصیلی انجام نشد")
                 }
             }
             override fun onFailure(call: Call<TermHistoryResponse>, t: Throwable) {
                 progress.visibility = View.GONE
                 empty.visibility = View.VISIBLE
-                empty.text = "ارتباط با سرور برقرار نشد"
+                empty.text = ApiErrorParser.networkMessage(t, "دریافت سابقه تحصیلی")
             }
         })
     }

@@ -7,14 +7,13 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class ResultMessagesActivity : AppCompatActivity() {
+class ResultMessagesActivity : BaseActivity() {
 
     private val labels = linkedMapOf(
         "FIVE_STAR" to "★★★★★  پنج ستاره",
@@ -36,7 +35,6 @@ class ResultMessagesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result_messages)
-        SystemBarInsets.apply(this, findViewById(R.id.rootResultMessages))
 
         findViewById<ImageView>(R.id.btnResultMessagesBack)
             .setOnClickListener { finish() }
@@ -74,7 +72,13 @@ class ResultMessagesActivity : AppCompatActivity() {
                         )
                     } else {
                         render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
-                        toast(apiError?.message ?: "دریافت متن‌ها انجام نشد؛ متن‌های اصلی نمایش داده شدند")
+                        toast(
+                            ApiErrorParser.userMessage(
+                                response,
+                                apiError,
+                                "دریافت متن‌ها انجام نشد؛ متن‌های اصلی نمایش داده شدند"
+                            )
+                        )
                     }
                 }
 
@@ -84,7 +88,10 @@ class ResultMessagesActivity : AppCompatActivity() {
                 ) {
                     setLoading(false)
                     render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
-                    toast("ارتباط با سرور برقرار نشد؛ متن‌های اصلی نمایش داده شدند")
+                    toast(
+                        ApiErrorParser.networkMessage(t, "دریافت متن‌های کارنامه") +
+                            " متن‌های اصلی نمایش داده شدند."
+                    )
                 }
             })
     }
@@ -167,7 +174,10 @@ class ResultMessagesActivity : AppCompatActivity() {
                     toast(body.message.ifBlank { "متن‌ها ذخیره شدند" })
                     finish()
                 } else {
-                    toast(body?.message ?: apiError?.message ?: "ذخیره متن‌ها انجام نشد")
+                    toast(
+                        body?.message?.takeIf { it.isNotBlank() }
+                            ?: ApiErrorParser.userMessage(response, apiError, "ذخیره متن‌ها انجام نشد")
+                    )
                 }
             }
 
@@ -176,7 +186,7 @@ class ResultMessagesActivity : AppCompatActivity() {
                 t: Throwable
             ) {
                 setLoading(false)
-                toast("ارتباط با سرور برقرار نشد")
+                toast(ApiErrorParser.networkMessage(t, "ذخیره متن‌های کارنامه"))
             }
         })
     }

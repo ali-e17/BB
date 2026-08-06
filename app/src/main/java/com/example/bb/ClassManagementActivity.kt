@@ -8,8 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -18,7 +17,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class ClassManagementActivity : AppCompatActivity() {
+class ClassManagementActivity : BaseActivity() {
 
     private val activeClasses = arrayListOf<ClassModel>()
     private lateinit var rvClasses: RecyclerView
@@ -63,7 +62,9 @@ class ClassManagementActivity : AppCompatActivity() {
             ) {
                 setLoading(false)
                 if (!response.isSuccessful) {
-                    showLocalClasses("سرور لیست کلاس‌ها را برنگرداند")
+                    showLocalClasses(
+                        ApiErrorParser.userMessage(response, "دریافت کلاس‌ها انجام نشد؛ اطلاعات محلی نمایش داده شد")
+                    )
                     return
                 }
 
@@ -74,7 +75,9 @@ class ClassManagementActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 setLoading(false)
-                showLocalClasses("اتصال به سرور برقرار نشد؛ اطلاعات محلی نمایش داده شد")
+                showLocalClasses(
+                    ApiErrorParser.networkMessage(t, "دریافت کلاس‌ها") + " اطلاعات محلی نمایش داده شد."
+                )
             }
         })
     }
@@ -112,7 +115,7 @@ class ClassManagementActivity : AppCompatActivity() {
     }
 
     private fun confirmCompleteClass(model: ClassModel) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("پایان ترم")
             .setMessage(
                 "ترم «${model.className}» پایان یابد؟\n\n" +
@@ -145,7 +148,8 @@ class ClassManagementActivity : AppCompatActivity() {
                     } else {
                         Toast.makeText(
                             this@ClassManagementActivity,
-                            result?.message?.takeIf { it.isNotBlank() } ?: "پایان ترم در سرور ثبت نشد",
+                            result?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, "پایان ترم ثبت نشد"),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -155,7 +159,7 @@ class ClassManagementActivity : AppCompatActivity() {
                     setLoading(false)
                     Toast.makeText(
                         this@ClassManagementActivity,
-                        "اتصال به complete_class.php برقرار نشد",
+                        ApiErrorParser.networkMessage(t, "ثبت پایان ترم"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -164,7 +168,7 @@ class ClassManagementActivity : AppCompatActivity() {
 
 
     private fun confirmTrashClass(model: ClassModel) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("حذف قطعی کلاس")
             .setMessage("آیا از حذف قطعی کلاس «${model.className}» مطمئن هستید؟ با این کار تمام سوابق، حضور و غیاب‌ها و کارنامه‌های این کلاس از دیتابیس پاک شده و دیگر قابل بازگشت نخواهد بود.")
             .setPositiveButton("حذف قطعی") { _, _ ->
@@ -174,12 +178,25 @@ class ClassManagementActivity : AppCompatActivity() {
                         override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                             setLoading(false)
                             val body = response.body()
-                            Toast.makeText(this@ClassManagementActivity, body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this@ClassManagementActivity,
+                                if (response.isSuccessful && body?.status == "success") {
+                                    body.message.ifBlank { "کلاس با موفقیت حذف شد" }
+                                } else {
+                                    body?.message?.takeIf { it.isNotBlank() }
+                                        ?: ApiErrorParser.userMessage(response, "حذف کلاس انجام نشد")
+                                },
+                                Toast.LENGTH_LONG
+                            ).show()
                             if (response.isSuccessful && body?.status == "success") fetchClasses()
                         }
                         override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                             setLoading(false)
-                            Toast.makeText(this@ClassManagementActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this@ClassManagementActivity,
+                                ApiErrorParser.networkMessage(t, "حذف کلاس"),
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     })
             }.setNegativeButton("انصراف", null).show()

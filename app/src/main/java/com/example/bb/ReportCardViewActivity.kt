@@ -1,5 +1,7 @@
 package com.example.bb
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.pdf.PdfDocument
@@ -12,22 +14,24 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.IOException
 import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.math.min
 
-class ReportCardViewActivity : AppCompatActivity() {
+class ReportCardViewActivity : BaseActivity() {
 
     private lateinit var scoreContainer: LinearLayout
     private lateinit var progress: View
     private lateinit var printableArea: View
     private lateinit var pdfButton: MaterialButton
     private var currentCard: ReportCardDto? = null
+    private val pdfExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     private val createPdfLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/pdf")
@@ -40,7 +44,6 @@ class ReportCardViewActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report_card_view)
-        SystemBarInsets.apply(this, findViewById(R.id.rootReportCardView))
 
         findViewById<ImageView>(R.id.btnReportBack).setOnClickListener { finish() }
         scoreContainer = findViewById(R.id.containerReportScores)
@@ -86,7 +89,10 @@ class ReportCardViewActivity : AppCompatActivity() {
                             pdfButton.alpha = 1f
                         }
                     } else {
-                        toast(response.body()?.message ?: apiError?.message ?: "کارنامه دریافت نشد")
+                        toast(
+                            response.body()?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, apiError, "کارنامه دریافت نشد")
+                        )
                         finish()
                     }
                 }
@@ -96,7 +102,7 @@ class ReportCardViewActivity : AppCompatActivity() {
                     t: Throwable
                 ) {
                     progress.visibility = View.GONE
-                    toast("خطا در ارتباط با سرور")
+                    toast(ApiErrorParser.networkMessage(t, "دریافت کارنامه"))
                 }
             })
     }
@@ -261,6 +267,52 @@ class ReportCardViewActivity : AppCompatActivity() {
         progress.visibility = View.VISIBLE
         pdfButton.isEnabled = false
 
+        val snapshot = try {
+            Bitmap.createBitmap(
+                printableArea.width,
+                printableArea.height,
+                Bitmap.Config.ARGB_8888
+            ).also { bitmap ->
+                val canvas = Canvas(bitmap)
+                canvas.drawColor(Color.WHITE)
+                printableArea.draw(canvas)
+            }
+        } catch (_: Throwable) {
+            progress.visibility = View.GONE
+            pdfButton.isEnabled = currentCard != null
+            toast("آماده‌سازی کارنامه برای PDF انجام نشد. دوباره تلاش کنید.")
+            return
+        }
+
+        pdfExecutor.execute {
+            val result = runCatching {
+                writeSnapshotToPdf(snapshot, uri)
+            }
+            snapshot.recycle()
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                progress.visibility = View.GONE
+                pdfButton.isEnabled = currentCard != null
+
+                result.onSuccess {
+                    toast("فایل PDF با موفقیت ذخیره شد")
+                }.onFailure { error ->
+                    val message = when (error) {
+                        is SecurityException ->
+                            "اجازه ذخیره فایل داده نشد. یک محل دیگر را انتخاب کنید."
+                        is IOException ->
+                            "فایل PDF ذخیره نشد. فضای ذخیره‌سازی و محل انتخاب‌شده را بررسی کنید."
+                        else ->
+                            "ساخت فایل PDF انجام نشد. دوباره تلاش کنید."
+                    }
+                    toast(message)
+                }
+            }
+        }
+    }
+
+    private fun writeSnapshotToPdf(snapshot: Bitmap, uri: Uri) {
         val document = PdfDocument()
         try {
             val pageWidth = 595
@@ -274,32 +326,26 @@ class ReportCardViewActivity : AppCompatActivity() {
             val availableWidth = pageWidth - (2f * margin)
             val availableHeight = pageHeight - (2f * margin)
             val scale = min(
-                availableWidth / printableArea.width.toFloat(),
-                availableHeight / printableArea.height.toFloat()
+                availableWidth / snapshot.width.toFloat(),
+                availableHeight / snapshot.height.toFloat()
             )
-            val drawnWidth = printableArea.width * scale
-            val drawnHeight = printableArea.height * scale
+            val drawnWidth = snapshot.width * scale
+            val drawnHeight = snapshot.height * scale
             val left = (pageWidth - drawnWidth) / 2f
             val top = (pageHeight - drawnHeight) / 2f
 
             canvas.save()
             canvas.translate(left, top)
             canvas.scale(scale, scale)
-            printableArea.draw(canvas)
+            canvas.drawBitmap(snapshot, 0f, 0f, null)
             canvas.restore()
             document.finishPage(page)
 
             contentResolver.openOutputStream(uri, "w")?.use { stream ->
                 document.writeTo(stream)
             } ?: throw IOException("خروجی فایل باز نشد")
-
-            toast("فایل PDF با موفقیت ذخیره شد")
-        } catch (error: Exception) {
-            toast("ذخیره PDF انجام نشد: ${error.message ?: "خطای نامشخص"}")
         } finally {
             document.close()
-            progress.visibility = View.GONE
-            pdfButton.isEnabled = currentCard != null
         }
     }
 
@@ -374,6 +420,12 @@ class ReportCardViewActivity : AppCompatActivity() {
 
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+
+    override fun onDestroy() {
+        pdfExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     private data class StatusPresentation(

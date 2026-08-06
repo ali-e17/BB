@@ -13,7 +13,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -27,7 +26,7 @@ import retrofit2.Response
 import java.text.Collator
 import java.util.Locale
 
-class StudentManagementActivity : AppCompatActivity() {
+class StudentManagementActivity : BaseActivity() {
 
     private data class ClassFilterOption(
         val id: String?,
@@ -175,8 +174,8 @@ class StudentManagementActivity : AppCompatActivity() {
                 if (!response.isSuccessful) {
                     Toast.makeText(
                         this@StudentManagementActivity,
-                        "سرور لیست دانش‌آموزان را برنگرداند",
-                        Toast.LENGTH_SHORT
+                        ApiErrorParser.userMessage(response, "فهرست دانش‌آموزان دریافت نشد"),
+                        Toast.LENGTH_LONG
                     ).show()
                     return
                 }
@@ -211,8 +210,8 @@ class StudentManagementActivity : AppCompatActivity() {
             override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
                 Toast.makeText(
                     this@StudentManagementActivity,
-                    "خطا در اتصال به سرور",
-                    Toast.LENGTH_SHORT
+                    ApiErrorParser.networkMessage(t, "دریافت فهرست دانش‌آموزان"),
+                    Toast.LENGTH_LONG
                 ).show()
             }
         })
@@ -322,7 +321,7 @@ class StudentManagementActivity : AppCompatActivity() {
                     } else {
                         Toast.makeText(
                             this@StudentManagementActivity,
-                            response.body()?.message ?: "تغییر وضعیت در سرور ثبت نشد",
+                            response.body()?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "تغییر وضعیت دانش‌آموز انجام نشد"),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -332,7 +331,7 @@ class StudentManagementActivity : AppCompatActivity() {
                     archive.isEnabled = true
                     Toast.makeText(
                         this@StudentManagementActivity,
-                        "خطا در اتصال به اینترنت",
+                        ApiErrorParser.networkMessage(t, "تغییر وضعیت دانش‌آموز"),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -357,10 +356,18 @@ class StudentManagementActivity : AppCompatActivity() {
                         .enqueue(object : Callback<ApiResponse> {
                             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                                 val body = response.body()
-                                Toast.makeText(this@StudentManagementActivity, body?.message ?: "عملیات انجام نشد", Toast.LENGTH_LONG).show()
+                                val message = if (response.isSuccessful && body?.status == "success") {
+                                    body.message.ifBlank { "دانش‌آموز با موفقیت حذف شد" }
+                                } else {
+                                    body?.message?.takeIf { it.isNotBlank() }
+                                        ?: ApiErrorParser.userMessage(response, "حذف دانش‌آموز انجام نشد")
+                                }
+                                Toast.makeText(this@StudentManagementActivity, message, Toast.LENGTH_LONG).show()
                                 if (response.isSuccessful && body?.status == "success") { dialog.dismiss(); refreshStudents() }
                             }
-                            override fun onFailure(call: Call<ApiResponse>, t: Throwable) { Toast.makeText(this@StudentManagementActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show() }
+                            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                                Toast.makeText(this@StudentManagementActivity, ApiErrorParser.networkMessage(t, "حذف دانش‌آموز"), Toast.LENGTH_LONG).show()
+                            }
                         })
                 }.show()
         }
@@ -386,12 +393,12 @@ class StudentManagementActivity : AppCompatActivity() {
                                     .setPositiveButton("متوجه شدم", null)
                                     .show()
                             } else {
-                                Toast.makeText(this@StudentManagementActivity, body?.message ?: "ساخت رمز موقت انجام نشد", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this@StudentManagementActivity, body?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "ساخت رمز موقت انجام نشد"), Toast.LENGTH_LONG).show()
                             }
                         }
                         override fun onFailure(call: Call<AdminResetPasswordResponse>, t: Throwable) {
                             resetPassword.isEnabled = true
-                            Toast.makeText(this@StudentManagementActivity, "خطا در اتصال به سرور", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@StudentManagementActivity, ApiErrorParser.networkMessage(t, "ساخت رمز موقت"), Toast.LENGTH_LONG).show()
                         }
                     })
                 }
