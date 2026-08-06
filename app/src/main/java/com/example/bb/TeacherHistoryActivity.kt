@@ -7,14 +7,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class TeacherHistoryActivity : AppCompatActivity() {
+class TeacherHistoryActivity : BaseActivity() {
 
     private val historyClasses = arrayListOf<ClassModel>()
     private lateinit var rvHistory: RecyclerView

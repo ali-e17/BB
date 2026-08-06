@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -17,7 +16,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.UUID
 
-class AddEditClassActivity : AppCompatActivity() {
+class AddEditClassActivity : BaseActivity() {
 
     private var classId: String = ""
     private var existingClass: ClassModel? = null
@@ -41,7 +40,6 @@ class AddEditClassActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_class)
-        SystemBarInsets.apply(this, findViewById(R.id.rootAddEditClass))
 
         findViewById<ImageView>(R.id.btnClassEditBack).setOnClickListener { finish() }
 
@@ -284,12 +282,12 @@ class AddEditClassActivity : AppCompatActivity() {
                     AppDatabase.upsertClass(model)
                     setResult(RESULT_OK); finish()
                 } else {
-                    Toast.makeText(this@AddEditClassActivity, response.body()?.message ?: ApiErrorParser.parse(response)?.message ?: "خطا در ثبت", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@AddEditClassActivity, response.body()?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "ثبت کلاس انجام نشد"), Toast.LENGTH_LONG).show()
                 }
             }
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 setSavingState(false)
-                Toast.makeText(this@AddEditClassActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@AddEditClassActivity, ApiErrorParser.networkMessage(t, "ثبت اطلاعات کلاس"), Toast.LENGTH_LONG).show()
             }
         })
     }
@@ -305,14 +303,14 @@ class AddEditClassActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(
                         this@AddEditClassActivity,
-                        response.body()?.message ?: ApiErrorParser.parse(response)?.message ?: "ویرایش کلاس انجام نشد",
+                        response.body()?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "ویرایش کلاس انجام نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
             }
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 setSavingState(false)
-                Toast.makeText(this@AddEditClassActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@AddEditClassActivity, ApiErrorParser.networkMessage(t, "ویرایش اطلاعات کلاس"), Toast.LENGTH_LONG).show()
             }
         })
     }

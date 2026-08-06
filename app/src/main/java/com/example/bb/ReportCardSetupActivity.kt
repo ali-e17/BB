@@ -11,8 +11,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
@@ -24,7 +24,7 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class ReportCardSetupActivity : AppCompatActivity() {
+class ReportCardSetupActivity : BaseActivity() {
 
     private val classes = mutableListOf<ClassModel>()
     private val components = mutableListOf<EditableComponent>()
@@ -48,7 +48,6 @@ class ReportCardSetupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report_card_setup)
-        SystemBarInsets.apply(this, findViewById(R.id.rootReportCardSetup))
 
         findViewById<ImageView>(R.id.btnSetupBack).setOnClickListener { finish() }
 
@@ -192,9 +191,11 @@ class ReportCardSetupActivity : AppCompatActivity() {
                 setLoading(false)
 
                 val body = response.body()
-                val apiError = ApiErrorParser.parse(response)
                 if (!response.isSuccessful || body?.status != "success") {
-                    toast(body?.message ?: apiError?.message ?: "دریافت تنظیمات کارنامه انجام نشد")
+                    toast(
+                        body?.message?.takeIf { it.isNotBlank() }
+                            ?: ApiErrorParser.userMessage(response, "دریافت تنظیمات کارنامه انجام نشد")
+                    )
                     return
                 }
 
@@ -215,7 +216,7 @@ class ReportCardSetupActivity : AppCompatActivity() {
             override fun onFailure(call: Call<ReportConfigResponse>, t: Throwable) {
                 if (call.isCanceled || selectedClass?.id != classId) return
                 setLoading(false)
-                toast("دریافت تنظیمات کارنامه انجام نشد")
+                toast(ApiErrorParser.networkMessage(t, "دریافت تنظیمات کارنامه"))
             }
         })
     }
@@ -269,8 +270,7 @@ class ReportCardSetupActivity : AppCompatActivity() {
                     ).show()
                 } else {
                     syncRows()
-                    components.removeAt(index)
-                    renderComponents()
+                    confirmComponentRemoval(component)
                 }
             }
 
@@ -279,6 +279,21 @@ class ReportCardSetupActivity : AppCompatActivity() {
 
         addButton.isEnabled = components.size < 8 && !loading
         updateTotalFromModels()
+    }
+
+
+    private fun confirmComponentRemoval(component: EditableComponent) {
+        val displayTitle = component.title.trim().ifBlank { "این معیار" }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("حذف معیار")
+            .setMessage("آیا از حذف «$displayTitle» مطمئن هستید؟")
+            .setNegativeButton("انصراف", null)
+            .setPositiveButton("حذف معیار") { _, _ ->
+                components.remove(component)
+                renderComponents()
+            }
+            .show()
     }
 
     private fun simpleTextWatcher(afterChange: (String) -> Unit): TextWatcher =
@@ -419,7 +434,6 @@ class ReportCardSetupActivity : AppCompatActivity() {
                 ) {
                     setLoading(false)
                     val body = response.body()
-                    val apiError = ApiErrorParser.parse(response)
 
                     if (response.isSuccessful && body?.status == "success") {
                         configRevision = body.revision
@@ -440,7 +454,10 @@ class ReportCardSetupActivity : AppCompatActivity() {
                         )
                         finish()
                     } else {
-                        toast(body?.message ?: apiError?.message ?: "ذخیره تنظیمات انجام نشد")
+                        toast(
+                            body?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, "ذخیره تنظیمات کارنامه انجام نشد")
+                        )
                     }
                 }
 
@@ -449,7 +466,7 @@ class ReportCardSetupActivity : AppCompatActivity() {
                     t: Throwable
                 ) {
                     setLoading(false)
-                    toast("ارتباط با سرور برقرار نشد")
+                    toast(ApiErrorParser.networkMessage(t, "ذخیره تنظیمات کارنامه"))
                 }
             })
     }

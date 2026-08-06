@@ -8,8 +8,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,7 +18,7 @@ import retrofit2.Response
 import java.util.Calendar
 import java.util.Locale
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var currentUserRole: UserRole
@@ -435,7 +434,8 @@ class MainActivity : AppCompatActivity() {
                     if (!response.isSuccessful || body?.status != "success") {
                         Toast.makeText(
                             this@MainActivity,
-                            body?.message.ifNullOrBlank(apiError?.message.ifNullOrBlank("دریافت وضعیت کارنامه انجام نشد")),
+                            body?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, apiError, "دریافت وضعیت کارنامه انجام نشد"),
                             Toast.LENGTH_LONG
                         ).show()
                         return
@@ -471,7 +471,7 @@ class MainActivity : AppCompatActivity() {
                             .joinToString(" • ")
                     }.toTypedArray()
 
-                    AlertDialog.Builder(this@MainActivity)
+                    MaterialAlertDialogBuilder(this@MainActivity)
                         .setTitle("کارنامه ترم فعلی")
                         .setItems(labels) { _, position ->
                             openCurrentReportItem(items[position])
@@ -486,7 +486,7 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     Toast.makeText(
                         this@MainActivity,
-                        "ارتباط با سرور برقرار نشد",
+                        ApiErrorParser.networkMessage(throwable, "دریافت وضعیت کارنامه"),
                         Toast.LENGTH_LONG
                     ).show()
                 }

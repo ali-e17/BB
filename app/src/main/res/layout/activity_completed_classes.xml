@@ -1,87 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/app_global_background"
-    android:fitsSystemWindows="true">
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/topBarCompletedClass"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/card_background"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:strokeWidth="0dp">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/btnCompletedMgmtBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="8dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:padding="12dp"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="@color/main_text" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="کلاس‌های پایان‌یافته"
-                android:textColor="@color/title_blue"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvCompletedClasses"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:clipToPadding="false"
-        android:paddingHorizontal="6dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topBarCompletedClass" />
-
-    <TextView
-        android:id="@+id/tvCompletedClassesEmpty"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="کلاس پایان‌یافته‌ای وجود ندارد"
-        android:textColor="@color/sub_text"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/rvCompletedClasses"
-        app:layout_constraintEnd_toEndOf="@id/rvCompletedClasses"
-        app:layout_constraintStart_toStartOf="@id/rvCompletedClasses"
-        app:layout_constraintTop_toTopOf="@id/rvCompletedClasses" />
-
-    <ProgressBar
-        android:id="@+id/progressCompletedClasses"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
+<?xml version='1.0' encoding='UTF-8'?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background">
+  <com.google.android.material.card.MaterialCardView android:id="@+id/topBarCompletedClass" android:layout_width="match_parent" android:layout_height="64dp" android:layout_marginHorizontal="20dp" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="20dp" app:cardElevation="8dp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:strokeWidth="0dp">
+    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
+      <ImageView android:id="@+id/btnCompletedMgmtBack" android:layout_alignParentLeft="true" android:layout_centerVertical="true" style="@style/AppBackButton"/>
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true" android:text="کلاس‌های پایان‌یافته" android:textColor="@color/title_blue" android:textSize="18sp" android:textStyle="bold"/>
+    </RelativeLayout>
+  </com.google.android.material.card.MaterialCardView>
+  <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvCompletedClasses" android:layout_width="match_parent" android:layout_height="0dp" android:layout_marginTop="12dp" android:clipToPadding="false" android:paddingHorizontal="6dp" android:paddingTop="6dp" android:paddingBottom="20dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/topBarCompletedClass"/>
+  <TextView android:id="@+id/tvCompletedClassesEmpty" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" android:text="کلاس پایان‌یافته‌ای وجود ندارد" android:textColor="@color/sub_text" android:visibility="gone" app:layout_constraintBottom_toBottomOf="@id/rvCompletedClasses" app:layout_constraintEnd_toEndOf="@id/rvCompletedClasses" app:layout_constraintStart_toStartOf="@id/rvCompletedClasses" app:layout_constraintTop_toTopOf="@id/rvCompletedClasses"/>
+  <ProgressBar android:id="@+id/progressCompletedClasses" android:layout_width="44dp" android:layout_height="44dp" android:visibility="gone" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

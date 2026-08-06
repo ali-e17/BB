@@ -13,7 +13,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -24,7 +23,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.Locale
 
-class GradeEntryActivity : AppCompatActivity() {
+class GradeEntryActivity : BaseActivity() {
 
     private lateinit var classId: String
     private lateinit var className: String
@@ -43,7 +42,6 @@ class GradeEntryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_grade_entry)
-        SystemBarInsets.apply(this, findViewById(R.id.rootGradeEntry))
 
         classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
         className = intent.getStringExtra(EXTRA_CLASS_NAME).orEmpty()
@@ -94,7 +92,10 @@ class GradeEntryActivity : AppCompatActivity() {
                         body?.status != "success" ||
                         body.config == null
                     ) {
-                        toast(body?.message ?: "دریافت فهرست نمرات انجام نشد")
+                        toast(
+                            body?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, "دریافت فهرست نمرات انجام نشد")
+                        )
                         return
                     }
 
@@ -130,7 +131,7 @@ class GradeEntryActivity : AppCompatActivity() {
                     t: Throwable
                 ) {
                     setLoading(false)
-                    toast("ارتباط با سرور برقرار نشد")
+                    toast(ApiErrorParser.networkMessage(t, "دریافت فهرست نمرات"))
                 }
             })
     }
@@ -206,7 +207,10 @@ class GradeEntryActivity : AppCompatActivity() {
                     return
                 }
 
-                toast(body?.message ?: apiError?.message ?: "ذخیره نمرات انجام نشد")
+                toast(
+                    body?.message?.takeIf { it.isNotBlank() }
+                        ?: ApiErrorParser.userMessage(response, apiError, "ذخیره نمرات انجام نشد")
+                )
                 if (apiError?.code == "CONFIG_REVISION_CONFLICT" ||
                     apiError?.code == "REVISION_CONFLICT" ||
                     response.code() == 409
@@ -217,7 +221,7 @@ class GradeEntryActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 setLoading(false)
-                toast("ارتباط با سرور برقرار نشد")
+                toast(ApiErrorParser.networkMessage(t, "ذخیره نمرات"))
             }
         })
     }

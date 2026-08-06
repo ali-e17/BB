@@ -6,14 +6,13 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.UUID
 
-class AddEditTeacherActivity : AppCompatActivity() {
+class AddEditTeacherActivity : BaseActivity() {
 
     private var originalUsername = ""
 
@@ -62,9 +61,21 @@ class AddEditTeacherActivity : AppCompatActivity() {
                             if(response.isSuccessful&&body?.status=="success"){
                                 AppDatabase.upsertTeacher(model,originalPhone=originalUsername.takeIf{it.isNotBlank()})
                                 Toast.makeText(this@AddEditTeacherActivity,body.message,Toast.LENGTH_SHORT).show();finish()
-                            } else Toast.makeText(this@AddEditTeacherActivity,body?.message?:"ثبت اطلاعات انجام نشد",Toast.LENGTH_LONG).show()
+                            } else Toast.makeText(
+                                this@AddEditTeacherActivity,
+                                body?.message?.takeIf { it.isNotBlank() }
+                                    ?: ApiErrorParser.userMessage(response, "ذخیره اطلاعات استاد انجام نشد"),
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
-                        override fun onFailure(call:Call<ApiResponse>,t:Throwable){setSaving(save,progress,false);Toast.makeText(this@AddEditTeacherActivity,"خطا در اتصال به سرور",Toast.LENGTH_LONG).show()}
+                        override fun onFailure(call:Call<ApiResponse>,t:Throwable){
+                            setSaving(save,progress,false)
+                            Toast.makeText(
+                                this@AddEditTeacherActivity,
+                                ApiErrorParser.networkMessage(t, "ذخیره اطلاعات استاد"),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     })
                 }
             }

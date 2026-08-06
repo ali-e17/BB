@@ -16,14 +16,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -31,7 +29,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-class AttendanceActivity : AppCompatActivity() {
+class AttendanceActivity : BaseActivity() {
 
     private lateinit var role: UserRole
     private var currentUserId: String = ""
@@ -517,10 +515,14 @@ class AttendanceActivity : AppCompatActivity() {
                     val contentType = body.contentType()?.toString()?.lowercase(java.util.Locale.ROOT) ?: ""
                     if (contentType.contains("text/html") || contentType.contains("application/json")) {
                         val errorText = body.string()
+                        val friendlyMessage = ApiErrorParser.messageFromRawJson(
+                            errorText,
+                            "گزارش حضور و غیاب در حال حاضر آماده دریافت نیست."
+                        )
                         runOnUiThread {
-                            androidx.appcompat.app.AlertDialog.Builder(this@AttendanceActivity)
-                                .setTitle("ارور از سمت سرور")
-                                .setMessage(errorText)
+                            MaterialAlertDialogBuilder(this@AttendanceActivity)
+                                .setTitle("دانلود گزارش انجام نشد")
+                                .setMessage(friendlyMessage)
                                 .setPositiveButton("بستن", null)
                                 .show()
                         }
@@ -570,17 +572,29 @@ class AttendanceActivity : AppCompatActivity() {
                             }
                         } catch (e: Exception) {
                             runOnUiThread {
-                                Toast.makeText(this@AttendanceActivity, "خطا در ذخیره فایل: ${e.message}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    this@AttendanceActivity,
+                                    "فایل گزارش ذخیره نشد. فضای ذخیره‌سازی و دسترسی پوشه Downloads را بررسی کنید.",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         }
                     }.start()
                 } else {
-                    Toast.makeText(this@AttendanceActivity, "خطا در دریافت (کد ${response.code()})", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@AttendanceActivity,
+                        ApiErrorParser.userMessage(response, "دانلود گزارش حضور و غیاب انجام نشد"),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
 
             override fun onFailure(call: Call<okhttp3.ResponseBody>, t: Throwable) {
-                Toast.makeText(this@AttendanceActivity, "ارتباط با سرور برای دانلود قطع شد", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@AttendanceActivity,
+                    ApiErrorParser.networkMessage(t, "دانلود گزارش حضور و غیاب"),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         })
     }
@@ -788,12 +802,8 @@ class AttendanceActivity : AppCompatActivity() {
         recycler.visibility = View.VISIBLE
     }
 
-    private fun errorMessage(response: Response<*>, fallback: String): String {
-        val raw = runCatching { response.errorBody()?.string() }.getOrNull().orEmpty()
-        if (raw.isBlank()) return fallback
-        return runCatching { JSONObject(raw).optString("message", fallback) }
-            .getOrDefault(fallback)
-    }
+    private fun errorMessage(response: Response<*>, fallback: String): String =
+        ApiErrorParser.userMessage(response, fallback)
 
     private fun normalizePhone(value: String): String {
         var normalized = value.trim().replace(" ", "")

@@ -1,16 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
-    <color name="card_background">#212E53</color>
-    <color name="main_card_background">#9092b0</color>
-    <color name="app_background">#0B132B</color>
-
-    <color name="main_text">#BAE6FD</color>
-    <color name="title_blue">#38BDF8</color>
-
-    <color name="sub_text">#94A3B8</color>
-
-    <color name="input_text">#F8FAFC</color>
-    <color name="hint_color">#64748B</color>
-    <color name="logout_text_color">#FFEBEE</color>
-    <color name="logout_bg_color">#D32F2F</color>
+  <color name="card_background">#212E53</color>
+  <color name="main_card_background">#9092b0</color>
+  <color name="app_background">#0B132B</color>
+  <color name="main_text">#BAE6FD</color>
+  <color name="title_blue">#38BDF8</color>
+  <color name="sub_text">#94A3B8</color>
+  <color name="input_text">#F8FAFC</color>
+  <color name="hint_color">#64748B</color>
+  <color name="logout_text_color">#FFEBEE</color>
+  <color name="logout_bg_color">#D32F2F</color>
+  <color name="back_button_background">#192746</color>
+  <color name="back_button_pressed">#263A62</color>
+  <color name="back_button_stroke">#3D5F93</color>
 </resources>

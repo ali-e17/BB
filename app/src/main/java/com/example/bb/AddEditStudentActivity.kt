@@ -6,13 +6,12 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.UUID
 
-class AddEditStudentActivity : AppCompatActivity() {
+class AddEditStudentActivity : BaseActivity() {
     private var editing: StudentModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,17 +79,31 @@ class AddEditStudentActivity : AppCompatActivity() {
             // 🌐 ارسال آنلاین به سرور با Retrofit
             RetrofitClient.instance.addStudent(model).enqueue(object : Callback<ApiResponse> {
                 override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                    if (response.isSuccessful && response.body()?.status == "success") {
-                        Toast.makeText(this@AddEditStudentActivity, "دانش‌آموز با موفقیت ثبت شد", Toast.LENGTH_SHORT).show()
+                    val body = response.body()
+                    if (response.isSuccessful && body?.status == "success") {
+                        Toast.makeText(
+                            this@AddEditStudentActivity,
+                            body.message.ifBlank { "اطلاعات دانش‌آموز با موفقیت ذخیره شد" },
+                            Toast.LENGTH_SHORT
+                        ).show()
                         setResult(RESULT_OK)
                         finish()
                     } else {
-                        Toast.makeText(this@AddEditStudentActivity, "خطا در ثبت اطلاعات در سرور", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@AddEditStudentActivity,
+                            body?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, "ذخیره اطلاعات دانش‌آموز انجام نشد"),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
 
                 override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                    Toast.makeText(this@AddEditStudentActivity, "خطا در اتصال به اینترنت", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@AddEditStudentActivity,
+                        ApiErrorParser.networkMessage(t, "ذخیره اطلاعات دانش‌آموز"),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             })
         }

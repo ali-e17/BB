@@ -5,10 +5,16 @@ import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import java.util.WeakHashMap
 
-/** Applies status/navigation-bar padding without relying on fitsSystemWindows. */
+/** Applies status/navigation-bar padding consistently to one screen root. */
 object SystemBarInsets {
+    private val appliedViews = WeakHashMap<View, Unit>()
+
     fun apply(activity: Activity, root: View) {
+        if (appliedViews.containsKey(root)) return
+        appliedViews[root] = Unit
+
         WindowCompat.setDecorFitsSystemWindows(activity.window, false)
 
         val initialLeft = root.paddingLeft

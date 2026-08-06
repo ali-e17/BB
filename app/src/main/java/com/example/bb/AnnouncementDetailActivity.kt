@@ -12,7 +12,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import retrofit2.Call
@@ -22,7 +21,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 
-class AnnouncementDetailActivity : AppCompatActivity() {
+class AnnouncementDetailActivity : BaseActivity() {
 
     private lateinit var announcement: Announcement
     private var pendingLocalAttachment: Uri? = null
