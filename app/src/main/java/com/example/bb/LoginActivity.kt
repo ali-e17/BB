@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen // 🌟 اینپورت لایبرری اسپلش
@@ -30,14 +29,12 @@ class LoginActivity : BaseActivity() {
             )
         }
 
-        // 🌟 مرحله ۲: فعال‌سازی اسپلش اسکرین (حالا با تم تنظیم شده در بالا هماهنگ است)
+        // 🌟 مرحله ۲: فعال‌سازی اسپلش اسکرین
         val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
-        // Phase-1 auth changed the login identifier from phone to national ID.
-        // Old phone-based tokens are intentionally discarded once after app update.
         if (prefs.getInt("AUTH_SCHEMA_VERSION", 0) < 2) {
             clearExpiredSession()
             prefs.edit().putInt("AUTH_SCHEMA_VERSION", 2).apply()
@@ -64,11 +61,8 @@ class LoginActivity : BaseActivity() {
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val btnThemeToggle = findViewById<ImageView>(R.id.btnThemeToggle)
-        val btnLanguageToggle = findViewById<TextView>(R.id.btnLanguageToggle)
 
         updateThemeIcon(btnThemeToggle)
-        var language = prefs.getString("APP_LANGUAGE", "fa") ?: "fa"
-        btnLanguageToggle.text = if (language == "fa") "EN" else "فا"
 
         btnThemeToggle.setOnClickListener {
             val dark = isDarkMode()
@@ -79,12 +73,6 @@ class LoginActivity : BaseActivity() {
             AppCompatDelegate.setDefaultNightMode(
                 if (dark) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
             )
-        }
-
-        btnLanguageToggle.setOnClickListener {
-            language = if (language == "fa") "en" else "fa"
-            prefs.edit().putString("APP_LANGUAGE", language).apply()
-            btnLanguageToggle.text = if (language == "fa") "EN" else "فا"
         }
 
         btnLogin.setOnClickListener {

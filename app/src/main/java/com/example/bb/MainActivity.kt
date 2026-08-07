@@ -46,7 +46,6 @@ class MainActivity : BaseActivity() {
 
         setupHeader(prefs)
         setupThemeButton()
-        setupLanguageButton(prefs)
         setupProfileButton()
         setupDashboard(currentUserId)
     }
@@ -107,46 +106,7 @@ class MainActivity : BaseActivity() {
     /**
      * دکمه تغییر زبان
      */
-    private fun setupLanguageButton(
-        prefs: android.content.SharedPreferences
-    ) {
-        val btnLanguageToggle = findViewById<TextView>(
-            R.id.btnLanguageToggle
-        )
 
-        var currentLanguage = prefs
-            .getString(PREF_APP_LANGUAGE, LANGUAGE_FA)
-            ?: LANGUAGE_FA
-
-        btnLanguageToggle.text =
-            if (currentLanguage == LANGUAGE_FA) "EN" else "فا"
-
-        btnLanguageToggle.setOnClickListener {
-            currentLanguage =
-                if (currentLanguage == LANGUAGE_FA) {
-                    LANGUAGE_EN
-                } else {
-                    LANGUAGE_FA
-                }
-
-            prefs.edit()
-                .putString(PREF_APP_LANGUAGE, currentLanguage)
-                .apply()
-
-            btnLanguageToggle.text =
-                if (currentLanguage == LANGUAGE_FA) "EN" else "فا"
-
-            Toast.makeText(
-                this,
-                if (currentLanguage == LANGUAGE_FA) {
-                    "زبان فارسی انتخاب شد"
-                } else {
-                    "English selected"
-                },
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
 
     /**
      * دکمه پروفایل
@@ -217,8 +177,8 @@ class MainActivity : BaseActivity() {
                 showStudentReportCards()
             }
 
-            TITLE_STUDENT_HISTORY,
-            TITLE_CLASS_HISTORY -> {
+
+            TITLE_STUDENT_HISTORY -> {
                 startActivity(
                     Intent(this, TermHistoryActivity::class.java)
                         .putExtra(
@@ -229,6 +189,13 @@ class MainActivity : BaseActivity() {
                             TermHistoryActivity.EXTRA_ID,
                             currentUserId
                         )
+                )
+            }
+
+
+            TITLE_CLASS_HISTORY -> {
+                startActivity(
+                    Intent(this, TeacherHistoryActivity::class.java)
                 )
             }
 
@@ -320,13 +287,19 @@ class MainActivity : BaseActivity() {
                 ),
                 DashboardItem(
                     TITLE_ISSUE_REPORT,
-                    "ثبت نمرات و صدور کارنامه",
+                    "ثبت nمرات و صدور کارنامه",
                     R.drawable.home_issue_report
                 ),
                 DashboardItem(
                     TITLE_ANNOUNCEMENTS,
                     "مشاهده و ارسال اعلانات",
                     R.drawable.home_announcements
+                ),
+                // 🌟 دکمه سوابق استاد با لوگوی عکسی که داری
+                DashboardItem(
+                    TITLE_CLASS_HISTORY,
+                    "مشاهده سوابق و کلاس‌های پایان‌یافته",
+                    R.drawable.teacher_history
                 )
             )
 
@@ -391,8 +364,7 @@ class MainActivity : BaseActivity() {
     private fun greetingForHour(hour: Int): String {
         return when (hour) {
             in 0..4 -> "شب بخیر 🌙"
-            in 5..7 -> "صبح زود بخیر 🌄"
-            in 8..11 -> "صبح بخیر ☕"
+            in 4..11 -> "صبح بخیر ☕"
             in 12..13 -> "ظهر بخیر ☀️"
             in 14..16 -> "بعدازظهر بخیر🕑"
             in 17..19 -> "عصر بخیر 🌆"
