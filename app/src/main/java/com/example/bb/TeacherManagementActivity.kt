@@ -146,9 +146,10 @@ class TeacherManagementActivity : BaseActivity() {
         val archive = view.findViewById<MaterialButton>(R.id.btnDialogTeacherArchive)
 
         fun render() {
-            val avatarName = teacher.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_teacher_1"
+            // 🌟 جایگزینی پیش‌فرض
+            val avatarName = teacher.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_no_profile"
             val res = resources.getIdentifier(avatarName, "drawable", packageName)
-            avatar.setImageResource(if (res != 0) res else R.drawable.avatar_teacher_1)
+            avatar.setImageResource(if (res != 0) res else resources.getIdentifier("avatar_no_profile", "drawable", packageName))
             name.text = teacher.name
             phone.text = teacher.phone
             val teacherClasses = classes.filter {

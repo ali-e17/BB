@@ -98,24 +98,22 @@ class ProfileActivity : BaseActivity() {
     }
 
     private fun applyAvatar(name: String) {
-        val fallback = when (userRole) {
-            "ADMIN" -> "avatar_admin_1"
-            "TEACHER" -> "avatar_teacher_1"
-            else -> "avatar_student_1"
-        }
+        val fallback = "avatar_no_profile" // 🌟 تغییر به پیش‌فرض جدید برای همه
         val requested = resources.getIdentifier(name.ifBlank { fallback }, "drawable", packageName)
         val fallbackRes = resources.getIdentifier(fallback, "drawable", packageName)
         ivAvatar.setImageResource(if (requested != 0) requested else fallbackRes)
     }
-
     private fun showAvatarSelectionDialog() {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_avatar_selector, null)
-        val names = when (userRole) {
+
+        // 🌟 اضافه شدن "avatar_no_profile" به اول لیستِ تمام نقش‌ها
+        val names = listOf("avatar_no_profile") + when (userRole) {
             "ADMIN" -> (1..4).map { "avatar_admin_$it" }
             "TEACHER" -> (1..6).map { "avatar_teacher_$it" }
             else -> (1..9).map { "avatar_student_$it" }
         }
+
         val resourcesList = names
             .map { resources.getIdentifier(it, "drawable", packageName) }
             .filter { it != 0 }

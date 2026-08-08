@@ -23,7 +23,7 @@ data class AdminModel(
     var phone: String,
     var nationalId: String,
     var password: String,
-    var avatarName: String? = "avatar_admin_1" // 🌟 اضافه شد
+    var avatarName: String? = "avatar_no_profile" // 🌟
 )
 
 data class StudentModel(
@@ -37,7 +37,7 @@ data class StudentModel(
     var classId: String? = null,
     var registrationDate: String = AppDatabase.today(),
     var isActive: Boolean = true,
-    var avatarName: String? = "avatar_student_1"
+    var avatarName: String? = "avatar_no_profile"
 ) : Serializable {
     val name: String
         get() = "$firstName $lastName"
@@ -52,7 +52,7 @@ data class TeacherModel(
     var password: String = "",
     var isActive: Boolean = true,
     var classIds: String = "",
-    var avatarName: String? = "avatar_teacher_1" // 🌟 اضافه شدن آواتار اساتید
+    var avatarName: String? = "avatar_no_profile" // 🌟 اضافه شدن آواتار اساتید
 ) : java.io.Serializable {
     val name: String
         get() = "$firstName $lastName"

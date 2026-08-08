@@ -60,8 +60,6 @@ class AddEditStudentActivity : BaseActivity() {
             val old = editing
 
             // 🌟 ساخت یک نام رندوم بین 1 تا 9 برای دانش‌آموز جدید
-            val randomAvatar = "avatar_student_${(1..9).random()}"
-
             val model = StudentModel(
                 id = old?.id ?: UUID.randomUUID().toString(),
                 firstName = fname,
@@ -73,7 +71,7 @@ class AddEditStudentActivity : BaseActivity() {
                 classId = old?.classId,
                 registrationDate = old?.registrationDate ?: AppDatabase.today(),
                 isActive = old?.isActive ?: true,
-                avatarName = old?.avatarName ?: randomAvatar // 🌟 اعمال عکس رندوم
+                avatarName = old?.avatarName ?: "avatar_no_profile" // 🌟 اعمال عکس دیفالت برای عضو جدید
             )
 
             // 🌐 ارسال آنلاین به سرور با Retrofit

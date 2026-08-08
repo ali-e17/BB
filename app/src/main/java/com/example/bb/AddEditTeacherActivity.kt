@@ -52,7 +52,7 @@ class AddEditTeacherActivity : BaseActivity() {
                     val model=TeacherModel(
                         id=editing?.id?:UUID.randomUUID().toString(), firstName=f,lastName=l,phone=normalized,
                         nationalId=n,password="",isActive=editing?.isActive?:true,classIds=editing?.classIds.orEmpty(),
-                        avatarName=editing?.avatarName?:"avatar_teacher_${(1..6).random()}"
+                        avatarName=editing?.avatarName?:"avatar_no_profile" // 🌟 اعمال عکس دیفالت برای عضو جدید
                     )
                     setSaving(save,progress,true)
                     RetrofitClient.instance.addTeacher(model).enqueue(object:Callback<ApiResponse>{

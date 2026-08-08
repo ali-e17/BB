@@ -281,13 +281,12 @@ class StudentManagementActivity : BaseActivity() {
 
         val avatarView = view.findViewById<ImageView>(R.id.dialogAvatar)
         val randomNum = (Math.abs(student.id.hashCode()) % 9) + 1
-        val fallback = "avatar_student_$randomNum"
+        val fallback = "avatar_no_profile"
         val avatar = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
         val resId = resources.getIdentifier(avatar, "drawable", packageName)
         avatarView.setImageResource(
-            if (resId != 0) resId else R.drawable.avatar_student_1
+            if (resId != 0) resId else resources.getIdentifier(fallback, "drawable", packageName)
         )
-
         val status = view.findViewById<TextView>(R.id.dialogStatus)
         val archive = view.findViewById<MaterialButton>(R.id.btnDialogArchive)
         status.text = if (student.isActive) "فعال" else "بایگانی‌شده"
