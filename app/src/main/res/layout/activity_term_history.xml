@@ -50,34 +50,18 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <TextView
-        android:id="@+id/txtHistoryHint"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="22dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginEnd="22dp"
-        android:gravity="center"
-        android:text="ترم فعلی ابتدا نمایش داده می‌شود و سپس ترم‌های گذشته به ترتیب قرار می‌گیرند."
-        android:textAlignment="center"
-        android:textColor="@color/sub_text"
-        android:textDirection="rtl"
-        android:textSize="12sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/historyTopBar" />
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvTermHistory"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="12dp"
         android:clipToPadding="false"
         android:paddingTop="6dp"
         android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/txtHistoryHint" />
+        app:layout_constraintTop_toBottomOf="@id/historyTopBar" />
 
     <LinearLayout
         android:id="@+id/historyEmptyState"
