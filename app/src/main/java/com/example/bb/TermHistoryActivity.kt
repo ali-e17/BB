@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
@@ -18,103 +17,216 @@ import java.util.Locale
 
 class TermHistoryActivity : BaseActivity() {
     private lateinit var recycler: RecyclerView
-    private lateinit var empty: TextView
+    private lateinit var empty: View
+    private lateinit var emptyText: TextView
     private lateinit var progress: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_term_history)
+
         findViewById<ImageView>(R.id.btnHistoryBack).setOnClickListener { finish() }
         recycler = findViewById(R.id.rvTermHistory)
-        empty = findViewById(R.id.txtHistoryEmpty)
+        empty = findViewById(R.id.historyEmptyState)
+        emptyText = findViewById(R.id.txtHistoryEmpty)
         progress = findViewById(R.id.progressTermHistory)
+
         recycler.layoutManager = LinearLayoutManager(this)
         load()
     }
 
     private fun load() {
         progress.visibility = View.VISIBLE
+        recycler.visibility = View.INVISIBLE
+        empty.visibility = View.GONE
+
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        val role = intent.getStringExtra(EXTRA_ROLE) ?: prefs.getString("CURRENT_USER_ROLE", "STUDENT").orEmpty()
-        val id = intent.getStringExtra(EXTRA_ID) ?: prefs.getString("CURRENT_USER_ID", "").orEmpty()
-        RetrofitClient.instance.getTermHistory(role, id).enqueue(object : Callback<TermHistoryResponse> {
-            override fun onResponse(call: Call<TermHistoryResponse>, response: Response<TermHistoryResponse>) {
-                progress.visibility = View.GONE
-                val body = response.body()
-                val apiError = ApiErrorParser.parse(response)
-                if (response.isSuccessful && body?.status == "success") {
-                    recycler.adapter = HistoryAdapter(body.items) { item ->
-                        item.reportCardId?.takeIf { it.isNotBlank() }?.let { cardId ->
-                            startActivity(Intent(this@TermHistoryActivity, ReportCardViewActivity::class.java)
-                                .putExtra(ReportCardViewActivity.EXTRA_REPORT_CARD_ID, cardId))
+        val role = intent.getStringExtra(EXTRA_ROLE)
+            ?: prefs.getString("CURRENT_USER_ROLE", "STUDENT").orEmpty()
+        val id = intent.getStringExtra(EXTRA_ID)
+            ?: prefs.getString("CURRENT_USER_ID", "").orEmpty()
+
+        RetrofitClient.instance.getTermHistory(role, id)
+            .enqueue(object : Callback<TermHistoryResponse> {
+                override fun onResponse(
+                    call: Call<TermHistoryResponse>,
+                    response: Response<TermHistoryResponse>
+                ) {
+                    progress.visibility = View.GONE
+                    val body = response.body()
+                    val apiError = ApiErrorParser.parse(response)
+
+                    if (response.isSuccessful && body?.status == "success") {
+                        val orderedItems = body.items.sortedWith(
+                            compareByDescending<TermHistoryItem> { it.isCurrent }
+                                .thenByDescending { parseTermYear(it.termYear) }
+                                .thenByDescending { seasonRank(it.termSeason) }
+                                .thenByDescending { it.enrolledAt.orEmpty() }
+                        )
+
+                        recycler.adapter = HistoryAdapter(orderedItems) { item ->
+                            item.reportCardId
+                                ?.takeIf { it.isNotBlank() }
+                                ?.let { cardId ->
+                                    startActivity(
+                                        Intent(
+                                            this@TermHistoryActivity,
+                                            ReportCardViewActivity::class.java
+                                        ).putExtra(
+                                            ReportCardViewActivity.EXTRA_REPORT_CARD_ID,
+                                            cardId
+                                        )
+                                    )
+                                }
                         }
+
+                        val hasItems = orderedItems.isNotEmpty()
+                        recycler.visibility = if (hasItems) View.VISIBLE else View.INVISIBLE
+                        empty.visibility = if (hasItems) View.GONE else View.VISIBLE
+                        if (!hasItems) {
+                            emptyText.text = "هنوز کلاس یا ترمی در سوابق شما ثبت نشده است."
+                        }
+                    } else {
+                        recycler.visibility = View.INVISIBLE
+                        empty.visibility = View.VISIBLE
+                        emptyText.text = ApiErrorParser.userMessage(
+                            response,
+                            apiError,
+                            "دریافت کارنامه‌ها و سوابق تحصیلی انجام نشد"
+                        )
                     }
-                    empty.visibility = if (body.items.isEmpty()) View.VISIBLE else View.GONE
-                } else {
-                    empty.visibility = View.VISIBLE
-                    empty.text = ApiErrorParser.userMessage(response, apiError, "دریافت سابقه تحصیلی انجام نشد")
                 }
-            }
-            override fun onFailure(call: Call<TermHistoryResponse>, t: Throwable) {
-                progress.visibility = View.GONE
-                empty.visibility = View.VISIBLE
-                empty.text = ApiErrorParser.networkMessage(t, "دریافت سابقه تحصیلی")
-            }
-        })
+
+                override fun onFailure(call: Call<TermHistoryResponse>, t: Throwable) {
+                    progress.visibility = View.GONE
+                    recycler.visibility = View.INVISIBLE
+                    empty.visibility = View.VISIBLE
+                    emptyText.text = ApiErrorParser.networkMessage(
+                        t,
+                        "دریافت کارنامه‌ها و سوابق تحصیلی"
+                    )
+                }
+            })
     }
 
     private class HistoryAdapter(
         private val items: List<TermHistoryItem>,
         private val onReport: (TermHistoryItem) -> Unit
     ) : RecyclerView.Adapter<HistoryAdapter.Holder>() {
+
         class Holder(v: View) : RecyclerView.ViewHolder(v) {
             val title: TextView = v.findViewById(R.id.txtHistoryTitle)
+            val status: TextView = v.findViewById(R.id.txtHistoryStatus)
             val meta: TextView = v.findViewById(R.id.txtHistoryMeta)
             val stats: TextView = v.findViewById(R.id.txtHistoryStats)
             val result: TextView = v.findViewById(R.id.txtHistoryResult)
         }
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = Holder(
-            LayoutInflater.from(parent.context).inflate(R.layout.item_term_history, parent, false)
-        )
-        override fun onBindViewHolder(h: Holder, position: Int) {
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+            return Holder(
+                LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_term_history, parent, false)
+            )
+        }
+
+        override fun onBindViewHolder(holder: Holder, position: Int) {
             val item = items[position]
-            h.title.text = item.className.ifBlank { "کلاس" }
-            val term = listOfNotNull(item.termSeason?.takeIf(String::isNotBlank), item.termYear?.takeIf(String::isNotBlank)).joinToString(" ")
-            h.meta.text = listOfNotNull(
-                item.classCode?.takeIf(String::isNotBlank)?.let { "کد: $it" },
-                item.bookName?.takeIf(String::isNotBlank)?.let { "کتاب: $it" },
+            holder.title.text = item.className.ifBlank { "کلاس" }
+
+            holder.status.text = if (item.isCurrent) "ترم جاری" else "ترم گذشته"
+            holder.status.setBackgroundResource(
+                if (item.isCurrent) {
+                    R.drawable.bg_unified_status_active
+                } else {
+                    R.drawable.bg_unified_status_inactive
+                }
+            )
+
+            val term = listOfNotNull(
+                item.termSeason?.takeIf(String::isNotBlank),
+                item.termYear?.takeIf(String::isNotBlank)
+            ).joinToString(" ")
+
+            holder.meta.text = listOfNotNull(
+                term.takeIf(String::isNotBlank)?.let { "ترم: $it" },
+                item.classCode?.takeIf(String::isNotBlank)?.let { "کد کلاس: $it" },
                 item.classLevel?.takeIf(String::isNotBlank)?.let { "سطح: $it" },
-                term.takeIf(String::isNotBlank),
+                item.bookName?.takeIf(String::isNotBlank)?.let { "کتاب: $it" },
                 item.teacherName?.takeIf(String::isNotBlank)?.let { "استاد: $it" }
-            ).joinToString("  •  ").ifBlank { "اطلاعات تکمیلی ثبت نشده" }
-            h.stats.text = if (item.studentCount > 0 || item.publishedReportCount > 0) {
-                "${item.studentCount} زبان‌آموز  •  ${item.publishedReportCount} کارنامه منتشرشده"
-            } else {
-                "غیبت: ${item.absentCount}  •  تأخیر: ${item.lateCount}"
-            }
+            ).joinToString("  •  ").ifBlank { "اطلاعات تکمیلی این ترم ثبت نشده است" }
+
+            holder.stats.text = "غیبت: ${item.absentCount}  •  تأخیر: ${item.lateCount}"
+
             val hasPublishedCard = !item.reportCardId.isNullOrBlank()
-            h.result.visibility = View.VISIBLE
-            h.result.isEnabled = hasPublishedCard
-            h.result.alpha = if (hasPublishedCard) 1f else 0.65f
-            h.result.text = if (hasPublishedCard) {
+            holder.result.visibility = View.VISIBLE
+            holder.result.isEnabled = hasPublishedCard
+            holder.result.alpha = if (hasPublishedCard) 1f else 0.62f
+            holder.result.text = if (hasPublishedCard) {
                 buildString {
                     append("مشاهده کارنامه")
                     item.totalScore?.let { append("  •  نمره ${formatScore(it)}") }
-                    if (item.starCount > 0) append("  •  ${"★".repeat(item.starCount)}")
+                    if (item.starCount > 0) {
+                        append("  •  ${"★".repeat(item.starCount.coerceIn(1, 5))}")
+                    }
                 }
+            } else if (item.isCurrent) {
+                "کارنامه این ترم هنوز منتشر نشده است"
             } else {
-                "کارنامه این ترم منتشر نشده است"
+                "برای این ترم کارنامه‌ای منتشر نشده است"
             }
-            h.result.setOnClickListener {
+
+            holder.result.setOnClickListener {
                 if (hasPublishedCard) onReport(item)
             }
         }
-        override fun getItemCount() = items.size
-        private fun formatScore(value: Double) = if (value % 1.0 == 0.0) value.toInt().toString() else String.format(Locale.US, "%.2f", value)
+
+        override fun getItemCount(): Int = items.size
+
+        private fun formatScore(value: Double): String {
+            return if (value % 1.0 == 0.0) {
+                value.toInt().toString()
+            } else {
+                String.format(Locale.US, "%.2f", value)
+            }
+        }
     }
 
     companion object {
         const val EXTRA_ROLE = "HISTORY_ROLE"
         const val EXTRA_ID = "HISTORY_ID"
+
+        private fun parseTermYear(value: String?): Int {
+            if (value.isNullOrBlank()) return Int.MIN_VALUE
+            val normalized = buildString {
+                value.forEach { ch ->
+                    append(
+                        when (ch) {
+                            '۰', '٠' -> '0'
+                            '۱', '١' -> '1'
+                            '۲', '٢' -> '2'
+                            '۳', '٣' -> '3'
+                            '۴', '٤' -> '4'
+                            '۵', '٥' -> '5'
+                            '۶', '٦' -> '6'
+                            '۷', '٧' -> '7'
+                            '۸', '٨' -> '8'
+                            '۹', '٩' -> '9'
+                            else -> ch
+                        }
+                    )
+                }
+            }
+            return normalized.filter(Char::isDigit).toIntOrNull() ?: Int.MIN_VALUE
+        }
+
+        private fun seasonRank(value: String?): Int {
+            return when (value?.trim()) {
+                "زمستان" -> 4
+                "پاییز" -> 3
+                "تابستان" -> 2
+                "بهار" -> 1
+                else -> 0
+            }
+        }
     }
 }

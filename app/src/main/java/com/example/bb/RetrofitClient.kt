@@ -106,6 +106,7 @@ data class SaveResultMessagesRequest(val messages:Map<String,String>)
 data class TermHistoryItem(
     val classId:String="",val classCode:String?=null,val className:String="",val bookName:String?=null,val classLevel:String?=null,
     val termYear:String?=null,val termSeason:String?=null,val teacherName:String?=null,val status:String="",
+    val isCurrent:Boolean=false,
     val enrolledAt:String?=null,val leftAt:String?=null,val assignedAt:String?=null,val endedAt:String?=null,
     val absentCount:Int=0,val lateCount:Int=0,val reportCardId:String?=null,val totalScore:Double?=null,
     val resultCode:String?=null,val starCount:Int=0,val studentCount:Int=0,val publishedReportCount:Int=0
