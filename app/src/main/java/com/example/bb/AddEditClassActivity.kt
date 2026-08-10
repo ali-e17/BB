@@ -1,16 +1,23 @@
 package com.example.bb
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -37,6 +44,11 @@ class AddEditClassActivity : BaseActivity() {
     private lateinit var btnSaveClass: Button
     private lateinit var progressSaving: View
 
+    private val classNameOptions = mutableListOf<ClassNameOption>()
+    private var classNameOptionsLoaded = false
+    private var lastValidClassName = ""
+    private val manageClassNamesLabel = "＋ مدیریت نام کلاس‌ها"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_class)
@@ -59,7 +71,7 @@ class AddEditClassActivity : BaseActivity() {
         btnSaveClass = findViewById(R.id.btnSaveClass)
         progressSaving = findViewById(R.id.progressSavingClass)
 
-        spinnerClassName.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, SchoolClassCatalog.classNames))
+        spinnerClassName.isEnabled = false
         spinnerClassName.setOnClickListener { spinnerClassName.showDropDown() }
 
         val seasons = listOf("بهار", "تابستان", "پاییز", "زمستان")
@@ -77,7 +89,226 @@ class AddEditClassActivity : BaseActivity() {
             loadClassForEdit()
         }
 
+        loadClassNameOptions()
         btnSaveClass.setOnClickListener { validateAndSave() }
+    }
+
+    private fun loadClassNameOptions(onFinished: (() -> Unit)? = null) {
+        RetrofitClient.instance.getClassNameOptions().enqueue(object : Callback<List<ClassNameOption>> {
+            override fun onResponse(call: Call<List<ClassNameOption>>, response: Response<List<ClassNameOption>>) {
+                if (response.isSuccessful) {
+                    classNameOptions.clear()
+                    classNameOptions.addAll(response.body().orEmpty().filter { it.name.isNotBlank() })
+                    classNameOptionsLoaded = true
+                    refreshClassNameDropdown()
+                    spinnerClassName.isEnabled = true
+                    onFinished?.invoke()
+                } else {
+                    classNameOptionsLoaded = false
+                    refreshClassNameDropdown()
+                    spinnerClassName.isEnabled = existingClass != null
+                    Toast.makeText(
+                        this@AddEditClassActivity,
+                        ApiErrorParser.userMessage(response, "دریافت فهرست نام کلاس‌ها انجام نشد"),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<ClassNameOption>>, t: Throwable) {
+                classNameOptionsLoaded = false
+                refreshClassNameDropdown()
+                spinnerClassName.isEnabled = existingClass != null
+                Toast.makeText(
+                    this@AddEditClassActivity,
+                    ApiErrorParser.networkMessage(t, "دریافت فهرست نام کلاس‌ها"),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        })
+    }
+
+    private fun refreshClassNameDropdown() {
+        val names = classNameOptions.map { it.name }.toMutableList()
+        val existingName = existingClass?.className?.trim().orEmpty()
+        if (existingName.isNotBlank() && existingName !in names) {
+            names.add(0, existingName)
+        }
+
+        val currentText = spinnerClassName.text?.toString()?.trim().orEmpty()
+        if (
+            currentText.isNotBlank() &&
+            currentText != existingName &&
+            currentText !in names &&
+            currentText != manageClassNamesLabel
+        ) {
+            spinnerClassName.setText("", false)
+            lastValidClassName = ""
+        }
+
+        val items = names + manageClassNamesLabel
+        spinnerClassName.setAdapter(
+            ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, items)
+        )
+        spinnerClassName.setOnItemClickListener { _, _, position, _ ->
+            val selected = items.getOrNull(position).orEmpty()
+            if (selected == manageClassNamesLabel) {
+                spinnerClassName.setText(lastValidClassName, false)
+                showClassNameManager()
+            } else {
+                lastValidClassName = selected
+                spinnerClassName.error = null
+            }
+        }
+    }
+
+    private fun showClassNameManager() {
+        if (!classNameOptionsLoaded) {
+            loadClassNameOptions { showClassNameManager() }
+            return
+        }
+
+        val content = LayoutInflater.from(this)
+            .inflate(R.layout.dialog_manage_class_names, null, false)
+        val inputLayout = content.findViewById<TextInputLayout>(R.id.layoutNewClassName)
+        val input = content.findViewById<TextInputEditText>(R.id.etNewClassName)
+        val addButton = content.findViewById<MaterialButton>(R.id.btnAddClassName)
+        val progress = content.findViewById<ProgressBar>(R.id.progressClassNames)
+        val listContainer = content.findViewById<LinearLayout>(R.id.classNameListContainer)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle("مدیریت نام کلاس‌ها")
+            .setView(content)
+            .setNegativeButton("بستن", null)
+            .create()
+
+        fun setBusy(busy: Boolean) {
+            progress.visibility = if (busy) View.VISIBLE else View.GONE
+            addButton.isEnabled = !busy
+            input.isEnabled = !busy
+            for (i in 0 until listContainer.childCount) {
+                listContainer.getChildAt(i)
+                    .findViewById<ImageButton>(R.id.btnDeleteClassNameOption)
+                    ?.isEnabled = !busy
+            }
+        }
+
+        fun renderRows() {
+            listContainer.removeAllViews()
+            classNameOptions.forEach { option ->
+                val row = LayoutInflater.from(this)
+                    .inflate(R.layout.item_class_name_option, listContainer, false)
+                row.findViewById<TextView>(R.id.txtClassNameOption).text = option.name
+                row.findViewById<ImageButton>(R.id.btnDeleteClassNameOption).setOnClickListener {
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle("حذف نام کلاس")
+                        .setMessage(
+                            "آیا از حذف «${option.name}» از فهرست انتخاب مطمئن هستید؟\n\n" +
+                                "کلاس‌های قبلی با این نام حذف یا تغییر نمی‌کنند."
+                        )
+                        .setNegativeButton("انصراف", null)
+                        .setPositiveButton("حذف") { _, _ ->
+                            setBusy(true)
+                            RetrofitClient.instance.deleteClassNameOption(
+                                DeleteClassNameOptionRequest(option.id)
+                            ).enqueue(object : Callback<ApiResponse> {
+                                override fun onResponse(
+                                    call: Call<ApiResponse>,
+                                    response: Response<ApiResponse>
+                                ) {
+                                    setBusy(false)
+                                    val body = response.body()
+                                    if (response.isSuccessful && body?.status == "success") {
+                                        Toast.makeText(
+                                            this@AddEditClassActivity,
+                                            body.message.ifBlank { "نام کلاس از فهرست حذف شد" },
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        loadClassNameOptions { renderRows() }
+                                    } else {
+                                        Toast.makeText(
+                                            this@AddEditClassActivity,
+                                            body?.message?.takeIf { it.isNotBlank() }
+                                                ?: ApiErrorParser.userMessage(
+                                                    response,
+                                                    "حذف نام کلاس انجام نشد"
+                                                ),
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }
+
+                                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                                    setBusy(false)
+                                    Toast.makeText(
+                                        this@AddEditClassActivity,
+                                        ApiErrorParser.networkMessage(t, "حذف نام کلاس"),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            })
+                        }
+                        .show()
+                }
+                listContainer.addView(row)
+            }
+        }
+
+        addButton.setOnClickListener {
+            inputLayout.error = null
+            val name = input.text?.toString()?.trim().orEmpty()
+            when {
+                name.isBlank() -> {
+                    inputLayout.error = "نام کلاس را وارد کنید"
+                    input.requestFocus()
+                }
+                name.length > 100 -> {
+                    inputLayout.error = "نام کلاس حداکثر ۱۰۰ کاراکتر است"
+                    input.requestFocus()
+                }
+                else -> {
+                    setBusy(true)
+                    RetrofitClient.instance.addClassNameOption(
+                        AddClassNameOptionRequest(name)
+                    ).enqueue(object : Callback<ApiResponse> {
+                        override fun onResponse(
+                            call: Call<ApiResponse>,
+                            response: Response<ApiResponse>
+                        ) {
+                            setBusy(false)
+                            val body = response.body()
+                            if (response.isSuccessful && body?.status == "success") {
+                                input.setText("")
+                                Toast.makeText(
+                                    this@AddEditClassActivity,
+                                    body.message.ifBlank { "نام کلاس به فهرست اضافه شد" },
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                loadClassNameOptions { renderRows() }
+                            } else {
+                                inputLayout.error = body?.message?.takeIf { it.isNotBlank() }
+                                    ?: ApiErrorParser.userMessage(
+                                        response,
+                                        "افزودن نام کلاس انجام نشد"
+                                    )
+                            }
+                        }
+
+                        override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                            setBusy(false)
+                            Toast.makeText(
+                                this@AddEditClassActivity,
+                                ApiErrorParser.networkMessage(t, "افزودن نام کلاس"),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    })
+                }
+            }
+        }
+
+        dialog.setOnShowListener { renderRows() }
+        dialog.show()
     }
 
     private fun loadClassForEdit() {
@@ -119,6 +350,8 @@ class AddEditClassActivity : BaseActivity() {
 
         etClassCode.setText(model.classCode)
         spinnerClassName.setText(model.className, false)
+        lastValidClassName = model.className
+        refreshClassNameDropdown()
         etClassLevel.setText(model.classLevel)
         etBookName.setText(model.bookName)
         etTermYear.setText(model.termYear)
@@ -157,8 +390,19 @@ class AddEditClassActivity : BaseActivity() {
         }
 
         val className = spinnerClassName.text?.toString()?.trim().orEmpty()
-        if (className !in SchoolClassCatalog.classNames && className != existingClass?.className) {
-            spinnerClassName.error = "نام کلاس را از فهرست انتخاب کنید"
+        val oldClassName = existingClass?.className.orEmpty()
+        val activeNames = classNameOptions.map { it.name }.toSet()
+        if (className.isBlank()) {
+            spinnerClassName.error = "نام کلاس را انتخاب کنید"
+            spinnerClassName.requestFocus()
+            return
+        }
+        if (className != oldClassName && (!classNameOptionsLoaded || className !in activeNames)) {
+            spinnerClassName.error = if (!classNameOptionsLoaded) {
+                "فهرست نام کلاس‌ها هنوز دریافت نشده است"
+            } else {
+                "نام کلاس را از فهرست انتخاب کنید"
+            }
             spinnerClassName.requestFocus()
             return
         }

@@ -65,7 +65,7 @@
       </com.google.android.material.chip.ChipGroup>
       <TextView style="@style/ClassFormLabel" android:layout_marginTop="18dp" android:text="تعداد کل جلسات ترم"/>
       <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
-        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etSessionCount" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:imeOptions="actionNext" android:inputType="number" android:maxLength="3" paddingStart="16dp" paddingEnd="16dp" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etSessionCount" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:imeOptions="actionNext" android:inputType="number" android:maxLength="3" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
       </com.google.android.material.textfield.TextInputLayout>
       <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:weightSum="2" android:layout_marginTop="18dp" android:layout_marginBottom="26dp">
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
