@@ -181,6 +181,19 @@ interface ApiService
     @Streaming
     @GET("export_attendance_excel.php")
     fun downloadAttendanceExcel(@Query("class_id") classId: String): Call<okhttp3.ResponseBody>
+
+    @GET("get_class_name_options.php")
+    fun getClassNameOptions(): Call<List<ClassNameOption>>
+
+    @POST("add_class_name_option.php")
+    fun addClassNameOption(
+        @Body request: AddClassNameOptionRequest
+    ): Call<ApiResponse>
+
+    @POST("delete_class_name_option.php")
+    fun deleteClassNameOption(
+        @Body request: DeleteClassNameOptionRequest
+    ): Call<ApiResponse>
 }
 
 

@@ -46,7 +46,13 @@ class AddEditStudentActivity : BaseActivity() {
             val nationalIdValue = nationalId.text.toString().trim()
 
             if (fname.isBlank() || lname.isBlank() || codeValue.isBlank() || phoneValue.isBlank() || nationalIdValue.isBlank()) {
-                Toast.makeText(this, "لطفاً فیلدهای ضروری را پر کنید", Toast.LENGTH_SHORT).show(); return@setOnClickListener
+                Toast.makeText(this, "لطفاً فیلدهای ضروری را پر کنید", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!codeValue.matches(Regex("^[0-9]{4}$"))) {
+                studentCode.error = "کد دانش‌آموز باید دقیقاً ۴ رقم باشد"
+                studentCode.requestFocus()
+                return@setOnClickListener
             }
 
             // 🌟 شرط به ۱۰ رقم تغییر کرد
