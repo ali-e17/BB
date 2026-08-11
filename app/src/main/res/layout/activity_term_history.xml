@@ -1,12 +1,121 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/rootTermHistory" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background">
-  <com.google.android.material.card.MaterialCardView android:id="@+id/historyTopBar" android:layout_width="0dp" android:layout_height="64dp" android:layout_margin="16dp" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="18dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent">
-    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
-      <ImageView android:id="@+id/btnHistoryBack" android:layout_gravity="left|center_vertical" style="@style/AppBackButton"/>
-      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="سابقه ترم‌ها" android:textColor="@color/title_blue" android:textSize="18sp" android:textStyle="bold"/>
-    </FrameLayout>
-  </com.google.android.material.card.MaterialCardView>
-  <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvTermHistory" android:layout_width="0dp" android:layout_height="0dp" android:clipToPadding="false" android:paddingBottom="24dp" app:layout_constraintTop_toBottomOf="@id/historyTopBar" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
-  <TextView android:id="@+id/txtHistoryEmpty" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="سابقه‌ای ثبت نشده" android:textColor="@color/sub_text" android:visibility="gone" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
-  <com.google.android.material.progressindicator.CircularProgressIndicator android:id="@+id/progressTermHistory" android:layout_width="44dp" android:layout_height="44dp" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootTermHistory"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/app_global_background"
+    android:layoutDirection="ltr">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/historyTopBar"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="20dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeWidth="0dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/btnHistoryBack"
+                style="@style/AppBackButton"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="کارنامه‌ها و سوابق تحصیلی"
+                android:textColor="@color/title_blue"
+                android:textDirection="rtl"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvTermHistory"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:paddingTop="6dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/historyTopBar" />
+
+    <LinearLayout
+        android:id="@+id/historyEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/historyTopBar">
+
+        <TextView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:gravity="center"
+            android:text="▤"
+            android:textColor="@color/title_blue"
+            android:textSize="34sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="سابقه‌ای وجود ندارد"
+            android:textColor="@color/main_text"
+            android:textDirection="rtl"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtHistoryEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="هنوز کلاس یا ترمی در سوابق شما ثبت نشده است."
+            android:textColor="@color/sub_text"
+            android:textDirection="rtl"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressTermHistory"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:visibility="gone"
+        app:indicatorColor="@color/brand_orange"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/historyTopBar" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -44,7 +44,9 @@ data class LoginResponse(
     val status:String="", val role:String?=null, val userId:String?=null, val username:String?=null,
     val phone:String?=null, val displayName:String?=null, val token:String?=null,
     val tokenExpiresAt:String?=null, val message:String?=null, val avatarName:String?=null,
-    val mustChangePassword:Boolean=false
+    val mustChangePassword:Boolean=false,
+    val initialAccessStatus:String="NOT_REQUIRED",
+    val paymentRequired:Boolean=false
 )
 data class CompleteClassRequest(val id:String)
 data class AssignClassRequest(val studentId:String,val classId:String?)
@@ -106,6 +108,7 @@ data class SaveResultMessagesRequest(val messages:Map<String,String>)
 data class TermHistoryItem(
     val classId:String="",val classCode:String?=null,val className:String="",val bookName:String?=null,val classLevel:String?=null,
     val termYear:String?=null,val termSeason:String?=null,val teacherName:String?=null,val status:String="",
+    val isCurrent:Boolean=false,
     val enrolledAt:String?=null,val leftAt:String?=null,val assignedAt:String?=null,val endedAt:String?=null,
     val absentCount:Int=0,val lateCount:Int=0,val reportCardId:String?=null,val totalScore:Double?=null,
     val resultCode:String?=null,val starCount:Int=0,val studentCount:Int=0,val publishedReportCount:Int=0
@@ -180,6 +183,29 @@ interface ApiService
     @Streaming
     @GET("export_attendance_excel.php")
     fun downloadAttendanceExcel(@Query("class_id") classId: String): Call<okhttp3.ResponseBody>
+
+    @GET("get_class_name_options.php")
+    fun getClassNameOptions(): Call<List<ClassNameOption>>
+
+    @POST("add_class_name_option.php")
+    fun addClassNameOption(
+        @Body request: AddClassNameOptionRequest
+    ): Call<ApiResponse>
+
+    @POST("delete_class_name_option.php")
+    fun deleteClassNameOption(
+        @Body request: DeleteClassNameOptionRequest
+    ): Call<ApiResponse>
+
+
+    @GET("get_initial_payment_status.php")
+    fun getInitialPaymentStatus(): Call<InitialPaymentStatusResponse>
+
+    @POST("request_initial_payment.php")
+    fun requestInitialPayment(): Call<InitialPaymentRequestResponse>
+
+    @POST("reconcile_initial_payment.php")
+    fun reconcileInitialPayment(): Call<InitialPaymentStatusResponse>
 }
 
 
@@ -197,7 +223,25 @@ private class SessionInterceptor(private val context:Context):Interceptor {
             Handler(Looper.getMainLooper()).post {
                 context.startActivity(Intent(context,LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
             }
+        } else if(response.code==402) {
+            prefs.edit().putBoolean("PAYMENT_REQUIRED", true).apply()
+            val path = request.url.encodedPath
+            val isPaymentEndpoint = path.endsWith("get_initial_payment_status.php") ||
+                    path.endsWith("request_initial_payment.php") ||
+                    path.endsWith("reconcile_initial_payment.php")
+            if (!isPaymentEndpoint) {
+                Handler(Looper.getMainLooper()).post {
+                    context.startActivity(Intent(context, InitialPaymentActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    })
+                }
+            }
         } else if(response.code==428) {
+            // auth.php emits 428 only after the payment gate is satisfied.
+            prefs.edit()
+                .putBoolean("PAYMENT_REQUIRED", false)
+                .putBoolean("MUST_CHANGE_PASSWORD", true)
+                .apply()
             Handler(Looper.getMainLooper()).post {
                 context.startActivity(Intent(context, UpdateProfileActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)

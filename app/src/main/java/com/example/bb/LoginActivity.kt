@@ -35,9 +35,11 @@ class LoginActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
 
-        if (prefs.getInt("AUTH_SCHEMA_VERSION", 0) < 2) {
+        // V3 adds a server-controlled initial-payment gate. Requiring one fresh
+        // login prevents a stale V2 local session from bypassing the new route.
+        if (prefs.getInt("AUTH_SCHEMA_VERSION", 0) < 3) {
             clearExpiredSession()
-            prefs.edit().putInt("AUTH_SCHEMA_VERSION", 2).apply()
+            prefs.edit().putInt("AUTH_SCHEMA_VERSION", 3).apply()
         }
 
         val savedToken = prefs.getString("API_TOKEN", "").orEmpty()
@@ -45,10 +47,10 @@ class LoginActivity : BaseActivity() {
                 savedToken.isNotBlank() && !isTokenExpired(prefs.getString("API_TOKEN_EXPIRES_AT", null))
 
         if (hasSession) {
-            if (prefs.getBoolean("MUST_CHANGE_PASSWORD", false)) {
-                openForcedPasswordChange()
-            } else {
-                openMain()
+            when {
+                prefs.getBoolean("PAYMENT_REQUIRED", false) -> openInitialPayment()
+                prefs.getBoolean("MUST_CHANGE_PASSWORD", false) -> openForcedPasswordChange()
+                else -> openMain()
             }
             finish()
             return
@@ -109,14 +111,16 @@ class LoginActivity : BaseActivity() {
                                 putString("API_TOKEN", body.token.orEmpty())
                                 putString("API_TOKEN_EXPIRES_AT", body.tokenExpiresAt.orEmpty())
                                 putBoolean("MUST_CHANGE_PASSWORD", body.mustChangePassword)
-                                putInt("AUTH_SCHEMA_VERSION", 2)
+                                putString("INITIAL_ACCESS_STATUS", body.initialAccessStatus)
+                                putBoolean("PAYMENT_REQUIRED", body.paymentRequired)
+                                putInt("AUTH_SCHEMA_VERSION", 3)
                                 apply()
                             }
 
-                            if (body.mustChangePassword) {
-                                openForcedPasswordChange()
-                            } else {
-                                openMain()
+                            when {
+                                body.paymentRequired -> openInitialPayment()
+                                body.mustChangePassword -> openForcedPasswordChange()
+                                else -> openMain()
                             }
                             finish()
                         } else {
@@ -157,12 +161,18 @@ class LoginActivity : BaseActivity() {
         })
     }
 
+    private fun openInitialPayment() {
+        startActivity(Intent(this, InitialPaymentActivity::class.java))
+    }
+
     private fun clearExpiredSession() {
         getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().apply {
             remove("IS_LOGGED_IN")
             remove("API_TOKEN")
             remove("API_TOKEN_EXPIRES_AT")
             remove("MUST_CHANGE_PASSWORD")
+            remove("PAYMENT_REQUIRED")
+            remove("INITIAL_ACCESS_STATUS")
             apply()
         }
     }

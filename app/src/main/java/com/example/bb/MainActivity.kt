@@ -168,28 +168,14 @@ class MainActivity : BaseActivity() {
                     }
 
                     UserRole.STUDENT -> {
-                        showStudentReportCards()
+                        openStudentReportHistory(currentUserId)
                     }
                 }
             }
 
-            TITLE_VIEW_REPORT -> {
-                showStudentReportCards()
-            }
-
-
+            TITLE_VIEW_REPORT,
             TITLE_STUDENT_HISTORY -> {
-                startActivity(
-                    Intent(this, TermHistoryActivity::class.java)
-                        .putExtra(
-                            TermHistoryActivity.EXTRA_ROLE,
-                            currentUserRole.name
-                        )
-                        .putExtra(
-                            TermHistoryActivity.EXTRA_ID,
-                            currentUserId
-                        )
-                )
+                openStudentReportHistory(currentUserId)
             }
 
 
@@ -264,13 +250,8 @@ class MainActivity : BaseActivity() {
                 ),
                 DashboardItem(
                     TITLE_VIEW_REPORT,
-                    "مشاهده کارنامه‌های منتشرشده",
+                    "مشاهده کارنامه ترم فعلی و ترم‌های گذشته",
                     R.drawable.home_view_report
-                ),
-                DashboardItem(
-                    TITLE_STUDENT_HISTORY,
-                    "مشاهده کلاس‌ها و ترم‌های قبلی",
-                    R.drawable.home_classes
                 ),
                 DashboardItem(
                     TITLE_DICTIONARY,
@@ -295,11 +276,10 @@ class MainActivity : BaseActivity() {
                     "مشاهده و ارسال اعلانات",
                     R.drawable.home_announcements
                 ),
-                // 🌟 دکمه سوابق استاد با لوگوی عکسی که داری
                 DashboardItem(
                     TITLE_CLASS_HISTORY,
                     "مشاهده سوابق و کلاس‌های پایان‌یافته",
-                    R.drawable.teacher_history
+                    R.drawable.home_teacher_history
                 )
             )
 
@@ -388,9 +368,17 @@ class MainActivity : BaseActivity() {
         )
     }
 
+    private fun openStudentReportHistory(currentUserId: String) {
+        startActivity(
+            Intent(this, TermHistoryActivity::class.java)
+                .putExtra(TermHistoryActivity.EXTRA_ROLE, UserRole.STUDENT.name)
+                .putExtra(TermHistoryActivity.EXTRA_ID, currentUserId)
+        )
+    }
+
     /**
-     * وضعیت کارنامه کلاس یا کلاس‌های فعال دانش‌آموز را نمایش می‌دهد.
-     * ترم‌های قبلی از صفحه سوابق تحصیلی قابل دسترسی هستند.
+     * مسیر قدیمی وضعیت کارنامه ترم فعلی نگه داشته شده است تا هیچ بخش دیگری از برنامه
+     * دچار ناسازگاری نشود؛ ورودی اصلی دانش‌آموز اکنون TermHistoryActivity است.
      */
     private fun showStudentReportCards() {
         RetrofitClient.instance
