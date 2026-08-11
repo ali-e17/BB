@@ -40,6 +40,21 @@
             android:exported="false" />
 
         <activity
+            android:name=".InitialPaymentActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="bbapp"
+                    android:host="payment-result" />
+            </intent-filter>
+        </activity>
+
+
+        <activity
             android:name=".AnnouncementsActivity"
             android:exported="false" />
 
