@@ -1,5 +1,8 @@
 package com.example.bb
 
+import android.widget.TextView
+import android.widget.LinearLayout
+import android.net.Uri
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -59,6 +62,7 @@ class LoginActivity : BaseActivity() {
         }
 
         setContentView(R.layout.activity_login)
+        setupContactFooter()
         val etUsername = findViewById<TextInputEditText>(R.id.etUsername)
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
@@ -199,5 +203,146 @@ class LoginActivity : BaseActivity() {
 
     private fun updateThemeIcon(view: ImageView) {
         view.setImageResource(if (isDarkMode()) R.drawable.ic_sun else R.drawable.ic_moon)
+    }
+    private fun setupContactFooter() {
+
+        val phoneText = findViewById<TextView>(R.id.tvContactPhone)
+        val eitaaText = findViewById<TextView>(R.id.tvContactEitaa)
+
+        val phoneLayout = findViewById<LinearLayout>(R.id.layoutContactPhone)
+        val eitaaLayout = findViewById<LinearLayout>(R.id.layoutContactEitaa)
+        val addressLayout = findViewById<LinearLayout>(R.id.layoutContactAddress)
+
+        phoneText.text =
+            "تماس با آموزشگاه : ${toPersianDigits(ContactConfig.PHONE_NUMBER)}"
+
+        eitaaText.text =
+            "ارتباط در ایتا : ${toPersianDigits(ContactConfig.EITAA_NUMBER)}"
+
+        phoneLayout.setOnClickListener {
+            val intent = Intent(
+                Intent.ACTION_DIAL,
+                Uri.parse("tel:${ContactConfig.PHONE_NUMBER}")
+            )
+            startActivity(intent)
+        }
+
+        eitaaLayout.setOnClickListener {
+            openEitaa()
+        }
+
+        addressLayout.setOnClickListener {
+            openSchoolAddress()
+        }
+    }
+
+    private fun openSchoolAddress() {
+        RetrofitClient.instance.getContactInfo()
+            .enqueue(object : Callback<ContactInfoResponse> {
+
+                override fun onResponse(
+                    call: Call<ContactInfoResponse>,
+                    response: Response<ContactInfoResponse>
+                ) {
+                    val body = response.body()
+                    val addressUrl = body?.addressUrl?.trim().orEmpty()
+
+                    if (!response.isSuccessful ||
+                        body == null ||
+                        (body.status.isNotBlank() && body.status != "success") ||
+                        addressUrl.isBlank()
+                    ) {
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "نشانی آموزشگاه در حال حاضر در دسترس نیست",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return
+                    }
+
+                    openNeshanOrBrowser(addressUrl)
+                }
+
+                override fun onFailure(
+                    call: Call<ContactInfoResponse>,
+                    t: Throwable
+                ) {
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "دریافت نشانی آموزشگاه انجام نشد. اتصال اینترنت را بررسی کنید.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            })
+    }
+
+    private fun openNeshanOrBrowser(url: String) {
+        val uri = runCatching { Uri.parse(url) }.getOrNull()
+
+        if (uri == null || (uri.scheme != "http" && uri.scheme != "https")) {
+            Toast.makeText(
+                this,
+                "لینک نشانی آموزشگاه معتبر نیست",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        try {
+            val neshanIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                setPackage("org.rajman.neshan.traffic.tehran.navigator")
+            }
+            startActivity(neshanIntent)
+        } catch (_: Exception) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, uri))
+            } catch (_: Exception) {
+                Toast.makeText(
+                    this,
+                    "برنامه‌ای برای باز کردن نشانی پیدا نشد",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun toPersianDigits(value: String): String {
+        return value
+            .replace('0', '۰')
+            .replace('1', '۱')
+            .replace('2', '۲')
+            .replace('3', '۳')
+            .replace('4', '۴')
+            .replace('5', '۵')
+            .replace('6', '۶')
+            .replace('7', '۷')
+            .replace('8', '۸')
+            .replace('9', '۹')
+    }
+
+    private fun openEitaa() {
+
+        val eitaaNumber = ContactConfig.EITAA_NUMBER
+
+        try {
+
+            val eitaaIntent = Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("eitaa://chat/$eitaaNumber")
+            )
+
+            eitaaIntent.setPackage("ir.eitaa.messenger")
+
+            startActivity(eitaaIntent)
+
+        } catch (e: Exception) {
+
+            val browserIntent = Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://eitaa.com/$eitaaNumber")
+            )
+
+            startActivity(browserIntent)
+        }
     }
 }

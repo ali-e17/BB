@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:orientation="vertical"
+
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="14dp">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:gravity="center"
+
+            android:text="ارتباط با آموزشگاه"
+
+            android:textColor="@color/title_blue"
+
+            android:textSize="13sp"
+
+            android:textStyle="bold" />
+
+
+        <!-- تماس با آموزشگاه -->
+
+        <LinearLayout
+            android:id="@+id/layoutContactPhone"
+
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+
+            android:layout_marginTop="7dp"
+
+            android:orientation="horizontal"
+
+            android:gravity="center"
+
+            android:layoutDirection="rtl"
+
+            android:clickable="true"
+            android:focusable="true"
+
+            android:background="?android:attr/selectableItemBackground">
+
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+
+                android:layout_marginEnd="8dp"
+
+                android:src="@drawable/ic_contact_phone"
+
+                android:scaleType="centerInside"
+
+                android:contentDescription="تماس با آموزشگاه" />
+
+
+            <TextView
+                android:id="@+id/tvContactPhone"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:gravity="center"
+
+                android:text="تماس با آموزشگاه : ۰۹۱۲۳۴۵۶۷۸۹"
+
+                android:textColor="@color/main_text"
+
+                android:textSize="13sp"
+
+                android:textDirection="rtl" />
+
+
+        </LinearLayout>
+
+
+        <!-- ایتا -->
+
+        <LinearLayout
+            android:id="@+id/layoutContactEitaa"
+
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+
+            android:orientation="horizontal"
+
+            android:gravity="center"
+
+            android:layoutDirection="rtl"
+
+            android:clickable="true"
+            android:focusable="true"
+
+            android:background="?android:attr/selectableItemBackground">
+
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+
+                android:layout_marginEnd="8dp"
+
+                android:src="@drawable/ic_contact_eitaa"
+
+                android:scaleType="centerInside"
+
+                android:contentDescription="ارتباط در ایتا" />
+
+
+            <TextView
+                android:id="@+id/tvContactEitaa"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:gravity="center"
+
+                android:text="ارتباط در ایتا : ۰۹۱۲۳۴۵۶۷۸۹"
+
+                android:textColor="@color/main_text"
+
+                android:textSize="13sp"
+
+                android:textDirection="rtl" />
+
+
+        </LinearLayout>
+
+
+        <!-- نشانی آموزشگاه -->
+
+        <LinearLayout
+            android:id="@+id/layoutContactAddress"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layoutDirection="rtl"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_contact_address"
+                android:scaleType="centerInside"
+                android:contentDescription="نشانی آموزشگاه" />
+
+            <TextView
+                android:id="@+id/tvContactAddress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="نشانی آموزشگاه"
+                android:textColor="@color/main_text"
+                android:textSize="13sp"
+                android:textDirection="rtl" />
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+
+</com.google.android.material.card.MaterialCardView>

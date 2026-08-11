@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import okhttp3.Interceptor
 import okhttp3.Dns
 import okhttp3.MultipartBody
@@ -16,6 +17,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import java.net.InetAddress
+
+data class ContactInfoResponse(
+    val status: String = "",
+    @SerializedName("address_url")
+    val addressUrl: String = ""
+)
 
 data class HardDeleteClassRequest(val id: String)
 data class HardDeleteStudentRequest(val id: String)
@@ -117,6 +124,9 @@ data class TermHistoryResponse(val status:String="",val role:String="",val items
 
 interface ApiService
 {
+
+    @GET(ContactConfig.CONTACT_API)
+    fun getContactInfo(): Call<ContactInfoResponse>
 
     @POST("delete_student.php")
     fun hardDeleteStudent(@Body request: HardDeleteStudentRequest): Call<ApiResponse>
