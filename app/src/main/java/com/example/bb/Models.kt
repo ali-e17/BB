@@ -52,8 +52,10 @@ data class TeacherModel(
     var password: String = "",
     var isActive: Boolean = true,
     var classIds: String = "",
-    var avatarName: String? = "avatar_no_profile" // 🌟 اضافه شدن آواتار اساتید
+    var avatarName: String? = "avatar_no_profile",
+    var isManagement: Boolean = false
 ) : java.io.Serializable {
+
     val name: String
         get() = "$firstName $lastName"
 
@@ -637,7 +639,33 @@ object AppDatabase
         root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_student_1")) } })
 
         // 🌟 ذخیره آواتار اساتید در جیسون لوکال
-        root.put("teachers", JSONArray().apply { teachers.forEach { t -> put(JSONObject().put("id", t.id).put("firstName", t.firstName).put("lastName", t.lastName).put("phone", t.phone).put("nationalId", t.nationalId).put("classIds", t.classIds).put("isActive", t.isActive).put("avatarName", t.avatarName ?: "avatar_teacher_1")) } })
+        root.put(
+            "teachers",
+            JSONArray().apply {
+
+                teachers.forEach { t ->
+
+                    put(
+                        JSONObject()
+                            .put("id", t.id)
+                            .put("firstName", t.firstName)
+                            .put("lastName", t.lastName)
+                            .put("phone", t.phone)
+                            .put("nationalId", t.nationalId)
+                            .put("classIds", t.classIds)
+                            .put("isActive", t.isActive)
+                            .put(
+                                "avatarName",
+                                t.avatarName ?: "avatar_teacher_1"
+                            )
+                            .put(
+                                "isManagement",
+                                t.isManagement
+                            )
+                    )
+                }
+            }
+        )
 
         // 🌟 حذف کلاس لول و جایگزینی با مینیمم‌های نمرات جدید کلاس
         root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("classLevel", c.classLevel).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt).put("classCode", c.classCode).put("bookName", c.bookName).put("termYear", c.termYear).put("termSeason", c.termSeason).put("teacherId", c.teacherId).put("teacherName", c.teacherName).put("minPassingScore", c.minPassingScore).put("minConditionalScore", c.minConditionalScore)) } })
@@ -760,14 +788,30 @@ object AppDatabase
             val parts = legacyName.trim().split(Regex("\\s+"), limit = 2)
             teachers += TeacherModel(
                 id = o.optString("id", UUID.randomUUID().toString()),
-                firstName = o.optString("firstName", parts.firstOrNull().orEmpty()),
-                lastName = o.optString("lastName", parts.getOrNull(1).orEmpty()),
-                phone = o.optString("phone", o.optString("username")),
+                firstName = o.optString(
+                    "firstName",
+                    parts.firstOrNull().orEmpty()
+                ),
+                lastName = o.optString(
+                    "lastName",
+                    parts.getOrNull(1).orEmpty()
+                ),
+                phone = o.optString(
+                    "phone",
+                    o.optString("username")
+                ),
                 nationalId = o.optString("nationalId"),
                 password = "",
                 classIds = o.optString("classIds"),
                 isActive = o.optBoolean("isActive", true),
-                avatarName = o.optString("avatarName", "avatar_teacher_1") // 🌟 بازیابی آواتار اساتید
+                avatarName = o.optString(
+                    "avatarName",
+                    "avatar_teacher_1"
+                ),
+                isManagement = o.optBoolean(
+                    "isManagement",
+                    false
+                )
             )
         }
 
