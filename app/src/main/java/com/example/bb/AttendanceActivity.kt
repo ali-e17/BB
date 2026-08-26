@@ -1,12 +1,14 @@
 package com.example.bb
 
+
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.IOException
+import okhttp3.ResponseBody
 import android.app.DatePickerDialog
-import android.app.DownloadManager
 import android.content.Context
 import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -54,6 +56,22 @@ class AttendanceActivity : BaseActivity() {
     private lateinit var saveButton: MaterialButton
     private lateinit var progress: View
     private lateinit var emptyState: TextView
+
+    private var pendingAttendanceExportClass: ClassModel? = null
+
+    private val createAttendanceExcelLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    ) { uri: Uri? ->
+
+        val model = pendingAttendanceExportClass
+        pendingAttendanceExportClass = null
+
+        if (uri != null && model != null) {
+            downloadAttendanceExcel(model, uri)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -483,120 +501,200 @@ class AttendanceActivity : BaseActivity() {
 
 
     private fun confirmAttendanceExport() {
+
         if (role != UserRole.ADMIN) return
+
         val model = selectedClass ?: run {
-            Toast.makeText(this, "ابتدا یک کلاس را انتخاب کنید", Toast.LENGTH_SHORT).show()
+
+            Toast.makeText(
+                this,
+                "ابتدا یک کلاس را انتخاب کنید",
+                Toast.LENGTH_SHORT
+            ).show()
+
             return
         }
+
+
         if (overview?.sessions.isNullOrEmpty()) {
-            Toast.makeText(this, "برای این کلاس هنوز جلسه ثبت‌شده‌ای وجود ندارد", Toast.LENGTH_LONG).show()
+
+            Toast.makeText(
+                this,
+                "برای این کلاس هنوز جلسه ثبت‌شده‌ای وجود ندارد",
+                Toast.LENGTH_LONG
+            ).show()
+
             return
         }
+
 
         MaterialAlertDialogBuilder(this)
             .setTitle("دریافت خروجی اکسل")
             .setMessage(
                 "گزارش کامل کلاس «${model.className}» شامل وضعیت تمام دانش‌آموزان در کل جلسات، " +
-                    "جمع غیبت و تأخیر و خلاصه هر جلسه ساخته می‌شود."
+                        "جمع غیبت و تأخیر و خلاصه هر جلسه ساخته می‌شود."
             )
-            .setNegativeButton("انصراف", null)
-            .setPositiveButton("دانلود اکسل") { _, _ -> downloadAttendanceExcel(model) }
+            .setNegativeButton(
+                "انصراف",
+                null
+            )
+            .setPositiveButton(
+                "دانلود اکسل"
+            ) { _, _ ->
+
+                chooseAttendanceExcelLocation(model)
+            }
             .show()
     }
 
-    private fun downloadAttendanceExcel(model: ClassModel) {
-        Toast.makeText(this, "در حال دریافت گزارش از سرور...", Toast.LENGTH_SHORT).show()
+    private fun chooseAttendanceExcelLocation(model: ClassModel) {
 
-        RetrofitClient.instance.downloadAttendanceExcel(model.id).enqueue(object : Callback<okhttp3.ResponseBody> {
-            override fun onResponse(call: Call<okhttp3.ResponseBody>, response: Response<okhttp3.ResponseBody>) {
-                if (response.isSuccessful && response.body() != null) {
-                    val body = response.body()!!
+        val safeClassName = model.className
+            .replace(Regex("[^A-Za-z0-9\u0600-\u06FF_-]+"), "_")
+            .trim('_')
+            .take(60)
+            .ifBlank { "class" }
 
-                    val contentType = body.contentType()?.toString()?.lowercase(java.util.Locale.ROOT) ?: ""
-                    if (contentType.contains("text/html") || contentType.contains("application/json")) {
-                        val errorText = body.string()
-                        val friendlyMessage = ApiErrorParser.messageFromRawJson(
-                            errorText,
-                            "گزارش حضور و غیاب در حال حاضر آماده دریافت نیست."
-                        )
-                        runOnUiThread {
-                            MaterialAlertDialogBuilder(this@AttendanceActivity)
-                                .setTitle("دانلود گزارش انجام نشد")
-                                .setMessage(friendlyMessage)
-                                .setPositiveButton("بستن", null)
-                                .show()
+        val timePart = SimpleDateFormat(
+            "yyyyMMdd_HHmm",
+            Locale.US
+        ).format(Calendar.getInstance().time)
+
+        val fileName =
+            "attendance_${safeClassName}_$timePart.xlsx"
+
+        pendingAttendanceExportClass = model
+
+        createAttendanceExcelLauncher.launch(fileName)
+    }
+
+
+    private fun downloadAttendanceExcel(
+        model: ClassModel,
+        uri: Uri
+    ) {
+
+        val prefs = getSharedPreferences(
+            "LocalAppPrefs",
+            Context.MODE_PRIVATE
+        )
+
+        val token = prefs
+            .getString("API_TOKEN", "")
+            .orEmpty()
+
+        if (token.isBlank()) {
+
+            Toast.makeText(
+                this,
+                "نشست ورود معتبر نیست؛ یک‌بار خارج و دوباره وارد شوید",
+                Toast.LENGTH_LONG
+            ).show()
+
+            return
+        }
+
+
+        setLoading(true)
+
+
+        RetrofitClient.instance
+            .downloadAttendanceExcel(
+                RetrofitClient.attendanceExportUrl(model.id)
+            )
+            .enqueue(
+                object : Callback<ResponseBody> {
+
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+
+                        val body = response.body()
+
+                        if (!response.isSuccessful || body == null) {
+
+                            setLoading(false)
+
+                            Toast.makeText(
+                                this@AttendanceActivity,
+                                "دریافت فایل اکسل از سرور ناموفق بود (کد ${response.code()})",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            return
                         }
-                        return
+
+
+                        try {
+
+                            contentResolver
+                                .openOutputStream(uri, "w")
+                                ?.use { outputStream ->
+
+                                    body.byteStream().use { inputStream ->
+
+                                        inputStream.copyTo(
+                                            outputStream,
+                                            bufferSize = 8 * 1024
+                                        )
+
+                                        outputStream.flush()
+                                    }
+                                }
+                                ?: throw IOException(
+                                    "امکان باز کردن محل ذخیره فایل وجود ندارد"
+                                )
+
+
+                            setLoading(false)
+
+
+                            Toast.makeText(
+                                this@AttendanceActivity,
+                                "فایل اکسل با موفقیت ذخیره شد",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+
+                        } catch (e: Exception) {
+
+                            setLoading(false)
+
+                            Toast.makeText(
+                                this@AttendanceActivity,
+                                when (e) {
+
+                                    is SecurityException ->
+                                        "اجازه ذخیره فایل داده نشد؛ محل دیگری را انتخاب کنید"
+
+                                    is IOException ->
+                                        "ذخیره فایل اکسل انجام نشد؛ محل ذخیره یا فضای دستگاه را بررسی کنید"
+
+                                    else ->
+                                        "خطا در ذخیره فایل اکسل: ${e.message}"
+                                },
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
 
-                    Thread {
-                        try {
-                            val safeClassName = model.className.replace(Regex("[^A-Za-z0-9\u0600-\u06FF_-]+"), "_").trim('_')
-                            val timePart = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(java.util.Calendar.getInstance().time)
-                            val fileName = "attendance_${safeClassName}_$timePart.xlsx"
 
-                            // 🌟 نوع فایل (اکسل) رو برای اندروید مشخص می‌کنیم
-                            val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    override fun onFailure(
+                        call: Call<ResponseBody>,
+                        t: Throwable
+                    ) {
 
-                            body.byteStream().use { inputStream ->
-                                val outputStream: java.io.OutputStream?
+                        setLoading(false)
 
-                                // 🌟 بررسی نسخه اندروید
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                                    // 🌟 روش مدرن MediaStore برای اندروید 10 به بالا (بدون نیاز به پرمیشن)
-                                    val resolver = contentResolver
-                                    val contentValues = android.content.ContentValues().apply {
-                                        put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                                        put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
-                                        put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
-                                    }
-
-                                    val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-                                    outputStream = uri?.let { resolver.openOutputStream(it) }
-                                } else {
-                                    // 🌟 روش کلاسیک برای اندروید 9 و پایین‌تر
-                                    val downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
-                                    downloadsDir.mkdirs()
-                                    val file = java.io.File(downloadsDir, fileName)
-                                    outputStream = java.io.FileOutputStream(file)
-                                }
-
-                                // 🌟 کپی کردن اطلاعات از سرور به داخل فایل ساخته شده در گوشی
-                                outputStream?.use { out ->
-                                    inputStream.copyTo(out)
-                                }
-                            }
-
-                            runOnUiThread {
-                                Toast.makeText(this@AttendanceActivity, "گزارش با موفقیت در پوشه Downloads ذخیره شد", Toast.LENGTH_LONG).show()
-                            }
-                        } catch (e: Exception) {
-                            runOnUiThread {
-                                Toast.makeText(
-                                    this@AttendanceActivity,
-                                    "فایل گزارش ذخیره نشد. فضای ذخیره‌سازی و دسترسی پوشه Downloads را بررسی کنید.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    }.start()
-                } else {
-                    Toast.makeText(
-                        this@AttendanceActivity,
-                        ApiErrorParser.userMessage(response, "دانلود گزارش حضور و غیاب انجام نشد"),
-                        Toast.LENGTH_LONG
-                    ).show()
+                        Toast.makeText(
+                            this@AttendanceActivity,
+                            "اتصال برای دانلود اکسل برقرار نشد؛ دوباره تلاش کنید",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
-            }
-
-            override fun onFailure(call: Call<okhttp3.ResponseBody>, t: Throwable) {
-                Toast.makeText(
-                    this@AttendanceActivity,
-                    ApiErrorParser.networkMessage(t, "دانلود گزارش حضور و غیاب"),
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        })
+            )
     }
 
     private fun showFinalizeDatePicker(session: AttendanceSessionResponse) {

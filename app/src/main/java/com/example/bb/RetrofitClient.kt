@@ -1,6 +1,7 @@
 package com.example.bb
 
 import okhttp3.ResponseBody
+import retrofit2.http.Url
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
@@ -125,6 +126,8 @@ data class TermHistoryResponse(val status:String="",val role:String="",val items
 interface ApiService
 {
 
+    @GET
+    fun downloadAttendanceExcel(@Url url: String): Call<ResponseBody>
     @GET(ContactConfig.CONTACT_API)
     fun getContactInfo(): Call<ContactInfoResponse>
 
@@ -190,9 +193,7 @@ interface ApiService
     @POST("save_result_messages.php") fun saveResultMessages(@Body request:SaveResultMessagesRequest):Call<ApiResponse>
     @GET("get_completed_classes.php")
     fun getCompletedClasses(): Call<List<ClassModel>>
-    @Streaming
-    @GET("export_attendance_excel.php")
-    fun downloadAttendanceExcel(@Query("class_id") classId: String): Call<okhttp3.ResponseBody>
+
 
     @GET("get_class_name_options.php")
     fun getClassNameOptions(): Call<List<ClassNameOption>>
