@@ -45,6 +45,7 @@ class InitialPaymentActivity : BaseActivity() {
 
         amountText = findViewById(R.id.tvInitialPaymentAmount)
         statusText = findViewById(R.id.tvInitialPaymentStatus)
+        environmentText = findViewById(R.id.tvInitialPaymentEnvironment)
         startButton = findViewById(R.id.btnStartInitialPayment)
         checkButton = findViewById(R.id.btnCheckInitialPayment)
         progress = findViewById(R.id.progressInitialPayment)
@@ -216,7 +217,7 @@ class InitialPaymentActivity : BaseActivity() {
             "CANCELED" -> "پرداخت قبلی لغو شده است. برای فعال‌سازی حساب می‌توانید دوباره تلاش کنید."
             "FAILED" -> "پرداخت قبلی ناموفق بود. دوباره تلاش کنید."
             "REVERSED" -> "پرداخت برگشت خورده است. برای فعال‌سازی حساب دوباره پرداخت کنید."
-            else -> "برای اولین استفاده یا تمدید استفاده از حساب دانش‌آموز، فعال‌سازی اولیه لازم است."
+            else -> "برای اولین استفاده از حساب دانش‌آموز، فعال‌سازی اولیه لازم است."
         }
         startButton.text = if (tx?.status.equals("PENDING", ignoreCase = true)) {
             "ادامه پرداخت"
