@@ -59,7 +59,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Bayane Bartar"
+                    android:text="آموزشگاه زبان خارجی بیان برتر"
                     android:textColor="@color/title_blue"
                     android:textSize="18sp"
                     android:textStyle="bold" />
