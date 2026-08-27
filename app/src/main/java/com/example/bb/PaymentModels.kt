@@ -17,6 +17,10 @@ data class InitialPaymentStatusResponse(
     val message: String? = null,
     val initialAccessStatus: String = "NOT_REQUIRED",
     val paymentRequired: Boolean = false,
+
+    val accessValidUntil: String? = null,
+    val paymentReason: String = "FIRST_ACCESS",
+
     val amount: Long = 0,
     val currency: String = "IRT",
     val environment: String = "SANDBOX",
@@ -30,6 +34,10 @@ data class InitialPaymentRequestResponse(
     val code: String? = null,
     val initialAccessStatus: String? = null,
     val paymentRequired: Boolean = true,
+
+    val accessValidUntil: String? = null,
+    val paymentReason: String = "FIRST_ACCESS",
+
     val transactionId: String? = null,
     val paymentUrl: String? = null,
     val amount: Long = 0,

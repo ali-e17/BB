@@ -15,7 +15,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class StudentHistoryActivity : AppCompatActivity() {
+class StudentHistoryActivity : BaseActivity() {
 
     private lateinit var rvHistory: RecyclerView
     private lateinit var tvEmpty: TextView

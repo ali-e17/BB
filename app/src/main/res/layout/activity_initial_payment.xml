@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/app_global_background"
     android:orientation="vertical">
 
+
+    <!-- هدر صفحه -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:paddingTop="8dp"
         android:paddingEnd="12dp">
+
 
         <ImageView
             android:id="@+id/btnInitialPaymentBack"
@@ -18,21 +23,26 @@
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true" />
 
+
         <TextView
+            android:id="@+id/tvInitialPaymentToolbarTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="فعال‌سازی حساب"
+            android:text="عضویت سالانه"
             android:textColor="@color/title_blue"
             android:textSize="21sp"
             android:textStyle="bold" />
+
     </RelativeLayout>
+
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:fillViewport="true">
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -44,22 +54,46 @@
             android:paddingEnd="24dp"
             android:paddingBottom="28dp">
 
+
+            <!-- لوگوی آموزشگاه -->
             <ImageView
                 android:layout_width="112dp"
                 android:layout_height="112dp"
                 android:contentDescription="@null"
                 android:src="@drawable/final50cm" />
 
+
+            <!-- عنوان اصلی -->
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/tvInitialPaymentTitle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:text="فعال‌سازی اولین ورود دانش‌آموز"
+                android:text="حق عضویت سالانه دانش‌آموز"
                 android:textColor="@color/main_text"
-                android:textSize="19sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
+
+            <!-- توضیح -->
+            <TextView
+                android:id="@+id/tvInitialPaymentDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:text="برای استفاده از سامانه آموزشگاه، عضویت سالانه حساب خود را فعال کنید."
+                android:textColor="@color/sub_text"
+                android:textSize="13sp" />
+
+
+            <!--
+                فقط در زمان تست Sandbox از طریق Kotlin
+                قابل نمایش است.
+                در Production کاملاً مخفی خواهد بود.
+            -->
             <TextView
                 android:id="@+id/tvInitialPaymentEnvironment"
                 android:layout_width="wrap_content"
@@ -69,11 +103,14 @@
                 android:gravity="center"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="7dp"
-                android:text="محیط آزمایشی زرین‌پال (Sandbox) — پرداخت واقعی انجام نمی‌شود"
+                android:text=""
                 android:textColor="@color/title_blue"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:visibility="gone" />
 
+
+            <!-- کارت پرداخت -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -84,6 +121,7 @@
                 app:strokeColor="@color/back_button_stroke"
                 app:strokeWidth="1dp">
 
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -91,23 +129,30 @@
                     android:orientation="vertical"
                     android:padding="22dp">
 
+
+                    <!-- عنوان مبلغ -->
                     <TextView
+                        android:id="@+id/tvInitialPaymentAmountLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="مبلغ فعال‌سازی"
+                        android:text="مبلغ عضویت یک‌ساله"
                         android:textColor="@color/sub_text"
                         android:textSize="14sp" />
 
+
+                    <!-- مبلغ -->
                     <TextView
                         android:id="@+id/tvInitialPaymentAmount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
-                        android:text="—"
+                        android:text="۱۵۰٬۰۰۰ تومان"
                         android:textColor="@color/title_blue"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
+
+                    <!-- وضعیت -->
                     <TextView
                         android:id="@+id/tvInitialPaymentStatus"
                         android:layout_width="match_parent"
@@ -115,22 +160,26 @@
                         android:layout_marginTop="18dp"
                         android:gravity="center"
                         android:lineSpacingExtra="4dp"
-                        android:text="در حال دریافت وضعیت فعال‌سازی..."
+                        android:text="در حال بررسی وضعیت عضویت..."
                         android:textColor="@color/main_text"
                         android:textSize="14sp" />
 
+
+                    <!-- دکمه پرداخت -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnStartInitialPayment"
                         android:layout_width="match_parent"
                         android:layout_height="54dp"
                         android:layout_marginTop="22dp"
-                        android:text="پرداخت و فعال‌سازی"
+                        android:text="پرداخت حق عضویت"
                         android:textColor="@android:color/white"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         app:backgroundTint="@color/brand_orange"
                         app:cornerRadius="12dp" />
 
+
+                    <!-- بررسی وضعیت -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCheckInitialPayment"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -142,24 +191,35 @@
                         app:cornerRadius="12dp"
                         app:strokeColor="@color/title_blue" />
 
+
                     <ProgressBar
                         android:id="@+id/progressInitialPayment"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
                         android:layout_marginTop="16dp"
                         android:visibility="gone" />
+
+
                 </LinearLayout>
+
             </com.google.android.material.card.MaterialCardView>
 
+
+            <!-- توضیح اعتبار -->
             <TextView
+                android:id="@+id/tvInitialPaymentFooter"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:gravity="center"
-                android:lineSpacingExtra="3dp"
-                android:text="پرداخت فقط برای فعال‌سازی اولیه حساب است. اگر مدیر بعداً رمز موقت جدیدی برای شما بسازد، پرداخت دوباره لازم نخواهد بود."
+                android:lineSpacingExtra="4dp"
+                android:text="پس از پرداخت موفق، حساب شما به مدت یک سال فعال خواهد بود. پس از پایان اعتبار، برای ادامه استفاده از سامانه فقط تمدید عضویت سالانه لازم است."
                 android:textColor="@color/sub_text"
                 android:textSize="12sp" />
+
+
         </LinearLayout>
+
     </ScrollView>
+
 </LinearLayout>

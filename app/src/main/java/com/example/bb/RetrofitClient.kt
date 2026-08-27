@@ -234,17 +234,65 @@ private class SessionInterceptor(private val context:Context):Interceptor {
             Handler(Looper.getMainLooper()).post {
                 context.startActivity(Intent(context,LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
             }
-        } else if(response.code==402) {
-            prefs.edit().putBoolean("PAYMENT_REQUIRED", true).apply()
-            val path = request.url.encodedPath
-            val isPaymentEndpoint = path.endsWith("get_initial_payment_status.php") ||
-                    path.endsWith("request_initial_payment.php") ||
-                    path.endsWith("reconcile_initial_payment.php")
+        } else if (response.code == 402) {
+
+            /*
+             * اعتبار سالانه دانش‌آموز
+             * از سمت Server منقضی شده.
+             *
+             * Token را پاک نمی‌کنیم چون
+             * صفحه پرداخت برای ارتباط با Backend
+             * به همان Token نیاز دارد.
+             */
+            prefs.edit()
+                .putBoolean("PAYMENT_REQUIRED", true)
+                .putString("INITIAL_ACCESS_STATUS", "PENDING")
+                .apply()
+
+
+            val path =
+                request.url.encodedPath
+
+
+            val isPaymentEndpoint =
+
+                path.endsWith(
+                    "get_initial_payment_status.php"
+                )
+                        ||
+                        path.endsWith(
+                            "request_initial_payment.php"
+                        )
+                        ||
+                        path.endsWith(
+                            "reconcile_initial_payment.php"
+                        )
+
+
             if (!isPaymentEndpoint) {
-                Handler(Looper.getMainLooper()).post {
-                    context.startActivity(Intent(context, InitialPaymentActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    })
+
+                Handler(
+                    Looper.getMainLooper()
+                ).post {
+
+                    /*
+                     * کل صفحات قبلی App حذف می‌شوند.
+                     *
+                     * یعنی دانش‌آموز دیگر با Back
+                     * نمی‌تواند به MainActivity
+                     * یا صفحات قبلی برگردد.
+                     */
+                    context.startActivity(
+                        Intent(
+                            context,
+                            InitialPaymentActivity::class.java
+                        ).apply {
+
+                            flags =
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                    )
                 }
             }
         } else if(response.code==428) {

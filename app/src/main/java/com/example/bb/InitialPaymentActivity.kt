@@ -19,18 +19,18 @@ import retrofit2.Response
 import java.text.NumberFormat
 import java.util.Locale
 
-/**
- * Mandatory first-access payment screen for STUDENT accounts.
- *
- * Important: this Activity never decides that a payment is successful from a
- * deep-link parameter. The server is always queried and remains the source of
- * truth for the payment state.
- */
 class InitialPaymentActivity : BaseActivity() {
 
     private lateinit var amountText: TextView
     private lateinit var statusText: TextView
     private lateinit var environmentText: TextView
+
+    private lateinit var toolbarTitle: TextView
+    private lateinit var pageTitle: TextView
+    private lateinit var descriptionText: TextView
+    private lateinit var amountLabel: TextView
+    private lateinit var footerText: TextView
+
     private lateinit var startButton: MaterialButton
     private lateinit var checkButton: MaterialButton
     private lateinit var progress: View
@@ -39,283 +39,1357 @@ class InitialPaymentActivity : BaseActivity() {
     private var returnCheckScheduled = false
     private var navigatedAway = false
 
+    private var currentPaymentReason = "FIRST_ACCESS"
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_initial_payment)
 
-        amountText = findViewById(R.id.tvInitialPaymentAmount)
-        statusText = findViewById(R.id.tvInitialPaymentStatus)
-        environmentText = findViewById(R.id.tvInitialPaymentEnvironment)
-        startButton = findViewById(R.id.btnStartInitialPayment)
-        checkButton = findViewById(R.id.btnCheckInitialPayment)
-        progress = findViewById(R.id.progressInitialPayment)
+        setContentView(
+            R.layout.activity_initial_payment
+        )
 
-        findViewById<ImageView>(R.id.btnInitialPaymentBack).setOnClickListener { handleBack() }
-        startButton.setOnClickListener { requestPayment() }
-        checkButton.setOnClickListener { reconcilePayment(showLoading = true) }
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() = handleBack()
-        })
+        amountText =
+            findViewById(
+                R.id.tvInitialPaymentAmount
+            )
 
-        if (intent?.data?.scheme.equals("bbapp", ignoreCase = true)) {
+        statusText =
+            findViewById(
+                R.id.tvInitialPaymentStatus
+            )
+
+        environmentText =
+            findViewById(
+                R.id.tvInitialPaymentEnvironment
+            )
+
+        toolbarTitle =
+            findViewById(
+                R.id.tvInitialPaymentToolbarTitle
+            )
+
+        pageTitle =
+            findViewById(
+                R.id.tvInitialPaymentTitle
+            )
+
+        descriptionText =
+            findViewById(
+                R.id.tvInitialPaymentDescription
+            )
+
+        amountLabel =
+            findViewById(
+                R.id.tvInitialPaymentAmountLabel
+            )
+
+        footerText =
+            findViewById(
+                R.id.tvInitialPaymentFooter
+            )
+
+        startButton =
+            findViewById(
+                R.id.btnStartInitialPayment
+            )
+
+        checkButton =
+            findViewById(
+                R.id.btnCheckInitialPayment
+            )
+
+        progress =
+            findViewById(
+                R.id.progressInitialPayment
+            )
+
+
+        /*
+         * در شروع صفحه دکمه بررسی وضعیت
+         * نمایش داده نمی‌شود.
+         *
+         * فقط اگر تراکنش PENDING داشته باشیم
+         * نمایش داده خواهد شد.
+         */
+        checkButton.visibility =
+            View.GONE
+
+
+        /*
+         * متن Sandbox یا Production
+         * در نسخه نهایی به کاربر نشان داده نمی‌شود.
+         */
+        environmentText.visibility =
+            View.GONE
+
+        environmentText.text =
+            ""
+
+
+        findViewById<ImageView>(
+            R.id.btnInitialPaymentBack
+        ).setOnClickListener {
+
+            handleBack()
+        }
+
+
+        startButton.setOnClickListener {
+
+            requestPayment()
+        }
+
+
+        checkButton.setOnClickListener {
+
+            reconcilePayment(
+                showLoading = true,
+                manualCheck = true
+            )
+        }
+
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+
+                override fun handleOnBackPressed() {
+
+                    handleBack()
+                }
+            }
+        )
+
+
+        /*
+         * اگر از Callback برنامه باز شده باشد.
+         */
+        if (
+            intent?.data?.scheme.equals(
+                "bbapp",
+                ignoreCase = true
+            )
+        ) {
+
             gatewayOpened = true
         }
-        loadStatus(showLoading = true)
+
+
+        loadStatus(
+            showLoading = true
+        )
     }
 
-    override fun onNewIntent(intent: Intent) {
+
+    override fun onNewIntent(
+        intent: Intent
+    ) {
+
         super.onNewIntent(intent)
+
         setIntent(intent)
-        // Never trust result/status fields from the URI. We only use the URI as
-        // a signal to re-check the transaction on our backend.
+
+
+        /*
+         * نتیجه داخل Deep Link قابل اعتماد نیست.
+         *
+         * فقط به عنوان علامت برگشت از درگاه
+         * از آن استفاده می‌کنیم و وضعیت واقعی
+         * را از Backend می‌گیریم.
+         */
         gatewayOpened = true
-        reconcilePayment(showLoading = true)
+
+
+        reconcilePayment(
+            showLoading = true,
+            manualCheck = false
+        )
     }
+
 
     override fun onResume() {
+
         super.onResume()
-        if (gatewayOpened && !returnCheckScheduled && !navigatedAway) {
+
+
+        /*
+         * اگر کاربر از مرورگر به برنامه برگشته،
+         * کمی صبر می‌کنیم تا Callback زرین‌پال
+         * فرصت ثبت وضعیت را داشته باشد.
+         */
+        if (
+            gatewayOpened
+            &&
+            !returnCheckScheduled
+            &&
+            !navigatedAway
+        ) {
+
             returnCheckScheduled = true
-            Handler(Looper.getMainLooper()).postDelayed({
+
+
+            Handler(
+                Looper.getMainLooper()
+            ).postDelayed({
+
                 returnCheckScheduled = false
-                if (!isFinishing && !navigatedAway) {
-                    reconcilePayment(showLoading = false)
+
+
+                if (
+                    !isFinishing
+                    &&
+                    !navigatedAway
+                ) {
+
+                    reconcilePayment(
+                        showLoading = false,
+                        manualCheck = false
+                    )
                 }
-            }, 900)
+
+            }, 1200)
         }
     }
 
-    private fun loadStatus(showLoading: Boolean) {
-        if (showLoading) setLoading(true)
-        RetrofitClient.instance.getInitialPaymentStatus()
-            .enqueue(object : Callback<InitialPaymentStatusResponse> {
-                override fun onResponse(
-                    call: Call<InitialPaymentStatusResponse>,
-                    response: Response<InitialPaymentStatusResponse>
-                ) {
-                    if (showLoading) setLoading(false)
-                    val body = response.body()
-                    if (response.isSuccessful && body?.status == "success") {
-                        renderStatus(body)
-                    } else {
+
+    private fun loadStatus(
+        showLoading: Boolean
+    ) {
+
+        if (showLoading) {
+
+            setLoading(true)
+
+            statusText.text =
+                "در حال بررسی وضعیت عضویت..."
+        }
+
+
+        RetrofitClient.instance
+            .getInitialPaymentStatus()
+            .enqueue(
+                object :
+                    Callback<InitialPaymentStatusResponse> {
+
+                    override fun onResponse(
+                        call:
+                        Call<InitialPaymentStatusResponse>,
+                        response:
+                        Response<InitialPaymentStatusResponse>
+                    ) {
+
+                        if (showLoading) {
+
+                            setLoading(false)
+                        }
+
+
+                        val body =
+                            response.body()
+
+
+                        if (
+                            response.isSuccessful
+                            &&
+                            body?.status == "success"
+                        ) {
+
+                            renderStatus(
+                                body
+                            )
+
+                        } else {
+
+                            showError(
+                                body?.message
+                                    ?.takeIf {
+                                        it.isNotBlank()
+                                    }
+                                    ?: ApiErrorParser.userMessage(
+                                        response,
+                                        "وضعیت عضویت دریافت نشد"
+                                    )
+                            )
+                        }
+                    }
+
+
+                    override fun onFailure(
+                        call:
+                        Call<InitialPaymentStatusResponse>,
+                        t: Throwable
+                    ) {
+
+                        if (showLoading) {
+
+                            setLoading(false)
+                        }
+
+
                         showError(
-                            body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "وضعیت فعال‌سازی دریافت نشد")
+                            ApiErrorParser.networkMessage(
+                                t,
+                                "بررسی وضعیت پرداخت"
+                            )
                         )
                     }
                 }
-
-                override fun onFailure(call: Call<InitialPaymentStatusResponse>, t: Throwable) {
-                    if (showLoading) setLoading(false)
-                    showError(ApiErrorParser.networkMessage(t, "بررسی وضعیت پرداخت"))
-                }
-            })
+            )
     }
+
 
     private fun requestPayment() {
+
         setLoading(true)
-        statusText.text = "در حال آماده‌سازی درگاه پرداخت..."
-        RetrofitClient.instance.requestInitialPayment()
-            .enqueue(object : Callback<InitialPaymentRequestResponse> {
-                override fun onResponse(
-                    call: Call<InitialPaymentRequestResponse>,
-                    response: Response<InitialPaymentRequestResponse>
-                ) {
-                    setLoading(false)
-                    val body = response.body()
-                    if (!response.isSuccessful || body?.status != "success") {
-                        showError(
-                            body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "درگاه پرداخت آماده نشد")
+
+
+        /*
+         * هنگام ساخت تراکنش جدید
+         * دکمه بررسی فعلاً مخفی باشد.
+         */
+        checkButton.visibility =
+            View.GONE
+
+
+        statusText.text =
+            "در حال آماده‌سازی درگاه پرداخت..."
+
+
+        RetrofitClient.instance
+            .requestInitialPayment()
+            .enqueue(
+                object :
+                    Callback<InitialPaymentRequestResponse> {
+
+                    override fun onResponse(
+                        call:
+                        Call<InitialPaymentRequestResponse>,
+                        response:
+                        Response<InitialPaymentRequestResponse>
+                    ) {
+
+                        setLoading(false)
+
+
+                        val body =
+                            response.body()
+
+
+                        if (
+                            !response.isSuccessful
+                            ||
+                            body?.status != "success"
+                        ) {
+
+                            showError(
+                                body?.message
+                                    ?.takeIf {
+                                        it.isNotBlank()
+                                    }
+                                    ?: ApiErrorParser.userMessage(
+                                        response,
+                                        "درگاه پرداخت آماده نشد"
+                                    )
+                            )
+
+                            return
+                        }
+
+
+                        currentPaymentReason =
+                            body.paymentReason
+                                .ifBlank {
+                                    currentPaymentReason
+                                }
+
+
+                        savePaymentMeta(
+                            accessValidUntil =
+                                body.accessValidUntil,
+
+                            paymentReason =
+                                body.paymentReason
                         )
-                        return
+
+
+                        renderPaymentReason(
+                            currentPaymentReason
+                        )
+
+
+                        if (
+                            !body.paymentRequired
+                        ) {
+
+                            completeActivation(
+                                body.initialAccessStatus
+                                    ?: "PAID"
+                            )
+
+                            return
+                        }
+
+
+                        renderAmount(
+                            body.amount,
+                            body.currency
+                        )
+
+
+                        renderEnvironment(
+                            body.environment
+                        )
+
+
+                        val paymentUrl =
+                            body.paymentUrl
+                                .orEmpty()
+
+
+                        if (
+                            paymentUrl.isBlank()
+                        ) {
+
+                            showError(
+                                "آدرس درگاه پرداخت دریافت نشد. دوباره تلاش کنید."
+                            )
+
+                            return
+                        }
+
+
+                        /*
+                         * از این لحظه یک تراکنش
+                         * PENDING داریم؛ بنابراین
+                         * اگر کاربر از درگاه برگشت،
+                         * امکان بررسی دستی هم دارد.
+                         */
+                        checkButton.visibility =
+                            View.VISIBLE
+
+
+                        openGateway(
+                            paymentUrl
+                        )
                     }
 
-                    if (!body.paymentRequired) {
-                        completeActivation(body.initialAccessStatus ?: "PAID")
-                        return
-                    }
 
-                    renderAmount(body.amount, body.currency)
-                    renderEnvironment(body.environment)
-                    val paymentUrl = body.paymentUrl.orEmpty()
-                    if (paymentUrl.isBlank()) {
-                        showError("آدرس درگاه پرداخت دریافت نشد. دوباره تلاش کنید.")
-                        return
+                    override fun onFailure(
+                        call:
+                        Call<InitialPaymentRequestResponse>,
+                        t: Throwable
+                    ) {
+
+                        setLoading(false)
+
+
+                        showError(
+                            ApiErrorParser.networkMessage(
+                                t,
+                                "ایجاد درخواست پرداخت"
+                            )
+                        )
                     }
-                    openGateway(paymentUrl)
                 }
-
-                override fun onFailure(call: Call<InitialPaymentRequestResponse>, t: Throwable) {
-                    setLoading(false)
-                    showError(ApiErrorParser.networkMessage(t, "ایجاد درخواست پرداخت"))
-                }
-            })
+            )
     }
 
-    private fun reconcilePayment(showLoading: Boolean) {
-        if (showLoading) setLoading(true)
-        if (!showLoading) statusText.text = "در حال بررسی نتیجه پرداخت..."
 
-        RetrofitClient.instance.reconcileInitialPayment()
-            .enqueue(object : Callback<InitialPaymentStatusResponse> {
-                override fun onResponse(
-                    call: Call<InitialPaymentStatusResponse>,
-                    response: Response<InitialPaymentStatusResponse>
-                ) {
-                    if (showLoading) setLoading(false)
-                    val body = response.body()
-                    if (response.isSuccessful && body?.status == "success") {
-                        gatewayOpened = false
-                        renderStatus(body)
+    private fun reconcilePayment(
+        showLoading: Boolean,
+        manualCheck: Boolean
+    ) {
+
+        if (showLoading) {
+
+            setLoading(true)
+        }
+
+
+        statusText.text =
+            "در حال بررسی وضعیت پرداخت..."
+
+
+        RetrofitClient.instance
+            .reconcileInitialPayment()
+            .enqueue(
+                object :
+                    Callback<InitialPaymentStatusResponse> {
+
+                    override fun onResponse(
+                        call:
+                        Call<InitialPaymentStatusResponse>,
+                        response:
+                        Response<InitialPaymentStatusResponse>
+                    ) {
+
+                        if (showLoading) {
+
+                            setLoading(false)
+                        }
+
+
+                        val body =
+                            response.body()
+
+
+                        if (
+                            response.isSuccessful
+                            &&
+                            body?.status == "success"
+                        ) {
+
+                            gatewayOpened =
+                                false
+
+
+                            renderStatus(
+                                body
+                            )
+
+
+                            /*
+                             * اگر پرداخت تأیید شده باشد،
+                             * renderStatus خودش وارد مرحله
+                             * بعدی می‌شود.
+                             */
+                            if (
+                                !body.paymentRequired
+                            ) {
+
+                                return
+                            }
+
+
+                            /*
+                             * بازخورد واضح برای کاربری که
+                             * خودش دکمه بررسی را زده.
+                             */
+                            if (manualCheck) {
+
+                                when (
+                                    body.transaction
+                                        ?.status
+                                        ?.uppercase(
+                                            Locale.US
+                                        )
+                                ) {
+
+                                    "PENDING" -> {
+
+                                        statusText.text =
+                                            "پرداخت هنوز تأیید نشده است. اگر پرداخت را انجام داده‌اید، چند لحظه دیگر دوباره بررسی کنید."
+
+
+                                        Toast.makeText(
+                                            this@InitialPaymentActivity,
+                                            "پرداخت هنوز تأیید نشده است",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+
+
+                                    "CREATED" -> {
+
+                                        statusText.text =
+                                            "درخواست پرداخت هنوز در حال آماده‌سازی است. چند لحظه دیگر دوباره تلاش کنید."
+                                    }
+
+
+                                    "CANCELED" -> {
+
+                                        statusText.text =
+                                            "پرداخت قبلی لغو شده است. برای ادامه، دوباره پرداخت را انجام دهید."
+                                    }
+
+
+                                    "FAILED" -> {
+
+                                        statusText.text =
+                                            "پرداخت قبلی ناموفق بوده است. دوباره تلاش کنید."
+                                    }
+
+
+                                    "REVERSED" -> {
+
+                                        statusText.text =
+                                            "مبلغ پرداخت برگشت خورده است. برای ادامه دوباره پرداخت کنید."
+                                    }
+
+
+                                    else -> {
+
+                                        statusText.text =
+                                            "هنوز پرداخت موفقی برای این حساب ثبت نشده است."
+                                    }
+                                }
+                            }
+
+                        } else {
+
+                            showError(
+                                body?.message
+                                    ?.takeIf {
+                                        it.isNotBlank()
+                                    }
+                                    ?: ApiErrorParser.userMessage(
+                                        response,
+                                        "وضعیت پرداخت قابل بررسی نیست"
+                                    )
+                            )
+                        }
+                    }
+
+
+                    override fun onFailure(
+                        call:
+                        Call<InitialPaymentStatusResponse>,
+                        t: Throwable
+                    ) {
+
+                        if (showLoading) {
+
+                            setLoading(false)
+                        }
+
+
+                        showError(
+                            ApiErrorParser.networkMessage(
+                                t,
+                                "بررسی نتیجه پرداخت"
+                            )
+                        )
+                    }
+                }
+            )
+    }
+
+
+    private fun renderStatus(
+        body: InitialPaymentStatusResponse
+    ) {
+
+        val tx =
+            body.transaction
+
+
+        currentPaymentReason =
+            body.paymentReason
+                .ifBlank {
+                    "FIRST_ACCESS"
+                }
+
+
+        savePaymentMeta(
+            accessValidUntil =
+                body.accessValidUntil,
+
+            paymentReason =
+                currentPaymentReason
+        )
+
+
+        renderPaymentReason(
+            currentPaymentReason
+        )
+
+
+        val txStatus =
+            tx?.status
+                ?.uppercase(
+                    Locale.US
+                )
+
+
+        val txIsActive =
+            txStatus == "PENDING"
+                    ||
+                    txStatus == "CREATED"
+
+
+        if (
+            body.paymentRequired
+            &&
+            txIsActive
+            &&
+            tx != null
+        ) {
+
+            /*
+             * تراکنش جاری مبلغ خودش را دارد.
+             */
+            renderAmount(
+                tx.amount,
+                tx.currency
+            )
+
+            renderEnvironment(
+                tx.environment
+            )
+
+        } else {
+
+            renderAmount(
+                body.amount,
+                body.currency
+            )
+
+            renderEnvironment(
+                body.environment
+            )
+        }
+
+
+        val prefs =
+            getSharedPreferences(
+                "LocalAppPrefs",
+                Context.MODE_PRIVATE
+            )
+
+
+        prefs.edit()
+            .putString(
+                "INITIAL_ACCESS_STATUS",
+                body.initialAccessStatus
+            )
+            .putBoolean(
+                "PAYMENT_REQUIRED",
+                body.paymentRequired
+            )
+            .putString(
+                "ACCESS_VALID_UNTIL",
+                body.accessValidUntil
+            )
+            .putString(
+                "PAYMENT_REASON",
+                currentPaymentReason
+            )
+            .apply()
+
+
+        /*
+         * پرداخت تأیید شده؛
+         * وارد مرحله بعد شو.
+         */
+        if (
+            !body.paymentRequired
+        ) {
+
+            checkButton.visibility =
+                View.GONE
+
+
+            completeActivation(
+                body.initialAccessStatus
+            )
+
+            return
+        }
+
+
+        startButton.isEnabled =
+            true
+
+
+        /*
+         * دکمه بررسی وضعیت فقط وقتی
+         * واقعاً تراکنش PENDING داریم
+         * نشان داده می‌شود.
+         */
+        checkButton.visibility =
+            if (
+                txStatus == "PENDING"
+            ) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+
+        checkButton.isEnabled =
+            txStatus == "PENDING"
+
+
+        statusText.text =
+            when (txStatus) {
+
+                "PENDING" ->
+
+                    "درخواست پرداخت ایجاد شده است. پرداخت را تکمیل کنید. اگر پرداخت کرده‌اید، می‌توانید وضعیت آن را بررسی کنید."
+
+
+                "CREATED" ->
+
+                    "درخواست پرداخت در حال آماده‌سازی است."
+
+
+                "CANCELED" ->
+
+                    "پرداخت قبلی لغو شده است. برای ادامه دوباره پرداخت کنید."
+
+
+                "FAILED" ->
+
+                    "پرداخت قبلی ناموفق بوده است. دوباره تلاش کنید."
+
+
+                "REVERSED" ->
+
+                    "پرداخت برگشت خورده است. برای ادامه دوباره پرداخت کنید."
+
+
+                else ->
+
+                    if (
+                        currentPaymentReason ==
+                        "ANNUAL_RENEWAL"
+                    ) {
+
+                        "برای ادامه استفاده از سامانه، عضویت سالانه خود را تمدید کنید."
+
                     } else {
-                        showError(
-                            body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "وضعیت پرداخت قابل بررسی نیست")
-                        )
+
+                        "برای فعال‌سازی حساب، حق عضویت سالانه را پرداخت کنید."
                     }
-                }
+            }
 
-                override fun onFailure(call: Call<InitialPaymentStatusResponse>, t: Throwable) {
-                    if (showLoading) setLoading(false)
-                    showError(ApiErrorParser.networkMessage(t, "بررسی نتیجه پرداخت"))
-                }
-            })
+
+        startButton.text =
+            when {
+
+                txStatus == "PENDING" ->
+
+                    "ادامه پرداخت"
+
+
+                currentPaymentReason ==
+                        "ANNUAL_RENEWAL" ->
+
+                    "تمدید عضویت"
+
+
+                else ->
+
+                    "پرداخت حق عضویت"
+            }
     }
 
-    private fun renderStatus(body: InitialPaymentStatusResponse) {
-        val tx = body.transaction
-        val txIsActive = tx?.status.equals("PENDING", ignoreCase = true) ||
-                tx?.status.equals("CREATED", ignoreCase = true)
-        if (body.paymentRequired && txIsActive && tx != null) {
-            // A pending transaction keeps its own amount snapshot even if the
-            // administrator changes the configured fee while it is in progress.
-            renderAmount(tx.amount, tx.currency)
-            renderEnvironment(tx.environment)
-        } else {
-            renderAmount(body.amount, body.currency)
-            renderEnvironment(body.environment)
-        }
 
-        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString("INITIAL_ACCESS_STATUS", body.initialAccessStatus)
-            .putBoolean("PAYMENT_REQUIRED", body.paymentRequired)
+    /*
+     * نمایش مبلغ با:
+     *
+     * اعداد فارسی
+     * ولی کامای معمولی پایین (,)
+     *
+     * مثال:
+     * ۱۵۰,۰۰۰ تومان
+     */
+    private fun renderAmount(
+        amount: Long,
+        currency: String
+    ) {
+
+        val unit =
+            if (
+                currency.equals(
+                    "IRR",
+                    ignoreCase = true
+                )
+            ) {
+                "ریال"
+            } else {
+                "تومان"
+            }
+
+
+        val englishGrouped =
+            NumberFormat
+                .getIntegerInstance(
+                    Locale.US
+                )
+                .format(
+                    amount
+                )
+
+
+        val persianGrouped =
+            convertDigitsToPersian(
+                englishGrouped
+            )
+
+
+        /*
+         * NumberFormat در Locale.US
+         * از U+002C یعنی کامای پایین استفاده می‌کند.
+         *
+         * فقط اعداد را فارسی می‌کنیم و
+         * خود کاما را تغییر نمی‌دهیم.
+         */
+        amountText.text =
+            "$persianGrouped $unit"
+    }
+
+
+    private fun convertDigitsToPersian(
+        value: String
+    ): String {
+
+        val persianDigits =
+            charArrayOf(
+                '۰',
+                '۱',
+                '۲',
+                '۳',
+                '۴',
+                '۵',
+                '۶',
+                '۷',
+                '۸',
+                '۹'
+            )
+
+
+        return buildString {
+
+            value.forEach { character ->
+
+                if (
+                    character in '0'..'9'
+                ) {
+
+                    append(
+                        persianDigits[
+                            character - '0'
+                        ]
+                    )
+
+                } else {
+
+                    /*
+                     * کامای معمولی "," همینجا
+                     * بدون تغییر باقی می‌ماند.
+                     */
+                    append(
+                        character
+                    )
+                }
+            }
+        }
+    }
+
+
+    private fun renderPaymentReason(
+        paymentReason: String
+    ) {
+
+        if (
+            paymentReason.equals(
+                "ANNUAL_RENEWAL",
+                ignoreCase = true
+            )
+        ) {
+
+            toolbarTitle.text =
+                "تمدید عضویت"
+
+            pageTitle.text =
+                "اعتبار حساب شما به پایان رسیده"
+
+            descriptionText.text =
+                "برای ادامه استفاده از سامانه، عضویت سالانه خود را تمدید کنید."
+
+            amountLabel.text =
+                "مبلغ تمدید یک‌ساله"
+
+            footerText.text =
+                "پس از پرداخت موفق، اعتبار حساب شما برای یک سال دیگر فعال می‌شود."
+
+            startButton.text =
+                "تمدید عضویت"
+
+        } else {
+
+            toolbarTitle.text =
+                "عضویت سالانه"
+
+            pageTitle.text =
+                "حق عضویت سالانه دانش‌آموز"
+
+            descriptionText.text =
+                "برای فعال‌سازی حساب دانش‌آموزی، حق عضویت سالانه را پرداخت کنید."
+
+            amountLabel.text =
+                "مبلغ عضویت یک‌ساله"
+
+            footerText.text =
+                "پس از پرداخت موفق، حساب شما برای یک سال فعال می‌شود."
+
+            startButton.text =
+                "پرداخت حق عضویت"
+        }
+    }
+
+
+    private fun renderEnvironment(
+        environment: String
+    ) {
+
+        /*
+         * عمداً چیزی درباره
+         * SANDBOX / PRODUCTION
+         * در UI نمایش داده نمی‌شود.
+         */
+        environmentText.visibility =
+            View.GONE
+
+        environmentText.text =
+            ""
+    }
+
+
+    private fun savePaymentMeta(
+        accessValidUntil: String?,
+        paymentReason: String
+    ) {
+
+        getSharedPreferences(
+            "LocalAppPrefs",
+            Context.MODE_PRIVATE
+        )
+            .edit()
+            .putString(
+                "ACCESS_VALID_UNTIL",
+                accessValidUntil
+            )
+            .putString(
+                "PAYMENT_REASON",
+                paymentReason
+            )
             .apply()
+    }
 
-        if (!body.paymentRequired) {
-            completeActivation(body.initialAccessStatus)
+
+    private fun openGateway(
+        url: String
+    ) {
+
+        val uri =
+            runCatching {
+
+                Uri.parse(
+                    url
+                )
+
+            }.getOrNull()
+
+
+        if (
+            uri == null
+            ||
+            uri.scheme !in
+            listOf(
+                "https",
+                "http"
+            )
+        ) {
+
+            showError(
+                "آدرس درگاه پرداخت معتبر نیست"
+            )
+
             return
         }
 
-        startButton.isEnabled = true
-        checkButton.isEnabled = true
 
-        statusText.text = when (tx?.status?.uppercase(Locale.US)) {
-            "PENDING" -> "درخواست پرداخت ایجاد شده است. پرداخت را کامل کنید؛ اگر برگشته‌اید، «بررسی وضعیت پرداخت» را بزنید."
-            "CANCELED" -> "پرداخت قبلی لغو شده است. برای فعال‌سازی حساب می‌توانید دوباره تلاش کنید."
-            "FAILED" -> "پرداخت قبلی ناموفق بود. دوباره تلاش کنید."
-            "REVERSED" -> "پرداخت برگشت خورده است. برای فعال‌سازی حساب دوباره پرداخت کنید."
-            else -> "برای اولین استفاده از حساب دانش‌آموز، فعال‌سازی اولیه لازم است."
-        }
-        startButton.text = if (tx?.status.equals("PENDING", ignoreCase = true)) {
-            "ادامه پرداخت"
-        } else {
-            "پرداخت و فعال‌سازی"
-        }
-    }
+        gatewayOpened =
+            true
 
-    private fun renderAmount(amount: Long, currency: String) {
-        val unit = if (currency.equals("IRR", ignoreCase = true)) "ریال" else "تومان"
-        amountText.text = NumberFormat.getNumberInstance(Locale.US).format(amount) + " " + unit
-    }
 
-    private fun renderEnvironment(environment: String) {
-        val sandbox = environment.equals("SANDBOX", ignoreCase = true)
-        environmentText.visibility = if (sandbox) View.VISIBLE else View.GONE
-        if (sandbox) {
-            environmentText.text = "محیط آزمایشی زرین‌پال (Sandbox) — پرداخت واقعی انجام نمی‌شود"
-        }
-    }
+        /*
+         * از حالا دکمه بررسی وضعیت
+         * کاربرد دارد.
+         */
+        checkButton.visibility =
+            View.VISIBLE
 
-    private fun openGateway(url: String) {
-        val uri = runCatching { Uri.parse(url) }.getOrNull()
-        if (uri == null || uri.scheme !in listOf("https", "http")) {
-            showError("آدرس درگاه پرداخت معتبر نیست")
-            return
-        }
-        gatewayOpened = true
-        statusText.text = "درگاه پرداخت باز شد. پس از پایان پرداخت به برنامه برگردید."
+
+        statusText.text =
+            "درگاه پرداخت باز شد. پس از پرداخت به برنامه برگردید."
+
+
         try {
-            startActivity(Intent(Intent.ACTION_VIEW, uri))
+
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    uri
+                )
+            )
+
         } catch (_: Exception) {
-            gatewayOpened = false
-            showError("مرورگری برای باز کردن درگاه پرداخت پیدا نشد")
+
+            gatewayOpened =
+                false
+
+
+            showError(
+                "مرورگری برای باز کردن درگاه پرداخت پیدا نشد"
+            )
         }
     }
 
-    private fun completeActivation(accessStatus: String) {
-        if (navigatedAway) return
-        navigatedAway = true
 
-        val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
+    private fun completeActivation(
+        accessStatus: String
+    ) {
+
+        if (navigatedAway) {
+
+            return
+        }
+
+
+        navigatedAway =
+            true
+
+
+        val prefs =
+            getSharedPreferences(
+                "LocalAppPrefs",
+                Context.MODE_PRIVATE
+            )
+
+
         prefs.edit()
-            .putBoolean("PAYMENT_REQUIRED", false)
-            .putString("INITIAL_ACCESS_STATUS", accessStatus)
+            .putBoolean(
+                "PAYMENT_REQUIRED",
+                false
+            )
+            .putString(
+                "INITIAL_ACCESS_STATUS",
+                accessStatus
+            )
             .apply()
 
-        val mustChangePassword = prefs.getBoolean("MUST_CHANGE_PASSWORD", false)
+
+        val mustChangePassword =
+            prefs.getBoolean(
+                "MUST_CHANGE_PASSWORD",
+                false
+            )
+
+
         if (mustChangePassword) {
-            startActivity(Intent(this, UpdateProfileActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra(UpdateProfileActivity.EXTRA_FORCE_PASSWORD_CHANGE, true)
-                putExtra(UpdateProfileActivity.EXTRA_OPEN_MAIN_AFTER_CHANGE, true)
-            })
+
+            startActivity(
+                Intent(
+                    this,
+                    UpdateProfileActivity::class.java
+                ).apply {
+
+                    flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+
+                    putExtra(
+                        UpdateProfileActivity.EXTRA_FORCE_PASSWORD_CHANGE,
+                        true
+                    )
+
+
+                    putExtra(
+                        UpdateProfileActivity.EXTRA_OPEN_MAIN_AFTER_CHANGE,
+                        true
+                    )
+                }
+            )
+
         } else {
-            startActivity(Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra("USER_ROLE", prefs.getString("CURRENT_USER_ROLE", "STUDENT"))
-            })
+
+            startActivity(
+                Intent(
+                    this,
+                    MainActivity::class.java
+                ).apply {
+
+                    flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+
+                    putExtra(
+                        "USER_ROLE",
+                        prefs.getString(
+                            "CURRENT_USER_ROLE",
+                            "STUDENT"
+                        )
+                    )
+                }
+            )
         }
+
+
         finish()
     }
 
-    private fun setLoading(loading: Boolean) {
-        progress.visibility = if (loading) View.VISIBLE else View.GONE
-        startButton.isEnabled = !loading
-        checkButton.isEnabled = !loading
-        startButton.alpha = if (loading) 0.65f else 1f
-        checkButton.alpha = if (loading) 0.65f else 1f
+
+    private fun setLoading(
+        loading: Boolean
+    ) {
+
+        progress.visibility =
+            if (loading) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+
+        startButton.isEnabled =
+            !loading
+
+
+        /*
+         * اگر دکمه مخفی باشد
+         * وضعیت Enabled مهم نیست.
+         */
+        checkButton.isEnabled =
+            !loading
+
+
+        startButton.alpha =
+            if (loading) {
+                0.65f
+            } else {
+                1f
+            }
+
+
+        checkButton.alpha =
+            if (loading) {
+                0.65f
+            } else {
+                1f
+            }
     }
 
-    private fun showError(message: String) {
-        statusText.text = message
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+    private fun showError(
+        message: String
+    ) {
+
+        statusText.text =
+            message
+
+
+        Toast.makeText(
+            this,
+            message,
+            Toast.LENGTH_LONG
+        ).show()
     }
+
 
     private fun handleBack() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("خروج از حساب")
-            .setMessage("برای ورود به برنامه باید فعال‌سازی اولیه حساب تکمیل شود. آیا می‌خواهید از حساب خارج شوید؟")
-            .setPositiveButton("خروج") { _, _ -> logoutAndReturnToLogin() }
-            .setNegativeButton("ادامه فعال‌سازی", null)
+
+        val message =
+            if (
+                currentPaymentReason ==
+                "ANNUAL_RENEWAL"
+            ) {
+
+                "برای ادامه استفاده از سامانه باید عضویت سالانه تمدید شود. آیا می‌خواهید از حساب خارج شوید؟"
+
+            } else {
+
+                "برای ورود به برنامه باید حق عضویت سالانه پرداخت شود. آیا می‌خواهید از حساب خارج شوید؟"
+            }
+
+
+        MaterialAlertDialogBuilder(
+            this
+        )
+            .setTitle(
+                "خروج از حساب"
+            )
+            .setMessage(
+                message
+            )
+            .setPositiveButton(
+                "خروج"
+            ) { _, _ ->
+
+                logoutAndReturnToLogin()
+            }
+            .setNegativeButton(
+                "ادامه",
+                null
+            )
             .show()
     }
 
+
     private fun logoutAndReturnToLogin() {
-        setLoading(true)
-        RetrofitClient.instance.logout().enqueue(object : Callback<ApiResponse> {
-            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) = clearSessionAndOpenLogin()
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) = clearSessionAndOpenLogin()
-        })
+
+        setLoading(
+            true
+        )
+
+
+        RetrofitClient.instance
+            .logout()
+            .enqueue(
+                object :
+                    Callback<ApiResponse> {
+
+                    override fun onResponse(
+                        call: Call<ApiResponse>,
+                        response: Response<ApiResponse>
+                    ) {
+
+                        clearSessionAndOpenLogin()
+                    }
+
+
+                    override fun onFailure(
+                        call: Call<ApiResponse>,
+                        t: Throwable
+                    ) {
+
+                        clearSessionAndOpenLogin()
+                    }
+                }
+            )
     }
 
+
     private fun clearSessionAndOpenLogin() {
-        getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().clear().apply()
-        startActivity(Intent(this, LoginActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        })
+
+        getSharedPreferences(
+            "LocalAppPrefs",
+            Context.MODE_PRIVATE
+        )
+            .edit()
+            .clear()
+            .apply()
+
+
+        startActivity(
+            Intent(
+                this,
+                LoginActivity::class.java
+            ).apply {
+
+                flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+        )
+
+
         finish()
     }
 }
