@@ -44,17 +44,21 @@ class StudentAdapter(
             }
         )
 
-        val randomNum = (Math.abs(student.id.hashCode()) % 9) + 1
-        val fallback = "avatar_student_$randomNum"
-        val avatar = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
+        val fallback = "avatar_no_profile"
+        val avatarName = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
         val resId = context.resources.getIdentifier(
-            avatar,
+            avatarName,
+            "drawable",
+            context.packageName
+        )
+        val fallbackResId = context.resources.getIdentifier(
+            fallback,
             "drawable",
             context.packageName
         )
 
         holder.ivAvatar.setImageResource(
-            if (resId != 0) resId else R.drawable.avatar_student_1
+            if (resId != 0) resId else fallbackResId
         )
 
         holder.itemView.alpha = if (student.isActive) 1f else 0.68f

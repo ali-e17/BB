@@ -31,9 +31,11 @@ class TeacherAdapter(
     override fun onBindViewHolder(holder: TeacherViewHolder, position: Int) {
         val teacher = teachers[position]
         val context = holder.itemView.context
-        val avatarName = teacher.avatarName?.takeIf { it.isNotBlank() } ?: "avatar_teacher_1"
+        val fallback = "avatar_no_profile"
+        val avatarName = teacher.avatarName?.takeIf { it.isNotBlank() } ?: fallback
         val res = context.resources.getIdentifier(avatarName, "drawable", context.packageName)
-        holder.avatar.setImageResource(if (res != 0) res else R.drawable.avatar_teacher_1)
+        val fallbackRes = context.resources.getIdentifier(fallback, "drawable", context.packageName)
+        holder.avatar.setImageResource(if (res != 0) res else fallbackRes)
         holder.name.text = teacher.name
         holder.phone.text = "شماره تماس: ${teacher.phone}"
         val count = AppDatabase.getTeacherClassesById(teacher.id).size

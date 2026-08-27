@@ -187,7 +187,7 @@ class StudentManagementActivity : BaseActivity() {
                     val normalizedSearch = normalizePersian(search)
                     val normalizedStudent = normalizePersian(
                         "${student.firstName} ${student.lastName} ${student.name} " +
-                            "${student.studentCode} ${student.phone}"
+                                "${student.studentCode} ${student.phone}"
                     )
 
                     val matchesSearch =
@@ -280,7 +280,6 @@ class StudentManagementActivity : BaseActivity() {
             student.registrationDate.ifBlank { "ثبت نشده" }
 
         val avatarView = view.findViewById<ImageView>(R.id.dialogAvatar)
-        val randomNum = (Math.abs(student.id.hashCode()) % 9) + 1
         val fallback = "avatar_no_profile"
         val avatar = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
         val resId = resources.getIdentifier(avatar, "drawable", packageName)

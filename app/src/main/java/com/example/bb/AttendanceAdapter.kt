@@ -47,12 +47,12 @@ class AttendanceAdapter(
             ?.let { "کد: $it" }
             ?: "بدون کد دانش‌آموزی"
 
-        val fallbackNumber = (kotlin.math.abs(record.studentId.hashCode()) % 9) + 1
-        val fallback = "avatar_student_$fallbackNumber"
+        val fallback = "avatar_no_profile"
         val avatarName = record.avatarName?.takeIf { it.isNotBlank() } ?: fallback
         val avatarRes = context.resources.getIdentifier(avatarName, "drawable", context.packageName)
+        val fallbackRes = context.resources.getIdentifier(fallback, "drawable", context.packageName)
         holder.avatar.setImageResource(
-            if (avatarRes != 0) avatarRes else R.drawable.avatar_student_1
+            if (avatarRes != 0) avatarRes else fallbackRes
         )
 
         fun selectedBackground(color: Int): GradientDrawable = GradientDrawable().apply {

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -30,7 +31,10 @@
                 android:id="@+id/tvClassName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="start"
                 android:maxLines="2"
+                android:textAlignment="viewStart"
+                android:textDirection="rtl"
                 android:text="نام کلاس"
                 android:textColor="@color/main_text"
                 android:textSize="15sp"
@@ -41,10 +45,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
+                android:gravity="start"
                 android:maxLines="3"
+                android:textAlignment="viewStart"
+                android:textDirection="rtl"
                 android:text="برنامه کلاس"
                 android:textColor="@color/sub_text"
                 android:textSize="12sp" />
+
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -57,6 +65,7 @@
             android:textSize="12sp"
             app:cornerRadius="11dp"
             app:strokeColor="@color/brand_orange" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -238,7 +238,28 @@ class ClassDetailsActivity : BaseActivity() {
 
             override fun onBindViewHolder(holder: StudentViewHolder, position: Int) {
                 val student = visibleStudents[position]
+                val context = holder.itemView.context
+
                 holder.tvName.text = student.name
+
+                // avatar_no_profile خودش یک آواتار واقعی و قابل انتخاب است.
+                // هیچ آواتار عددداری به عنوان fallback تحمیل نمی‌شود.
+                val fallback = "avatar_no_profile"
+                val avatarName = student.avatarName?.takeIf { it.isNotBlank() } ?: fallback
+                val avatarResId = context.resources.getIdentifier(
+                    avatarName,
+                    "drawable",
+                    context.packageName
+                )
+                val fallbackResId = context.resources.getIdentifier(
+                    fallback,
+                    "drawable",
+                    context.packageName
+                )
+
+                holder.ivAvatar.setImageResource(
+                    if (avatarResId != 0) avatarResId else fallbackResId
+                )
 
                 when (screenMode) {
                     ScreenMode.MEMBERS -> {
@@ -332,6 +353,7 @@ class ClassDetailsActivity : BaseActivity() {
     }
 
     class StudentViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val ivAvatar: ImageView = view.findViewById(R.id.ivStudentAvatar)
         val tvName: TextView = view.findViewById(R.id.tvStudentName)
         val tvDescription: TextView = view.findViewById(R.id.tvStudentPhone)
         val btnAction: MaterialButton = view.findViewById(R.id.btnAction)

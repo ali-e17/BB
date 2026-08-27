@@ -593,7 +593,7 @@ object AppDatabase
                     nationalId = old.getString("student_${i}_nationalId", "").orEmpty(),
                     password = "",
                     classId = old.getString("student_${i}_classId", null),
-                    avatarName = "avatar_student_1"
+                    avatarName = "avatar_no_profile"
                 )
             }
         }
@@ -611,7 +611,7 @@ object AppDatabase
                     password = "",
                     classIds = old.getString("teacher_${i}_classIds", "").orEmpty(),
                     isActive = old.getBoolean("teacher_${i}_isActive", true),
-                    avatarName = "avatar_teacher_1" // مقدار دیفالت برای اساتید قدیمی
+                    avatarName = "avatar_no_profile" // مقدار دیفالت برای اساتید قدیمی
                 )
             }
         }
@@ -635,8 +635,8 @@ object AppDatabase
     private fun save() {
         if (!::appContext.isInitialized) return
         val root = JSONObject()
-        root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("avatarName", admin.avatarName ?: "avatar_admin_1"))
-        root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_student_1")) } })
+        root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("avatarName", admin.avatarName ?: "avatar_no_profile"))
+        root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_no_profile")) } })
 
         // 🌟 ذخیره آواتار اساتید در جیسون لوکال
         root.put(
@@ -656,7 +656,7 @@ object AppDatabase
                             .put("isActive", t.isActive)
                             .put(
                                 "avatarName",
-                                t.avatarName ?: "avatar_teacher_1"
+                                t.avatarName ?: "avatar_no_profile"
                             )
                             .put(
                                 "isManagement",
@@ -763,7 +763,7 @@ object AppDatabase
 
     private fun load(root: JSONObject) {
         students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); announcementReads.clear(); reportCards.clear(); reportCardDrafts.clear()
-        root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), "", it.optString("avatarName", "avatar_admin_1")) }
+        root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), "", it.optString("avatarName", "avatar_no_profile")) }
 
         root.optJSONArray("students").forEachObject { o ->
             val legacyName = o.optString("name")
@@ -779,7 +779,7 @@ object AppDatabase
                 classId = o.optNullableString("classId"),
                 registrationDate = o.optString("registrationDate", AppDatabase.today()),
                 isActive = o.optBoolean("isActive", true),
-                avatarName = o.optString("avatarName", "avatar_student_1")
+                avatarName = o.optString("avatarName", "avatar_no_profile")
             )
         }
 
@@ -806,7 +806,7 @@ object AppDatabase
                 isActive = o.optBoolean("isActive", true),
                 avatarName = o.optString(
                     "avatarName",
-                    "avatar_teacher_1"
+                    "avatar_no_profile"
                 ),
                 isManagement = o.optBoolean(
                     "isManagement",
@@ -973,5 +973,5 @@ object AppDatabase
         admin.avatarName = avatarName
         save()
     }
-    fun getAdminAvatarName(): String = admin.avatarName ?: "avatar_admin_1"
+    fun getAdminAvatarName(): String = admin.avatarName ?: "avatar_no_profile"
 }

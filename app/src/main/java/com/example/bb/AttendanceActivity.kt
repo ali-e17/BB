@@ -4,7 +4,6 @@ package com.example.bb
 import androidx.activity.result.contract.ActivityResultContracts
 import java.io.IOException
 import okhttp3.ResponseBody
-import android.app.DatePickerDialog
 import android.content.Context
 import android.content.res.ColorStateList
 import android.net.Uri
@@ -16,6 +15,7 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -47,6 +47,7 @@ class AttendanceActivity : BaseActivity() {
     private lateinit var spinnerClass: MaterialAutoCompleteTextView
     private lateinit var containerSessions: LinearLayout
     private lateinit var txtSessionTitle: TextView
+    private lateinit var txtSessionCounter: TextView
     private lateinit var txtSessionMeta: TextView
     private lateinit var btnAttendanceDate: MaterialButton
     private lateinit var txtLiveStats: TextView
@@ -100,6 +101,7 @@ class AttendanceActivity : BaseActivity() {
         spinnerClass = findViewById(R.id.spinnerClass)
         containerSessions = findViewById(R.id.containerSessions)
         txtSessionTitle = findViewById(R.id.txtSessionTitle)
+        txtSessionCounter = findViewById(R.id.txtSessionCounter)
         txtSessionMeta = findViewById(R.id.txtSessionMeta)
         btnAttendanceDate = findViewById(R.id.btnAttendanceDate)
         txtLiveStats = findViewById(R.id.txtLiveStats)
@@ -256,7 +258,7 @@ class AttendanceActivity : BaseActivity() {
                             preferredSessionNumber
                         }
                         preferredSessionNumber != null && classIsActive &&
-                            preferredSessionNumber == body.nextSessionNumber -> {
+                                preferredSessionNumber == body.nextSessionNumber -> {
                             preferredSessionNumber
                         }
                         classIsActive && body.nextSessionNumber != null -> body.nextSessionNumber
@@ -390,16 +392,28 @@ class AttendanceActivity : BaseActivity() {
 
     private fun bindSession(session: AttendanceSessionResponse) {
         hideEmpty()
-        txtSessionTitle.text = "جلسه ${session.sessionNumber} از ${session.sessionCount}"
-        txtSessionMeta.text = if (session.isFinalized) {
-            buildString {
+        txtSessionTitle.text = if (session.isFinalized) {
+            "جزئیات حضور و غیاب"
+        } else {
+            "ثبت حضور و غیاب"
+        }
+
+        txtSessionCounter.text =
+            "جلسه ${session.sessionNumber} از ${session.sessionCount}"
+
+        if (session.isFinalized) {
+            txtSessionMeta.visibility = View.VISIBLE
+            txtSessionMeta.text = buildString {
                 append("ثبت نهایی")
                 session.finalizedByName?.takeIf { it.isNotBlank() }?.let { append(" توسط $it") }
                 session.finalizedAt?.takeIf { it.isNotBlank() }?.let { append(" • ${displayDateTime(it)}") }
                 if (session.revision > 1) append(" • ویرایش ${session.revision - 1} بار")
             }
         } else {
-            "جلسه بعدی کلاس؛ تاریخ هنگام ثبت نهایی ذخیره می‌شود"
+            // متن قدیمی «جلسه بعدی کلاس؛ تاریخ هنگام ثبت نهایی ذخیره می‌شود»
+            // حذف شده تا کارت جلسه تمیزتر و مستقیم‌تر باشد.
+            txtSessionMeta.text = ""
+            txtSessionMeta.visibility = View.GONE
         }
 
         if (session.isFinalized) {
@@ -710,8 +724,8 @@ class AttendanceActivity : BaseActivity() {
             .setTitle("ثبت نهایی جلسه ${session.sessionNumber}")
             .setMessage(
                 "تاریخ برگزاری: ${displayDate(selectedHeldDate)}\n\n" +
-                    "$summary\n\n" +
-                    "پس از ثبت، استاد امکان ویرایش ندارد و اعلان غیبت یا تأخیر به‌صورت خودکار برای دانش‌آموز مربوطه ساخته می‌شود."
+                        "$summary\n\n" +
+                        "پس از ثبت، استاد امکان ویرایش ندارد و اعلان غیبت یا تأخیر به‌صورت خودکار برای دانش‌آموز مربوطه ساخته می‌شود."
             )
             .setNegativeButton("بازبینی", null)
             .setPositiveButton("ثبت نهایی") { _, _ -> submitFinalize(session) }
@@ -730,8 +744,8 @@ class AttendanceActivity : BaseActivity() {
             .setTitle("ذخیره اصلاحات جلسه ${session.sessionNumber}")
             .setMessage(
                 "تاریخ برگزاری: ${displayDate(selectedHeldDate)}\n\n" +
-                    "${attendanceSummary()}\n\n" +
-                    "این تغییر در سابقه مدیریتی ثبت می‌شود و اعلان اصلاح‌شده برای افراد مرتبط دوباره خوانده‌نشده خواهد شد."
+                        "${attendanceSummary()}\n\n" +
+                        "این تغییر در سابقه مدیریتی ثبت می‌شود و اعلان اصلاح‌شده برای افراد مرتبط دوباره خوانده‌نشده خواهد شد."
             )
             .setView(reasonInput)
             .setNegativeButton("انصراف", null)
@@ -853,28 +867,257 @@ class AttendanceActivity : BaseActivity() {
     }
 
     private fun showDatePicker(onDateSelected: (() -> Unit)? = null) {
-        val calendar = parseIsoDate(selectedHeldDate) ?: Calendar.getInstance()
-        val dialog = DatePickerDialog(
-            this,
-            { _, year, month, dayOfMonth ->
-                val selected = Calendar.getInstance().apply {
-                    set(Calendar.YEAR, year)
-                    set(Calendar.MONTH, month)
-                    set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                }
-                if (selected.after(Calendar.getInstance())) {
-                    Toast.makeText(this, "تاریخ آینده قابل ثبت نیست", Toast.LENGTH_SHORT).show()
+        val initialGregorian =
+            parseIsoDate(selectedHeldDate)
+                ?: Calendar.getInstance()
+
+        val initialPersian =
+            PersianDateUtils.gregorianToPersian(
+                initialGregorian.get(Calendar.YEAR),
+                initialGregorian.get(Calendar.MONTH) + 1,
+                initialGregorian.get(Calendar.DAY_OF_MONTH)
+            )
+
+        val now = Calendar.getInstance()
+        val todayPersian =
+            PersianDateUtils.gregorianToPersian(
+                now.get(Calendar.YEAR),
+                now.get(Calendar.MONTH) + 1,
+                now.get(Calendar.DAY_OF_MONTH)
+            )
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+        }
+
+        val dayPicker = NumberPicker(this).apply {
+            wrapSelectorWheel = false
+        }
+
+        val monthPicker = NumberPicker(this).apply {
+            minValue = 1
+            maxValue = 12
+            displayedValues = PersianDateUtils.monthNames
+            wrapSelectorWheel = false
+        }
+
+        val yearPicker = NumberPicker(this).apply {
+            minValue = 1300
+            maxValue = todayPersian.year
+            wrapSelectorWheel = false
+        }
+
+        fun updateYearLabels() {
+            yearPicker.displayedValues = null
+            yearPicker.displayedValues =
+                (yearPicker.minValue..yearPicker.maxValue)
+                    .map {
+                        PersianDateUtils.toPersianDigits(
+                            it.toString()
+                        )
+                    }
+                    .toTypedArray()
+        }
+
+        fun updateMonthBounds() {
+            val selectedYear = yearPicker.value
+
+            monthPicker.displayedValues = null
+            monthPicker.minValue = 1
+            monthPicker.maxValue =
+                if (selectedYear == todayPersian.year) {
+                    todayPersian.month
                 } else {
-                    selectedHeldDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(selected.time)
-                    btnAttendanceDate.text = "تاریخ برگزاری: ${displayDate(selectedHeldDate)}"
+                    12
+                }
+
+            monthPicker.displayedValues =
+                PersianDateUtils.monthNames
+                    .copyOfRange(
+                        0,
+                        monthPicker.maxValue
+                    )
+
+            if (monthPicker.value > monthPicker.maxValue) {
+                monthPicker.value = monthPicker.maxValue
+            }
+        }
+
+        fun updateDayBounds() {
+            val selectedYear = yearPicker.value
+            val selectedMonth = monthPicker.value
+
+            val monthLength =
+                PersianDateUtils.monthLength(
+                    selectedYear,
+                    selectedMonth
+                )
+
+            val maxDay =
+                if (
+                    selectedYear == todayPersian.year &&
+                    selectedMonth == todayPersian.month
+                ) {
+                    minOf(
+                        monthLength,
+                        todayPersian.day
+                    )
+                } else {
+                    monthLength
+                }
+
+            val currentDay =
+                dayPicker.value
+                    .takeIf { it > 0 }
+                    ?: 1
+
+            dayPicker.displayedValues = null
+            dayPicker.minValue = 1
+            dayPicker.maxValue = maxDay
+            dayPicker.displayedValues =
+                (1..maxDay)
+                    .map {
+                        PersianDateUtils.toPersianDigits(
+                            it.toString()
+                        )
+                    }
+                    .toTypedArray()
+
+            dayPicker.value =
+                currentDay.coerceIn(
+                    1,
+                    maxDay
+                )
+        }
+
+        updateYearLabels()
+
+        yearPicker.value =
+            initialPersian.year.coerceIn(
+                yearPicker.minValue,
+                yearPicker.maxValue
+            )
+
+        updateMonthBounds()
+
+        monthPicker.value =
+            initialPersian.month.coerceIn(
+                monthPicker.minValue,
+                monthPicker.maxValue
+            )
+
+        updateDayBounds()
+
+        dayPicker.value =
+            initialPersian.day.coerceIn(
+                dayPicker.minValue,
+                dayPicker.maxValue
+            )
+
+        yearPicker.setOnValueChangedListener { _, _, _ ->
+            updateMonthBounds()
+            updateDayBounds()
+        }
+
+        monthPicker.setOnValueChangedListener { _, _, _ ->
+            updateDayBounds()
+        }
+
+        container.addView(
+            dayPicker,
+            LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                0.8f
+            )
+        )
+
+        container.addView(
+            monthPicker,
+            LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1.4f
+            )
+        )
+
+        container.addView(
+            yearPicker,
+            LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        )
+
+        val dialog =
+            MaterialAlertDialogBuilder(this)
+                .setTitle("انتخاب تاریخ برگزاری (شمسی)")
+                .setView(container)
+                .setNegativeButton("انصراف", null)
+                .setPositiveButton("تأیید", null)
+                .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener {
+                    val persianYear = yearPicker.value
+                    val persianMonth = monthPicker.value
+                    val persianDay = dayPicker.value
+
+                    val gregorian =
+                        PersianDateUtils.persianToGregorian(
+                            persianYear,
+                            persianMonth,
+                            persianDay
+                        )
+
+                    val selected = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, gregorian.year)
+                        set(Calendar.MONTH, gregorian.month - 1)
+                        set(Calendar.DAY_OF_MONTH, gregorian.day)
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+
+                    val today = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, 23)
+                        set(Calendar.MINUTE, 59)
+                        set(Calendar.SECOND, 59)
+                        set(Calendar.MILLISECOND, 999)
+                    }
+
+                    if (selected.after(today)) {
+                        Toast.makeText(
+                            this,
+                            "تاریخ آینده قابل ثبت نیست",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setOnClickListener
+                    }
+
+                    selectedHeldDate =
+                        String.format(
+                            Locale.US,
+                            "%04d-%02d-%02d",
+                            gregorian.year,
+                            gregorian.month,
+                            gregorian.day
+                        )
+
+                    btnAttendanceDate.text =
+                        "تاریخ برگزاری: ${displayDate(selectedHeldDate)}"
+
+                    dialog.dismiss()
                     onDateSelected?.invoke()
                 }
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        )
-        dialog.datePicker.maxDate = System.currentTimeMillis()
+        }
+
         dialog.show()
     }
 
@@ -913,9 +1156,38 @@ class AttendanceActivity : BaseActivity() {
         return normalized
     }
 
-    private fun displayDate(value: String): String = value.replace('-', '/')
+    private fun displayDate(value: String): String {
+        val calendar = parseIsoDate(value) ?: return value.replace('-', '/')
 
-    private fun displayDateTime(value: String): String = value.replace('-', '/')
+        val persian =
+            PersianDateUtils.gregorianToPersian(
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH) + 1,
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
+
+        return PersianDateUtils.toPersianDigits(
+            String.format(
+                Locale.US,
+                "%04d/%02d/%02d",
+                persian.year,
+                persian.month,
+                persian.day
+            )
+        )
+    }
+
+    private fun displayDateTime(value: String): String {
+        if (value.length < 10) {
+            return value.replace('-', '/')
+        }
+
+        val datePart = value.substring(0, 10)
+        val suffix = value.substring(10)
+
+        return displayDate(datePart) +
+                PersianDateUtils.toPersianDigits(suffix)
+    }
 
     private fun parseIsoDate(value: String): Calendar? = runCatching {
         val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(value)

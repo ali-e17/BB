@@ -3,6 +3,7 @@ package com.example.bb
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -45,6 +46,7 @@ class MainActivity : BaseActivity() {
         }.getOrDefault(UserRole.STUDENT)
 
         setupHeader(prefs)
+        setupTopBarWebsiteLink()
         setupThemeButton()
         setupProfileButton()
         setupDashboard(currentUserId)
@@ -75,6 +77,28 @@ class MainActivity : BaseActivity() {
         }
 
         txtRoleBadge.visibility = View.VISIBLE
+    }
+
+    /**
+     * باز کردن سایت آموزشگاه با لمس عنوان وسط Top Bar
+     */
+    private fun setupTopBarWebsiteLink() {
+        findViewById<TextView>(R.id.txtTopBarSchoolName).setOnClickListener {
+            runCatching {
+                startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse(SCHOOL_WEBSITE_URL)
+                    )
+                )
+            }.onFailure {
+                Toast.makeText(
+                    this,
+                    "امکان باز کردن سایت آموزشگاه وجود ندارد",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     /**
@@ -500,6 +524,9 @@ class MainActivity : BaseActivity() {
 
         private const val PREF_IS_DARK_MODE =
             "IS_DARK_MODE"
+
+        private const val SCHOOL_WEBSITE_URL =
+            "https://bayan-e-bartar.ir/"
 
         private const val LANGUAGE_FA = "fa"
         private const val LANGUAGE_EN = "en"
