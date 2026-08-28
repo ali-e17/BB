@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -137,6 +138,51 @@ class ReportCardViewActivity : BaseActivity() {
 
         renderScoreTable(card)
         renderResultSummary(card)
+
+        /*
+         * پیش‌نمایش و PDF باید تمام اعداد را با رقم انگلیسی نمایش دهند.
+         * PDF از همین printableArea تصویر می‌گیرد؛ بنابراین با یکسان‌سازی
+         * همین View، هر دو خروجی دقیقاً یکسان خواهند بود.
+         */
+        forceEnglishDigitsInPrintableArea()
+    }
+
+    private fun forceEnglishDigitsInPrintableArea() {
+        forceEnglishDigitsRecursively(
+            printableArea
+        )
+        printableArea.invalidate()
+    }
+
+    private fun forceEnglishDigitsRecursively(
+        view: View
+    ) {
+        if (view is TextView) {
+            view.tag =
+                FORCE_ENGLISH_DIGITS_TAG
+
+            val normalized =
+                UiTextFormatter.normalizeEnglishDigits(
+                    view.text
+                )
+
+            /*
+             * حتی اگر متن منبع از قبل ASCII باشد، دوباره setText می‌کنیم
+             * تا TransformationMethod بعد از تغییر tag فوراً بازاجرا شود.
+             */
+            view.text = normalized
+        }
+
+        if (view is ViewGroup) {
+            for (
+            index in
+            0 until view.childCount
+            ) {
+                forceEnglishDigitsRecursively(
+                    view.getChildAt(index)
+                )
+            }
+        }
     }
 
     private fun renderScoreTable(card: ReportCardDto) {
@@ -436,7 +482,11 @@ class ReportCardViewActivity : BaseActivity() {
     )
 
     companion object {
-        const val EXTRA_REPORT_CARD_ID = "REPORT_CARD_ID"
+        const val EXTRA_REPORT_CARD_ID =
+            "REPORT_CARD_ID"
+
+        private const val FORCE_ENGLISH_DIGITS_TAG =
+            "force_english_digits"
 
         val DEFAULT_RESULT_MESSAGES: Map<String, String> = linkedMapOf(
             "FIVE_STAR" to "FABULOUS! Perfect score! This is to certify that you have participated in the term and level above. Your success in learning a new language is our strong desire.",

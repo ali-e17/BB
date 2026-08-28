@@ -1,94 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layoutDirection="rtl"
-    android:orientation="vertical">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:minHeight="52dp"
-        android:orientation="horizontal"
-        android:paddingHorizontal="4dp"
-        android:paddingVertical="4dp">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingEnd="8dp">
-
-            <TextView
-                android:id="@+id/txtCompactCriterion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:breakStrategy="simple"
-                android:gravity="right"
-                android:hyphenationFrequency="none"
-                android:maxLines="2"
-                android:textColor="@color/main_text"
-                android:textDirection="firstStrong"
-                android:textSize="12.5sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtCompactMax"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:gravity="right"
-                android:maxLines="1"
-                android:textColor="@color/sub_text"
-                android:textSize="9.5sp" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="wrap_content" android:layoutDirection="rtl" android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:minHeight="52dp" android:orientation="horizontal" android:paddingHorizontal="4dp" android:paddingVertical="4dp">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:paddingEnd="8dp">
+            <TextView android:id="@+id/txtCompactCriterion" android:layout_width="match_parent" android:layout_height="wrap_content" android:breakStrategy="simple" android:gravity="right" android:hyphenationFrequency="none" android:maxLines="2" android:textColor="@color/main_text" android:textDirection="firstStrong" android:textSize="12.5sp" android:textStyle="bold"/>
+            <TextView android:id="@+id/txtCompactMax" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:gravity="right" android:maxLines="1" android:textColor="@color/sub_text" android:textSize="9.5sp"/>
         </LinearLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="76dp"
-            android:layout_height="46dp"
-            app:boxCornerRadiusBottomEnd="10dp"
-            app:boxCornerRadiusBottomStart="10dp"
-            app:boxCornerRadiusTopEnd="10dp"
-            app:boxCornerRadiusTopStart="10dp"
-            app:boxStrokeColor="@color/title_blue"
-            app:hintEnabled="false">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etCompactScore"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:inputType="numberDecimal"
-                android:maxLines="1"
-                android:padding="0dp"
-                android:textColor="@color/input_text"
-                android:textSize="13sp" />
+        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="76dp" android:layout_height="46dp" app:boxCornerRadiusBottomEnd="10dp" app:boxCornerRadiusBottomStart="10dp" app:boxCornerRadiusTopEnd="10dp" app:boxCornerRadiusTopStart="10dp" app:boxStrokeColor="@color/title_blue" app:hintEnabled="false">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCompactScore" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:imeOptions="actionNext" android:inputType="numberDecimal" android:maxLines="1" android:selectAllOnFocus="true" android:singleLine="true" android:padding="0dp" android:textColor="@color/input_text" android:textSize="13sp"/>
         </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCompactZero"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="72dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="7dp"
-            android:minWidth="0dp"
-            android:paddingHorizontal="5dp"
-            android:text="غیبت / ۰"
-            android:textAllCaps="false"
-            android:textColor="@color/brand_orange"
-            android:textSize="9.5sp"
-            app:cornerRadius="10dp"
-            app:strokeColor="@color/brand_orange" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnCompactZero" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="72dp" android:layout_height="40dp" android:layout_marginStart="7dp" android:minWidth="0dp" android:paddingHorizontal="5dp" android:text="غیبت / ۰" android:textAllCaps="false" android:textColor="@color/brand_orange" android:textSize="9.5sp" app:cornerRadius="10dp" app:strokeColor="@color/brand_orange"/>
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#183559B8" />
-
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#183559B8"/>
 </LinearLayout>

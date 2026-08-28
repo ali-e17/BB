@@ -1,18 +1,26 @@
 package com.example.bb
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -34,6 +42,11 @@ class GradeEntryActivity : BaseActivity() {
     private lateinit var studentsCountText: TextView
     private lateinit var readyCountText: TextView
     private lateinit var incompleteCountText: TextView
+    private lateinit var gradeSummaryCard: View
+
+    private var baseRecyclerPaddingBottom: Int = 0
+    private var currentImeBottom: Int = 0
+    private var currentNavigationBottom: Int = 0
 
     private var config: ReportConfigDto? = null
     private val students = mutableListOf<EditableStudent>()
@@ -57,6 +70,7 @@ class GradeEntryActivity : BaseActivity() {
         findViewById<TextView>(R.id.txtGradeSubtitle).text =
             "مرحله ۳ از ۳ • ثبت نمرات کارنامه"
 
+        gradeSummaryCard = findViewById(R.id.cardGradeSummary)
         rvStudents = findViewById(R.id.rvStudents)
         draftButton = findViewById(R.id.btnSaveDraft)
         publishButton = findViewById(R.id.btnPublishReports)
@@ -68,12 +82,226 @@ class GradeEntryActivity : BaseActivity() {
         rvStudents.layoutManager = LinearLayoutManager(this)
         adapter = RosterAdapter()
         rvStudents.adapter = adapter
+        setupKeyboardAwareScoreEntry()
 
         draftButton.setOnClickListener { save(publish = false) }
         publishButton.setOnClickListener { requestPublish() }
 
         updateSummary()
         loadRoster()
+    }
+
+    /**
+     * مدیریت IME برای صفحه ورود نمرات.
+     *
+     * اپ به‌صورت edge-to-edge اجرا می‌شود؛ بنابراین adjustResize روی همه
+     * دستگاه‌ها کافی نیست. ارتفاع واقعی کیبورد به فضای قابل اسکرول
+     * RecyclerView اضافه می‌شود تا فیلد فعال پشت کیبورد نرود.
+     */
+    private fun setupKeyboardAwareScoreEntry() {
+        baseRecyclerPaddingBottom = rvStudents.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(rvStudents) { _, insets ->
+            applyImeInsets(insets)
+            insets
+        }
+
+        ViewCompat.setWindowInsetsAnimationCallback(
+            rvStudents,
+            object : WindowInsetsAnimationCompat.Callback(
+                WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE
+            ) {
+                override fun onProgress(
+                    insets: WindowInsetsCompat,
+                    runningAnimations: MutableList<WindowInsetsAnimationCompat>
+                ): WindowInsetsCompat {
+                    applyImeInsets(insets)
+                    return insets
+                }
+
+                override fun onEnd(animation: WindowInsetsAnimationCompat) {
+                    super.onEnd(animation)
+                    val focused = currentFocus
+                    if (focused != null && isDescendantOfRecycler(focused)) {
+                        focused.postDelayed(
+                            { ensureScoreInputVisible(focused, smooth = false) },
+                            40
+                        )
+                    }
+                }
+            }
+        )
+
+        ViewCompat.requestApplyInsets(rvStudents)
+    }
+
+    private fun applyImeInsets(insets: WindowInsetsCompat) {
+        val imeBottom =
+            insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+        val navigationBottom =
+            insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+        val imeVisible =
+            insets.isVisible(WindowInsetsCompat.Type.ime())
+
+        currentImeBottom =
+            if (imeVisible) imeBottom else 0
+        currentNavigationBottom =
+            navigationBottom
+
+        val extraBottom = if (imeVisible) {
+            maxOf(
+                0,
+                imeBottom - navigationBottom
+            )
+        } else {
+            0
+        }
+
+        val wantedBottom =
+            baseRecyclerPaddingBottom + extraBottom
+
+        if (rvStudents.paddingBottom != wantedBottom) {
+            rvStudents.setPadding(
+                rvStudents.paddingLeft,
+                rvStudents.paddingTop,
+                rvStudents.paddingRight,
+                wantedBottom
+            )
+        }
+
+        if (imeVisible) {
+            val focused = currentFocus
+            if (focused != null && isDescendantOfRecycler(focused)) {
+                focused.post {
+                    ensureScoreInputVisible(
+                        focused,
+                        smooth = false
+                    )
+                }
+            }
+        }
+    }
+
+    private fun isDescendantOfRecycler(view: View): Boolean {
+        var current: View? = view
+
+        while (current != null) {
+            if (current === rvStudents) {
+                return true
+            }
+            current = current.parent as? View
+        }
+
+        return false
+    }
+
+    /**
+     * هر فیلد نمره را داخل ناحیه قابل مشاهده و بالای کیبورد نگه می‌دارد.
+     */
+    private fun ensureScoreInputVisible(
+        field: View,
+        smooth: Boolean = true
+    ) {
+        if (!field.isAttachedToWindow) return
+
+        field.post {
+            if (!field.isAttachedToWindow) {
+                return@post
+            }
+
+            val fieldRect = Rect()
+            if (!field.getGlobalVisibleRect(fieldRect)) {
+                return@post
+            }
+
+            val rootView = field.rootView
+            val keyboardTop = if (currentImeBottom > 0) {
+                rootView.height - currentImeBottom
+            } else {
+                rootView.height - currentNavigationBottom
+            }
+
+            val safeBottom =
+                keyboardTop - dp(20)
+
+            val summaryRect = Rect()
+            gradeSummaryCard.getGlobalVisibleRect(summaryRect)
+            val safeTop =
+                summaryRect.bottom + dp(8)
+
+            when {
+                fieldRect.bottom > safeBottom -> {
+                    val delta =
+                        fieldRect.bottom - safeBottom + dp(18)
+
+                    if (smooth) {
+                        rvStudents.smoothScrollBy(0, delta)
+                    } else {
+                        rvStudents.scrollBy(0, delta)
+                    }
+                }
+
+                fieldRect.top < safeTop -> {
+                    val delta =
+                        fieldRect.top - safeTop - dp(8)
+
+                    if (smooth) {
+                        rvStudents.smoothScrollBy(0, delta)
+                    } else {
+                        rvStudents.scrollBy(0, delta)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun focusScoreField(
+        field: TextInputEditText
+    ) {
+        field.requestFocus()
+
+        val length =
+            field.text?.length ?: 0
+
+        if (length > 0) {
+            field.setSelection(
+                0,
+                length
+            )
+        }
+
+        ensureScoreInputVisible(field)
+
+        field.postDelayed({
+            val imm =
+                getSystemService(
+                    Context.INPUT_METHOD_SERVICE
+                ) as InputMethodManager
+
+            imm.showSoftInput(
+                field,
+                InputMethodManager.SHOW_IMPLICIT
+            )
+
+            field.postDelayed({
+                ensureScoreInputVisible(
+                    field,
+                    smooth = false
+                )
+            }, 260)
+        }, 50)
+    }
+
+    private fun hideKeyboard(view: View) {
+        val imm =
+            getSystemService(
+                Context.INPUT_METHOD_SERVICE
+            ) as InputMethodManager
+
+        imm.hideSoftInputFromWindow(
+            view.windowToken,
+            0
+        )
     }
 
     private fun loadRoster() {
@@ -397,6 +625,8 @@ class GradeEntryActivity : BaseActivity() {
 
             holder.containerGrades.removeAllViews()
             val inflater = LayoutInflater.from(holder.itemView.context)
+            val scoreInputs =
+                mutableListOf<TextInputEditText>()
 
             components.forEach { component ->
                 val row = inflater.inflate(
@@ -412,6 +642,22 @@ class GradeEntryActivity : BaseActivity() {
 
                 val input =
                     row.findViewById<TextInputEditText>(R.id.etCompactScore)
+
+                input.setSelectAllOnFocus(true)
+                input.setOnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus) {
+                        ensureScoreInputVisible(input)
+
+                        input.postDelayed({
+                            ensureScoreInputVisible(
+                                input,
+                                smooth = false
+                            )
+                        }, 280)
+                    }
+                }
+
+                scoreInputs += input
 
                 student.scores[component.id]?.let {
                     input.setText(format(it))
@@ -439,7 +685,10 @@ class GradeEntryActivity : BaseActivity() {
                     ) = Unit
 
                     override fun afterTextChanged(s: Editable?) {
-                        val raw = s?.toString()?.trim().orEmpty()
+                        val raw =
+                            UiTextFormatter.normalizeEnglishDigits(
+                                s?.toString()?.trim().orEmpty()
+                            )
                         val value = raw.toDoubleOrNull()
 
                         when {
@@ -449,8 +698,8 @@ class GradeEntryActivity : BaseActivity() {
                             }
 
                             value == null ||
-                                value < 0.0 ||
-                                value > component.maxScore -> {
+                                    value < 0.0 ||
+                                    value > component.maxScore -> {
                                 student.scores[component.id] = null
                                 input.error =
                                     "۰ تا ${format(component.maxScore)}"
@@ -468,6 +717,55 @@ class GradeEntryActivity : BaseActivity() {
                 })
 
                 holder.containerGrades.addView(row)
+            }
+
+            scoreInputs.forEachIndexed { index, input ->
+                val isLast =
+                    index == scoreInputs.lastIndex
+
+                input.imeOptions =
+                    if (isLast) {
+                        EditorInfo.IME_ACTION_DONE
+                    } else {
+                        EditorInfo.IME_ACTION_NEXT
+                    }
+
+                input.setOnEditorActionListener {
+                        view,
+                        actionId,
+                        event ->
+
+                    val enterPressed =
+                        event?.let {
+                            it.keyCode == KeyEvent.KEYCODE_ENTER &&
+                                    it.action == KeyEvent.ACTION_DOWN
+                        } == true
+
+                    when {
+                        !isLast &&
+                                (
+                                        actionId == EditorInfo.IME_ACTION_NEXT ||
+                                                enterPressed
+                                        ) -> {
+                            focusScoreField(
+                                scoreInputs[index + 1]
+                            )
+                            true
+                        }
+
+                        isLast &&
+                                (
+                                        actionId == EditorInfo.IME_ACTION_DONE ||
+                                                enterPressed
+                                        ) -> {
+                            hideKeyboard(view)
+                            view.clearFocus()
+                            true
+                        }
+
+                        else -> false
+                    }
+                }
             }
         }
 
