@@ -35,9 +35,15 @@ class AnnouncementAdapter(
         val isRead = item.isRead
 
         holder.txtSender.text = item.senderName
-        holder.txtDate.text = item.createdAt
-        holder.txtTitle.text = item.title
-        applyDynamicAlignment(holder.txtTitle, item.title)
+
+        holder.txtDate.text =
+            PersianDateUtils.formatDateTime(item.createdAt)
+
+        val displayTitle =
+            PersianDateUtils.convertGregorianDatesInText(item.title)
+
+        holder.txtTitle.text = displayTitle
+        applyDynamicAlignment(holder.txtTitle, displayTitle)
 
         holder.txtSender.setTypeface(null, if (isRead) Typeface.NORMAL else Typeface.BOLD)
         holder.txtTitle.setTypeface(null, if (isRead) Typeface.NORMAL else Typeface.BOLD)

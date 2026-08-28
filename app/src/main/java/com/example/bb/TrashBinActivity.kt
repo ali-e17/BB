@@ -121,9 +121,29 @@ class TrashBinActivity : BaseActivity() {
         }
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = Holder(LayoutInflater.from(parent.context).inflate(R.layout.item_trash, parent, false))
         override fun onBindViewHolder(h: Holder, position: Int) {
-            val item = items[position]; h.name.text = item.name
-            h.meta.text = listOf(item.code.takeIf { it.isNotBlank() }?.let { "کد: $it" }, item.deletedAt.takeIf { it.isNotBlank() }?.let { "حذف: $it" }, item.reason.takeIf { it.isNotBlank() }).filterNotNull().joinToString("  •  ")
-            h.restore.setOnClickListener { restore(item) }; h.delete.setOnClickListener { delete(item) }
+            val item = items[position]
+            h.name.text = item.name
+
+            h.meta.text =
+                listOf(
+                    item.code
+                        .takeIf { it.isNotBlank() }
+                        ?.let { "کد: $it" },
+
+                    item.deletedAt
+                        .takeIf { it.isNotBlank() }
+                        ?.let {
+                            "حذف: ${PersianDateUtils.formatDateTime(it)}"
+                        },
+
+                    item.reason
+                        .takeIf { it.isNotBlank() }
+                )
+                    .filterNotNull()
+                    .joinToString("  •  ")
+
+            h.restore.setOnClickListener { restore(item) }
+            h.delete.setOnClickListener { delete(item) }
         }
         override fun getItemCount() = items.size
     }

@@ -76,8 +76,10 @@ class AnnouncementDetailActivity : BaseActivity() {
 
     private fun render() {
         val titleView = findViewById<TextView>(R.id.txtDetailToolbarTitle)
-        titleView.text = announcement.title
-        applyCenteredDirection(titleView, announcement.title)
+        val displayTitle =
+            PersianDateUtils.convertGregorianDatesInText(announcement.title)
+        titleView.text = displayTitle
+        applyCenteredDirection(titleView, displayTitle)
 
         findViewById<TextView>(R.id.txtDetailSender).text = announcement.senderName
         findViewById<TextView>(R.id.txtDetailRole).text = when (announcement.senderRole) {
@@ -85,12 +87,15 @@ class AnnouncementDetailActivity : BaseActivity() {
             AnnouncementSenderRole.TEACHER -> "استاد"
             AnnouncementSenderRole.SYSTEM -> "سامانه"
         }
-        findViewById<TextView>(R.id.txtDetailDate).text = announcement.createdAt
+        findViewById<TextView>(R.id.txtDetailDate).text =
+            PersianDateUtils.formatDateTime(announcement.createdAt)
         findViewById<TextView>(R.id.txtDetailTarget).text = targetSummary(announcement)
 
         val bodyView = findViewById<TextView>(R.id.txtDetailBody)
-        bodyView.text = announcement.body
-        applyDynamicAlignment(bodyView, announcement.body, Gravity.TOP)
+        val displayBody =
+            PersianDateUtils.convertGregorianDatesInText(announcement.body)
+        bodyView.text = displayBody
+        applyDynamicAlignment(bodyView, displayBody, Gravity.TOP)
 
         renderAttachment()
     }

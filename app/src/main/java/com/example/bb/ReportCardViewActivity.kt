@@ -405,11 +405,11 @@ class ReportCardViewActivity : BaseActivity() {
         setStroke(dp(1), strokeColor)
     }
 
-    private fun formatPublishedDate(value: String?): String {
-        val normalized = value.orEmpty().trim()
-        if (normalized.isBlank()) return "—"
-        return normalized.substringBefore('T').substringBefore(' ').ifBlank { "—" }
-    }
+    private fun formatPublishedDate(value: String?): String =
+        PersianDateUtils.formatDate(
+            value,
+            fallback = "—"
+        )
 
     private fun format(value: Double): String =
         if (value % 1.0 == 0.0) value.toInt().toString()

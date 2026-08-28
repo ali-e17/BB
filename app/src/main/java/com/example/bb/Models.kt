@@ -32,16 +32,40 @@ data class StudentModel(
     var lastName: String,
     var studentCode: String = "",
     var phone: String,
-    var nationalId: String,
+    var nationalId: String = "",
     var password: String = "",
     var classId: String? = null,
     var registrationDate: String = AppDatabase.today(),
     var isActive: Boolean = true,
     var avatarName: String? = "avatar_no_profile",
-    var accountStatus: String = "ACTIVE"
+    var accountStatus: String = "ACTIVE",
+
+    // NATIONAL = ایرانی / FOREIGN = اتباع
+    var identityType: String = "NATIONAL",
+
+    // ایرانی = کد ملی / اتباع = کد یا شناسه ۱۲ رقمی اتباع
+    var identityCode: String = "",
+
+    // فقط برای دانش‌آموز اتباع پر می‌شود
+    var foreignCode: String = "",
+
+    // true یعنی شناسه ۱۲ رقمی را Backend ساخته است
+    var foreignCodeGenerated: Boolean = false,
+
+    // Username واقعی حساب کاربری
+    var username: String = ""
 ) : Serializable {
+
     val name: String
         get() = "$firstName $lastName"
+
+    val isForeign: Boolean
+        get() = identityType.equals("FOREIGN", ignoreCase = true)
+
+    val displayIdentityCode: String
+        get() = identityCode.ifBlank {
+            if (isForeign) foreignCode else nationalId
+        }
 }
 
 data class TeacherModel(
@@ -223,7 +247,12 @@ object AppDatabase
     fun getDisplayName(role: UserRole, identity: String): String = when (role) {
         UserRole.ADMIN -> admin.name
         UserRole.TEACHER -> teachers.find { it.id == identity || it.nationalId == identity }?.name ?: identity
-        UserRole.STUDENT -> students.find { it.id == identity || it.nationalId == identity }?.name ?: identity
+        UserRole.STUDENT -> students.find {
+            it.id == identity ||
+                    it.nationalId == identity ||
+                    it.foreignCode == identity ||
+                    it.username == identity
+        }?.name ?: identity
     }
 
     @Deprecated("تغییر رمز فقط باید از API امن انجام شود")
@@ -243,7 +272,11 @@ object AppDatabase
         return students.find { normalizePhone(it.phone) == normalized }
     }
     fun searchStudents(query: String): List<StudentModel> = students.filter {
-        it.name.contains(query, true) || it.studentCode.contains(query, true) || it.phone.contains(query)
+        it.name.contains(query, true) ||
+                it.studentCode.contains(query, true) ||
+                it.phone.contains(query) ||
+                it.displayIdentityCode.contains(query) ||
+                it.username.contains(query)
     }
     fun getStudentsInClass(classId: String): List<StudentModel> = students.filter { it.classId == classId && it.isActive }
     fun getStudentsEverInClass(classId: String): List<StudentModel> {
@@ -252,9 +285,33 @@ object AppDatabase
     }
 
     fun upsertStudent(student: StudentModel, originalPhone: String? = null): String? {
-        // Shared parent phones are valid. Internal ID and national ID remain unique.
-        if (students.any { it.nationalId == student.nationalId && it.id != student.id }) return "این کد ملی قبلاً ثبت شده است"
-        if (students.any { it.studentCode == student.studentCode && it.id != student.id && student.studentCode.isNotBlank() }) return "این کد دانش‌آموزی قبلاً ثبت شده است"
+        // شماره تماس والد می‌تواند مشترک باشد؛ شناسه هویتی و کد دانش‌آموزی باید یکتا باشند.
+        if (student.isForeign) {
+            if (student.foreignCode.isNotBlank() && students.any {
+                    it.id != student.id &&
+                            it.identityType.equals("FOREIGN", ignoreCase = true) &&
+                            it.foreignCode == student.foreignCode
+                }) {
+                return "این کد اتباع قبلاً ثبت شده است"
+            }
+        } else {
+            if (student.nationalId.isNotBlank() && students.any {
+                    it.id != student.id &&
+                            !it.identityType.equals("FOREIGN", ignoreCase = true) &&
+                            it.nationalId == student.nationalId
+                }) {
+                return "این کد ملی قبلاً ثبت شده است"
+            }
+        }
+
+        if (students.any {
+                it.studentCode == student.studentCode &&
+                        it.id != student.id &&
+                        student.studentCode.isNotBlank()
+            }) {
+            return "این کد دانش‌آموزی قبلاً ثبت شده است"
+        }
+
         val index = students.indexOfFirst { it.id == student.id }
         if (index >= 0) students[index] = student else students += student
         save()
@@ -591,7 +648,10 @@ object AppDatabase
                     firstName = parts.firstOrNull().orEmpty(),
                     lastName = parts.getOrNull(1).orEmpty(),
                     studentCode = "S${i + 1}", phone = phone,
+                    identityType = "NATIONAL",
+                    identityCode = old.getString("student_${i}_nationalId", "").orEmpty(),
                     nationalId = old.getString("student_${i}_nationalId", "").orEmpty(),
+                    username = old.getString("student_${i}_nationalId", "").orEmpty(),
                     password = "",
                     classId = old.getString("student_${i}_classId", null),
                     avatarName = "avatar_no_profile"
@@ -637,7 +697,29 @@ object AppDatabase
         if (!::appContext.isInitialized) return
         val root = JSONObject()
         root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("avatarName", admin.avatarName ?: "avatar_no_profile"))
-        root.put("students", JSONArray().apply { students.forEach { s -> put(JSONObject().put("id", s.id).put("firstName", s.firstName).put("lastName", s.lastName).put("studentCode", s.studentCode).put("phone", s.phone).put("nationalId", s.nationalId).put("classId", s.classId).put("registrationDate", s.registrationDate).put("isActive", s.isActive).put("avatarName", s.avatarName ?: "avatar_no_profile")) } })
+        root.put("students", JSONArray().apply {
+            students.forEach { s ->
+                put(
+                    JSONObject()
+                        .put("id", s.id)
+                        .put("firstName", s.firstName)
+                        .put("lastName", s.lastName)
+                        .put("studentCode", s.studentCode)
+                        .put("phone", s.phone)
+                        .put("identityType", s.identityType)
+                        .put("identityCode", s.identityCode)
+                        .put("nationalId", s.nationalId)
+                        .put("foreignCode", s.foreignCode)
+                        .put("foreignCodeGenerated", s.foreignCodeGenerated)
+                        .put("username", s.username)
+                        .put("classId", s.classId)
+                        .put("registrationDate", s.registrationDate)
+                        .put("isActive", s.isActive)
+                        .put("avatarName", s.avatarName ?: "avatar_no_profile")
+                        .put("accountStatus", s.accountStatus)
+                )
+            }
+        })
 
         // 🌟 ذخیره آواتار اساتید در جیسون لوکال
         root.put(
@@ -775,12 +857,24 @@ object AppDatabase
                 lastName = o.optString("lastName", parts.getOrNull(1).orEmpty()),
                 studentCode = o.optString("studentCode"),
                 phone = o.optString("phone"),
+                identityType = o.optString("identityType", "NATIONAL"),
+                identityCode = o.optString(
+                    "identityCode",
+                    o.optString("nationalId")
+                ),
                 nationalId = o.optString("nationalId"),
+                foreignCode = o.optString("foreignCode"),
+                foreignCodeGenerated = o.optBoolean("foreignCodeGenerated", false),
+                username = o.optString(
+                    "username",
+                    o.optString("identityCode", o.optString("nationalId"))
+                ),
                 password = "",
                 classId = o.optNullableString("classId"),
                 registrationDate = o.optString("registrationDate", AppDatabase.today()),
                 isActive = o.optBoolean("isActive", true),
-                avatarName = o.optString("avatarName", "avatar_no_profile")
+                avatarName = o.optString("avatarName", "avatar_no_profile"),
+                accountStatus = o.optString("accountStatus", "ACTIVE")
             )
         }
 

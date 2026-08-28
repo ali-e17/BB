@@ -35,7 +35,35 @@ data class ApiResponse(
     val code: String? = null,
     val id: String? = null,
     val temporaryPassword: String? = null,
-    val revision: Int = 0
+    val revision: Int = 0,
+
+    // پاسخ اختصاصی ثبت دانش‌آموز؛ برای سایر APIها null/پیش‌فرض می‌ماند.
+    val identityType: String? = null,
+    val username: String? = null,
+    val initialPassword: String? = null,
+    val foreignCode: String? = null,
+    val foreignCodeGenerated: Boolean = false
+)
+
+data class StudentSaveRequest(
+    val id: String,
+    val firstName: String,
+    val lastName: String,
+    val studentCode: String,
+    val phone: String,
+    val nationalId: String,
+    val classId: String? = null,
+    val registrationDate: String,
+    val avatarName: String? = "avatar_no_profile",
+    val identityType: String = "NATIONAL",
+    val foreignCode: String = "",
+    val foreignCodeMissing: Boolean = false
+)
+
+data class GenerateForeignCodeResponse(
+    val status: String = "",
+    val message: String = "",
+    val foreignCode: String = ""
 )
 data class AdminResetPasswordResponse(
     val status: String = "", val message: String = "", val temporaryPassword: String? = null
@@ -45,7 +73,8 @@ data class UnreadAnnouncementCountResponse(val status:String="", val count:Int=0
 data class ProfileResponse(
     val status:String="", val role:String="", val userId:String="", val username:String="",
     val phone:String="", val displayName:String="", val avatarName:String="",
-    val mustChangePassword:Boolean=false, val classId:String?=null, val className:String?=null
+    val mustChangePassword:Boolean=false, val classId:String?=null, val className:String?=null,
+    val identityType:String?=null, val identityCode:String?=null
 )
 data class LoginRequest(val username:String,val password:String)
 data class LoginResponse(
@@ -148,7 +177,8 @@ interface ApiService
     @POST("update_avatar.php") fun updateAvatar(@Body request:UpdateAvatarRequest):Call<ApiResponse>
 
     @GET("get_students.php") fun getStudents():Call<List<StudentModel>>
-    @POST("add_student.php") fun addStudent(@Body model:StudentModel):Call<ApiResponse>
+    @POST("add_student.php") fun addStudent(@Body request:StudentSaveRequest):Call<ApiResponse>
+    @POST("generate_foreign_code.php") fun generateForeignCode():Call<GenerateForeignCodeResponse>
     @POST("assign_class.php") fun assignClass(@Body request:AssignClassRequest):Call<ApiResponse>
     @POST("toggle_student_active.php") fun toggleStudentActive(@Body request:ToggleActiveRequest):Call<ApiResponse>
 

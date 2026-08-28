@@ -107,7 +107,7 @@ class StudentManagementActivity : BaseActivity() {
                     AppToast.makeText(
                         this@StudentManagementActivity,
                         ApiErrorParser.userMessage(response, "دریافت فهرست کلاس‌ها کامل نشد") +
-                                "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد",
+                            "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -118,7 +118,7 @@ class StudentManagementActivity : BaseActivity() {
                 AppToast.makeText(
                     this@StudentManagementActivity,
                     ApiErrorParser.networkMessage(t, "دریافت فهرست کلاس‌ها") +
-                            " فهرست ذخیره‌شده دستگاه نمایش داده شد.",
+                        " فهرست ذخیره‌شده دستگاه نمایش داده شد.",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -267,7 +267,9 @@ class StudentManagementActivity : BaseActivity() {
 
         view.findViewById<TextView>(R.id.dialogName).text = student.name
         view.findViewById<TextView>(R.id.dialogCode).text =
-            "کد دانش‌آموزی: ${student.studentCode.ifBlank { "ندارد" }}"
+            UiTextFormatter.smartDigits(
+                "کد دانش‌آموزی: ${student.studentCode.ifBlank { "ندارد" }}"
+            )
 
         val className = activeClasses.find { it.id == student.classId }?.className
             ?: AppDatabase.getClassNameById(student.classId)
@@ -275,11 +277,26 @@ class StudentManagementActivity : BaseActivity() {
 
         view.findViewById<TextView>(R.id.dialogLevel).text = className
         view.findViewById<TextView>(R.id.dialogPhone).text =
-            student.phone.ifBlank { "ثبت نشده" }
+            UiTextFormatter.smartDigits(
+                student.phone.ifBlank { "ثبت نشده" }
+            )
+
+        view.findViewById<TextView>(R.id.dialogIdentityLabel).text =
+            if (student.isForeign) "کد اتباع" else "کد ملی"
+
         view.findViewById<TextView>(R.id.dialogNationalId).text =
-            student.nationalId.ifBlank { "ثبت نشده" }
+            UiTextFormatter.smartDigits(
+                student.displayIdentityCode.ifBlank { "ثبت نشده" }
+            )
+
         view.findViewById<TextView>(R.id.dialogRegDate).text =
-            student.registrationDate.ifBlank { "ثبت نشده" }
+            UiTextFormatter.smartDigits(
+                if (student.registrationDate.isBlank()) {
+                    "ثبت نشده"
+                } else {
+                    PersianDateUtils.formatDate(student.registrationDate)
+                }
+            )
 
         val avatarView = view.findViewById<ImageView>(R.id.dialogAvatar)
         val fallback = "avatar_no_profile"

@@ -106,9 +106,20 @@ class TeacherHistoryActivity : BaseActivity() {
             holder.tvSchedule.text = model.classTime ?: "بدون زمان"
 
             // 🌟 مدیریت امن نمایش تاریخ‌ها برای جلوگیری از خطای ناگهانی Null
-            val startDate = model.createdAt ?: "نامشخص"
-            val endDate = model.completedAt ?: "نامشخص"
-            holder.tvDates.text = "شروع: $startDate | پایان: $endDate"
+            val startDate =
+                model.createdAt
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let(PersianDateUtils::formatDate)
+                    ?: "نامشخص"
+
+            val endDate =
+                model.completedAt
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let(PersianDateUtils::formatDate)
+                    ?: "نامشخص"
+
+            holder.tvDates.text =
+                "شروع: $startDate | پایان: $endDate"
         }
 
         override fun getItemCount(): Int = historyClasses.size

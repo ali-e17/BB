@@ -31,7 +31,7 @@
             android:id="@+id/dialogAvatar"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:src="@drawable/avatar_student_1" />
+            android:src="@drawable/avatar_no_profile" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -102,7 +102,10 @@
             <View style="@style/StudentCompactDetailDivider" />
 
             <LinearLayout style="@style/StudentCompactDetailRow">
-                <TextView style="@style/StudentCompactDetailLabel" android:text="کد ملی" />
+                <TextView
+                    android:id="@+id/dialogIdentityLabel"
+                    style="@style/StudentCompactDetailLabel"
+                    android:text="کد ملی" />
                 <TextView
                     android:id="@+id/dialogNationalId"
                     style="@style/StudentCompactDetailValue"

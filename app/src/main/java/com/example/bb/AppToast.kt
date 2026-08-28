@@ -22,8 +22,10 @@ object AppToast {
     ): Toast {
         activeToast?.cancel()
 
-        val message = normalizeMessage(
-            text?.toString().orEmpty()
+        val message = UiTextFormatter.smartDigitsString(
+            normalizeMessage(
+                text?.toString().orEmpty()
+            )
         )
 
         val toast = Toast.makeText(
@@ -78,7 +80,7 @@ object AppToast {
 
         activeToast = Toast.makeText(
             context.applicationContext,
-            "$icon ${normalizeMessage(message.toString())}",
+            "$icon ${UiTextFormatter.smartDigitsString(normalizeMessage(message.toString()))}",
             duration
         ).also { it.show() }
     }

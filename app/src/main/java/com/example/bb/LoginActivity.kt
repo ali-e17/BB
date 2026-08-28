@@ -86,23 +86,34 @@ class LoginActivity : BaseActivity() {
         }
 
         btnLogin.setOnClickListener {
-            val nationalId = normalizeDigits(etUsername.text?.toString().orEmpty())
-                .filter(Char::isDigit)
+            etUsername.error = null
+            etPassword.error = null
+
+            val username = normalizeDigits(etUsername.text?.toString().orEmpty())
+                .filter { it in '0'..'9' }
             val password = etPassword.text?.toString().orEmpty()
 
             when {
-                nationalId.isBlank() -> {
-                    etUsername.error = "کد ملی را وارد کنید"
+                username.isBlank() -> {
+                    etUsername.error = "شناسه ورود را وارد کنید"
                     etUsername.requestFocus()
-                    AppToast.warning(this, "برای ورود، کد ملی خود را وارد کنید")
+                    AppToast.warning(
+                        this,
+                        "برای ورود، کد ملی یا شناسه ۱۲ رقمی اتباع را وارد کنید"
+                    )
                     return@setOnClickListener
                 }
-                nationalId.length != 10 -> {
-                    etUsername.error = "کد ملی باید ۱۰ رقم باشد"
+
+                username.length != 10 && username.length != 12 -> {
+                    etUsername.error = "شناسه ورود باید ۱۰ یا ۱۲ رقم باشد"
                     etUsername.requestFocus()
-                    AppToast.warning(this, "کد ملی باید دقیقاً ۱۰ رقم باشد")
+                    AppToast.warning(
+                        this,
+                        "شناسه ورود باید ۱۰ رقم برای کد ملی یا ۱۲ رقم برای اتباع باشد"
+                    )
                     return@setOnClickListener
                 }
+
                 password.isBlank() -> {
                     etPassword.error = "رمز عبور را وارد کنید"
                     etPassword.requestFocus()
@@ -113,7 +124,7 @@ class LoginActivity : BaseActivity() {
 
             btnLogin.isEnabled = false
             btnLogin.text = "در حال بررسی..."
-            RetrofitClient.instance.login(LoginRequest(nationalId, password))
+            RetrofitClient.instance.login(LoginRequest(username, password))
                 .enqueue(object : Callback<LoginResponse> {
                     override fun onResponse(
                         call: Call<LoginResponse>,
@@ -127,7 +138,7 @@ class LoginActivity : BaseActivity() {
                             prefs.edit().apply {
                                 putBoolean("IS_LOGGED_IN", true)
                                 putString("CURRENT_USER_ROLE", body.role ?: "STUDENT")
-                                putString("CURRENT_USERNAME", body.username ?: nationalId)
+                                putString("CURRENT_USERNAME", body.username ?: username)
                                 putString("CURRENT_PHONE", body.phone.orEmpty())
                                 putString("CURRENT_USER_ID", body.userId.orEmpty())
                                 putString("CURRENT_DISPLAY_NAME", body.displayName ?: "کاربر")
@@ -151,7 +162,7 @@ class LoginActivity : BaseActivity() {
                             AppToast.makeText(
                                 this@LoginActivity.applicationContext,
                                 body?.message?.takeIf { it.isNotBlank() }
-                                    ?: ApiErrorParser.userMessage(response, "ورود به حساب کامل نشد؛ لطفاً کد ملی و رمز عبور را بررسی کنید."),
+                                    ?: ApiErrorParser.userMessage(response, "ورود به حساب کامل نشد؛ لطفاً شناسه ورود و رمز عبور را بررسی کنید."),
                                 Toast.LENGTH_LONG
                             ).show()
                             etPassword.text?.clear()

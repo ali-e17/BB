@@ -1,43 +1,186 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background">
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/app_global_background">
+
     <!--
-            محتوای اصلی صفحه لاگین.
-            paddingBottom باعث می‌شود اگر صفحه کوتاه بود یا کیبورد/نمایشگر کوچک بود،
-            محتوای لاگین زیر Footer ثابت نرود.
-         -->
-    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:clipToPadding="false" android:paddingBottom="140dp">
-        <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
-            <!--  دکمه تغییر تم  -->
-            <LinearLayout android:id="@+id/layoutLoginActions" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:layout_alignParentStart="true" android:layout_marginTop="16dp" android:layout_marginStart="16dp" android:orientation="horizontal" android:gravity="center_vertical">
-                <ImageView android:id="@+id/btnThemeToggle" android:layout_width="44dp" android:layout_height="44dp" android:padding="10dp" android:src="@drawable/ic_moon" android:background="@drawable/bg_header_control" app:tint="@color/main_text" android:clickable="true" android:focusable="true"/>
+        محتوای اصلی صفحه لاگین.
+        paddingBottom باعث می‌شود اگر صفحه کوتاه بود یا کیبورد/نمایشگر کوچک بود،
+        محتوای لاگین زیر Footer ثابت نرود.
+    -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:paddingBottom="140dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- دکمه تغییر تم -->
+            <LinearLayout
+                android:id="@+id/layoutLoginActions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/btnThemeToggle"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_moon"
+                    android:background="@drawable/bg_header_control"
+                    app:tint="@color/main_text"
+                    android:clickable="true"
+                    android:focusable="true" />
+
             </LinearLayout>
+
             <!--
-                            لوگوی آموزشگاه
-                            پس‌زمینه سفید باعث می‌شود لوگو در Dark Mode هم شفاف و خوانا بماند؛
-                            همان الگوی استفاده‌شده برای لوگوی Top Bar صفحه اصلی.
-                         -->
-            <ImageView android:id="@+id/imgLogo" android:layout_width="140dp" android:layout_height="140dp" android:layout_centerHorizontal="true" android:layout_marginTop="66dp" android:background="@drawable/bg_circle_white" android:elevation="6dp" android:padding="10dp" android:scaleType="fitCenter" android:src="@drawable/final50cm"/>
-            <!--  عنوان خوش‌آمدگویی  -->
-            <TextView android:id="@+id/tvWelcome" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_below="@id/imgLogo" android:layout_centerHorizontal="true" android:layout_marginTop="16dp" android:text="خوش آمدید" android:textColor="@color/title_blue" android:textSize="26sp" android:textStyle="bold"/>
-            <!--  فرم ورود  -->
-            <LinearLayout android:id="@+id/layoutLoginForm" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/tvWelcome" android:layout_marginTop="36dp" android:orientation="vertical" android:paddingStart="32dp" android:paddingEnd="32dp">
-                <!--  نام کاربری  -->
-                <com.google.android.material.textfield.TextInputLayout style="@style/UnifiedOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="18dp" android:hint="نام کاربری" android:layoutDirection="rtl" app:hintTextColor="#FF6B00" android:textColorHint="@color/hint_color" app:boxStrokeColor="@color/unified_field_stroke" app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp" app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etUsername" android:layout_width="match_parent" android:layout_height="56dp" android:textColor="@color/input_text" android:textStyle="bold" android:textColorHint="@color/hint_color" android:textDirection="ltr" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩" android:inputType="number" android:maxLength="10"/>
+                لوگوی آموزشگاه
+                پس‌زمینه سفید باعث می‌شود لوگو در Dark Mode هم شفاف و خوانا بماند؛
+                همان الگوی استفاده‌شده برای لوگوی Top Bar صفحه اصلی.
+            -->
+            <ImageView
+                android:id="@+id/imgLogo"
+                android:layout_width="148dp"
+                android:layout_height="148dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="66dp"
+                android:background="@drawable/bg_circle_white"
+                android:elevation="6dp"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/final50cm" />
+
+            <!-- عنوان خوش‌آمدگویی -->
+            <TextView
+                android:id="@+id/tvWelcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/imgLogo"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="16dp"
+                android:text="خوش آمدید"
+                android:textColor="@color/title_blue"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <!-- فرم ورود -->
+            <LinearLayout
+                android:id="@+id/layoutLoginForm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tvWelcome"
+                android:layout_marginTop="36dp"
+                android:orientation="vertical"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp">
+
+                <!-- نام کاربری -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/UnifiedOutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    android:hint="کد ملی / شناسه اتباع"
+                    android:layoutDirection="rtl"
+                    app:hintTextColor="#FF6B00"
+                    android:textColorHint="@color/hint_color"
+                    app:boxStrokeColor="@color/unified_field_stroke"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:textColor="@color/input_text"
+                        android:textStyle="bold"
+                        android:textColorHint="@color/hint_color"
+                        android:textDirection="ltr"
+                        android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
+                        android:inputType="number"
+                        android:maxLength="12" />
+
                 </com.google.android.material.textfield.TextInputLayout>
-                <!--  رمز عبور  -->
-                <com.google.android.material.textfield.TextInputLayout style="@style/UnifiedOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="28dp" android:hint="رمز عبور" android:layoutDirection="rtl" app:hintTextColor="#FF6B00" android:textColorHint="@color/hint_color" app:boxStrokeColor="@color/unified_field_stroke" app:passwordToggleEnabled="true" app:passwordToggleTint="@color/title_blue" app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp" app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etPassword" android:layout_width="match_parent" android:layout_height="56dp" android:textColor="@color/input_text" android:textStyle="bold" android:textColorHint="@color/hint_color" android:textDirection="ltr" android:inputType="textPassword"/>
+
+                <!-- رمز عبور -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/UnifiedOutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="28dp"
+                    android:hint="رمز عبور"
+                    android:layoutDirection="rtl"
+                    app:hintTextColor="#FF6B00"
+                    android:textColorHint="@color/hint_color"
+                    app:boxStrokeColor="@color/unified_field_stroke"
+                    app:passwordToggleEnabled="true"
+                    app:passwordToggleTint="@color/title_blue"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:textColor="@color/input_text"
+                        android:textStyle="bold"
+                        android:textColorHint="@color/hint_color"
+                        android:textDirection="ltr"
+                        android:inputType="textPassword" />
+
                 </com.google.android.material.textfield.TextInputLayout>
-                <!--  دکمه ورود  -->
-                <Button android:id="@+id/btnLogin" android:layout_width="match_parent" android:layout_height="58dp" android:text="ورود" android:textSize="18sp" android:textStyle="bold" android:textColor="#FFFFFF" android:backgroundTint="#FF6B00" app:cornerRadius="12dp"/>
+
+                <!-- دکمه ورود -->
+                <Button
+                    android:id="@+id/btnLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:text="ورود"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#FF6B00"
+                    app:cornerRadius="12dp" />
+
             </LinearLayout>
+
         </RelativeLayout>
+
     </ScrollView>
+
     <!--
-            Footer ثابت پایین صفحه.
-            marginStart / marginEnd = 32dp
-            دقیقاً برابر Padding افقی فرم لاگین است؛
-            بنابراین عرض کارت Footer دقیقاً با دکمه ورود هماهنگ می‌شود.
-         -->
-    <include android:id="@+id/contactFooter" layout="@layout/view_contact_footer" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:layout_marginStart="30dp" android:layout_marginEnd="30dp" android:layout_marginBottom="12dp"/>
+        Footer ثابت پایین صفحه.
+        marginStart / marginEnd = 32dp
+        دقیقاً برابر Padding افقی فرم لاگین است؛
+        بنابراین عرض کارت Footer دقیقاً با دکمه ورود هماهنگ می‌شود.
+    -->
+    <include
+        android:id="@+id/contactFooter"
+        layout="@layout/view_contact_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="12dp" />
+
 </FrameLayout>
