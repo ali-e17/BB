@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='UTF-8'?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/rootAddEditClass" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/app_global_background" android:layoutDirection="rtl">
   <com.google.android.material.card.MaterialCardView android:id="@+id/topBarClassEdit" android:layout_width="match_parent" android:layout_height="64dp" android:layout_marginHorizontal="20dp" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/card_background" app:cardCornerRadius="20dp" app:cardElevation="8dp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:strokeWidth="0dp">
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
@@ -6,8 +5,8 @@
       <TextView android:id="@+id/tvClassEditTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true" android:text="ایجاد کلاس جدید" android:textColor="@color/title_blue" android:textSize="18sp" android:textStyle="bold"/>
     </RelativeLayout>
   </com.google.android.material.card.MaterialCardView>
-  <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_marginTop="12dp" android:fillViewport="true" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toBottomOf="@id/topBarClassEdit">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="24dp" android:paddingTop="4dp" android:paddingBottom="32dp">
+  <androidx.core.widget.NestedScrollView android:id="@+id/scrollClassForm" android:layout_width="match_parent" android:descendantFocusability="afterDescendants" android:layout_height="0dp" android:layout_marginTop="12dp" android:clipToPadding="false" android:fillViewport="true" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toBottomOf="@id/topBarClassEdit">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="24dp" android:paddingTop="4dp" android:paddingBottom="48dp">
       <TextView style="@style/ClassFormLabel" android:text="کد دستی کلاس"/>
       <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="مثلاً 1405-SP-A1-01">
         <com.google.android.material.textfield.TextInputEditText android:id="@+id/etClassCode" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:imeOptions="actionNext" android:inputType="text" android:maxLength="50" android:paddingStart="16dp" android:paddingEnd="16dp" android:singleLine="true" android:textColor="@color/main_text" android:textDirection="ltr"/>
@@ -28,7 +27,7 @@
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
           <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="سال ترم"/>
           <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTermYear" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹" android:gravity="center" android:inputType="number" android:maxLength="4" android:singleLine="true" android:textColor="@color/main_text"/>
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etTermYear" android:layout_width="match_parent" android:layout_height="56dp" android:digits="0123456789۰۱۲۳۴۵۶۷۸۹" android:gravity="center" android:imeOptions="actionNext" android:inputType="number" android:maxLength="4" android:singleLine="true" android:textColor="@color/main_text"/>
           </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
@@ -71,13 +70,13 @@
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
           <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="حد پایین قبولی"/>
           <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinPassingScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:inputType="numberDecimal" android:text="80" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinPassingScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:imeOptions="actionNext" android:inputType="numberDecimal" android:singleLine="true" android:text="80" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
           </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
           <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="حد پایین مشروطی"/>
           <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinConditionalScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:inputType="numberDecimal" android:text="70" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinConditionalScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:imeOptions="actionDone" android:inputType="numberDecimal" android:singleLine="true" android:text="70" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
           </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
       </LinearLayout>
@@ -86,5 +85,5 @@
         <ProgressBar android:id="@+id/progressSavingClass" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:visibility="gone"/>
       </FrameLayout>
     </LinearLayout>
-  </ScrollView>
+  </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

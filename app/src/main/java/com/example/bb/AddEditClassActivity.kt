@@ -1,8 +1,14 @@
 package com.example.bb
 
+import android.content.Context
+import android.graphics.Rect
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageButton
@@ -11,6 +17,10 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.button.MaterialButton
@@ -29,6 +39,7 @@ class AddEditClassActivity : BaseActivity() {
     private var existingClass: ClassModel? = null
 
     private lateinit var tvTitle: TextView
+    private lateinit var scrollClassForm: NestedScrollView
     private lateinit var etClassCode: TextInputEditText
     private lateinit var spinnerClassName: MaterialAutoCompleteTextView
     private lateinit var etClassLevel: TextInputEditText
@@ -51,11 +62,15 @@ class AddEditClassActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // این صفحه Edge-to-Edge است؛ بنابراین resize سنتی به‌تنهایی قابل اتکا نیست.
+        // فضای IME را با WindowInsets به‌صورت صریح مدیریت می‌کنیم.
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
         setContentView(R.layout.activity_add_edit_class)
 
         findViewById<ImageView>(R.id.btnClassEditBack).setOnClickListener { finish() }
 
         tvTitle = findViewById(R.id.tvClassEditTitle)
+        scrollClassForm = findViewById(R.id.scrollClassForm)
         etClassCode = findViewById(R.id.etClassCode)
         spinnerClassName = findViewById(R.id.spinnerClassName)
         etClassLevel = findViewById(R.id.etClassLevel)
@@ -71,15 +86,24 @@ class AddEditClassActivity : BaseActivity() {
         btnSaveClass = findViewById(R.id.btnSaveClass)
         progressSaving = findViewById(R.id.progressSavingClass)
 
+        setupImeAwareLayout()
+
         spinnerClassName.isEnabled = false
-        spinnerClassName.setOnClickListener { spinnerClassName.showDropDown() }
+        spinnerClassName.setOnClickListener { openDropdown(spinnerClassName) }
 
         val seasons = listOf("بهار", "تابستان", "پاییز", "زمستان")
-        spinnerTermSeason.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, seasons))
-        spinnerTermSeason.setOnClickListener { spinnerTermSeason.showDropDown() }
+        spinnerTermSeason.setAdapter(
+            ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, seasons)
+        )
+        spinnerTermSeason.setOnClickListener { openDropdown(spinnerTermSeason) }
+        spinnerTermSeason.setOnItemClickListener { _, _, _, _ ->
+            spinnerTermSeason.error = null
+            focusField(etStartTime)
+        }
 
         setTimeFormatter(etStartTime)
         setTimeFormatter(etEndTime)
+        setupKeyboardFlow()
 
         classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
         if (classId.isBlank()) {
@@ -158,6 +182,7 @@ class AddEditClassActivity : BaseActivity() {
             } else {
                 lastValidClassName = selected
                 spinnerClassName.error = null
+                focusField(etClassLevel)
             }
         }
     }
@@ -204,7 +229,7 @@ class AddEditClassActivity : BaseActivity() {
                         .setTitle("حذف نام کلاس")
                         .setMessage(
                             "آیا از حذف «${option.name}» از فهرست انتخاب مطمئن هستید؟\n\n" +
-                                "کلاس‌های قبلی با این نام حذف یا تغییر نمی‌کنند."
+                                    "کلاس‌های قبلی با این نام حذف یا تغییر نمی‌کنند."
                         )
                         .setNegativeButton("انصراف", null)
                         .setPositiveButton("حذف") { _, _ ->
@@ -596,9 +621,296 @@ class AddEditClassActivity : BaseActivity() {
         })
     }
 
+    private fun setupKeyboardFlow() {
+        val normalFields = listOf(
+            etClassCode,
+            etClassLevel,
+            etBookName,
+            etTermYear,
+            etSessionCount,
+            etMinPassingScore,
+            etMinConditionalScore
+        )
+
+        normalFields.forEach { field ->
+            field.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) ensureFieldVisible(field)
+            }
+        }
+
+        spinnerClassName.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) ensureFieldVisible(spinnerClassName)
+        }
+        spinnerTermSeason.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) ensureFieldVisible(spinnerTermSeason)
+        }
+
+        setNextAction(etClassCode) {
+            openDropdown(spinnerClassName)
+        }
+        setNextAction(etClassLevel) {
+            focusField(etBookName)
+        }
+        setNextAction(etBookName) {
+            focusField(etTermYear)
+        }
+        setNextAction(etTermYear) {
+            openDropdown(spinnerTermSeason)
+        }
+        setNextAction(etStartTime) {
+            focusField(etEndTime)
+        }
+        setNextAction(etEndTime) {
+            focusField(etSessionCount)
+        }
+        setNextAction(etSessionCount) {
+            focusField(etMinPassingScore)
+        }
+        setNextAction(etMinPassingScore) {
+            focusField(etMinConditionalScore)
+        }
+
+        etMinConditionalScore.setOnEditorActionListener { view, actionId, event ->
+            val donePressed =
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                        (event?.keyCode == KeyEvent.KEYCODE_ENTER &&
+                                event.action == KeyEvent.ACTION_DOWN)
+
+            if (donePressed) {
+                hideKeyboard(view)
+                view.clearFocus()
+                btnSaveClass.postDelayed({
+                    ensureFieldVisible(btnSaveClass, extraBottomDp = 16)
+                }, 120)
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun setNextAction(
+        field: TextInputEditText,
+        action: () -> Unit
+    ) {
+        field.setOnEditorActionListener { _, actionId, event ->
+            val nextPressed =
+                actionId == EditorInfo.IME_ACTION_NEXT ||
+                        (event?.keyCode == KeyEvent.KEYCODE_ENTER &&
+                                event.action == KeyEvent.ACTION_DOWN)
+
+            if (nextPressed) {
+                action()
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun focusField(field: TextInputEditText) {
+        field.requestFocus()
+        ensureFieldVisible(field)
+
+        field.postDelayed({
+            val inputMethodManager =
+                getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+            inputMethodManager.showSoftInput(
+                field,
+                InputMethodManager.SHOW_IMPLICIT
+            )
+
+            // یک بار بعد از باز شدن/انیمیشن کیبورد نیز موقعیت را اصلاح می‌کنیم.
+            field.postDelayed({
+                ensureFieldVisible(
+                    field,
+                    extraBottomDp = 24,
+                    smooth = false
+                )
+            }, 280)
+        }, 80)
+    }
+
+    private fun openDropdown(dropdown: MaterialAutoCompleteTextView) {
+        hideKeyboard(currentFocus)
+        dropdown.requestFocus()
+        ensureFieldVisible(dropdown)
+        dropdown.postDelayed({
+            if (dropdown.isEnabled) {
+                dropdown.showDropDown()
+            }
+        }, 120)
+    }
+
+    private fun hideKeyboard(view: View?) {
+        val inputMethodManager =
+            getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val token = view?.windowToken ?: currentFocus?.windowToken
+        if (token != null) {
+            inputMethodManager.hideSoftInputFromWindow(token, 0)
+        }
+    }
+
+    /**
+     * این صفحه به‌صورت Edge-to-Edge اجرا می‌شود. در این حالت روی برخی نسخه‌های
+     * Android، adjustResize به‌تنهایی ارتفاع قابل مشاهده را کم نمی‌کند و کیبورد
+     * روی فیلدهای انتهایی می‌افتد.
+     *
+     * این listener ارتفاع واقعی IME را می‌گیرد و همان مقدار را به padding پایین
+     * ریشه صفحه اضافه می‌کند؛ در نتیجه NestedScrollView واقعاً فقط فضای بالای
+     * کیبورد را در اختیار دارد.
+     */
+    private fun setupImeAwareLayout() {
+        val root = findViewById<View>(R.id.rootAddEditClass)
+
+        val initialLeft = root.paddingLeft
+        val initialTop = root.paddingTop
+        val initialRight = root.paddingRight
+        val initialBottom = root.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+
+            val bottomInset = if (imeVisible) {
+                maxOf(bars.bottom, ime.bottom)
+            } else {
+                bars.bottom
+            }
+
+            view.setPadding(
+                initialLeft + bars.left,
+                initialTop + bars.top,
+                initialRight + bars.right,
+                initialBottom + bottomInset
+            )
+
+            if (imeVisible) {
+                scrollClassForm.post {
+                    currentFocus?.let { focused ->
+                        if (isClassFormField(focused)) {
+                            ensureFieldVisible(focused, extraBottomDp = 24)
+                        }
+                    }
+                }
+            }
+
+            insets
+        }
+
+        ViewCompat.setWindowInsetsAnimationCallback(
+            root,
+            object : WindowInsetsAnimationCompat.Callback(
+                WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE
+            ) {
+                override fun onProgress(
+                    insets: WindowInsetsCompat,
+                    runningAnimations: MutableList<WindowInsetsAnimationCompat>
+                ): WindowInsetsCompat {
+                    return insets
+                }
+
+                override fun onEnd(animation: WindowInsetsAnimationCompat) {
+                    super.onEnd(animation)
+
+                    val insets = ViewCompat.getRootWindowInsets(root)
+                    val imeVisible =
+                        insets?.isVisible(WindowInsetsCompat.Type.ime()) == true
+
+                    if (imeVisible) {
+                        scrollClassForm.post {
+                            currentFocus?.let { focused ->
+                                if (isClassFormField(focused)) {
+                                    ensureFieldVisible(
+                                        focused,
+                                        extraBottomDp = 24,
+                                        smooth = false
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        ViewCompat.requestApplyInsets(root)
+    }
+
+    private fun isClassFormField(view: View): Boolean =
+        view === etClassCode ||
+                view === spinnerClassName ||
+                view === etClassLevel ||
+                view === etBookName ||
+                view === etTermYear ||
+                view === spinnerTermSeason ||
+                view === etStartTime ||
+                view === etEndTime ||
+                view === etSessionCount ||
+                view === etMinPassingScore ||
+                view === etMinConditionalScore ||
+                view === btnSaveClass
+
+    /**
+     * فیلد فوکوس‌شده را داخل محدوده واقعی NestedScrollView نگه می‌دارد.
+     * برخلاف requestRectangleOnScreen، این محاسبه مستقیماً بر اساس viewport
+     * کوچک‌شده بعد از باز شدن IME انجام می‌شود.
+     */
+    private fun ensureFieldVisible(
+        view: View,
+        extraBottomDp: Int = 24,
+        smooth: Boolean = true
+    ) {
+        scrollClassForm.post {
+            if (!view.isShown) return@post
+
+            val rect = Rect()
+            view.getDrawingRect(rect)
+            scrollClassForm.offsetDescendantRectToMyCoords(view, rect)
+
+            val density = resources.displayMetrics.density
+            val topGap = (12f * density).toInt()
+            val bottomGap = (extraBottomDp * density).toInt()
+
+            val viewportTop =
+                scrollClassForm.scrollY + topGap
+
+            val viewportBottom =
+                scrollClassForm.scrollY +
+                        scrollClassForm.height -
+                        scrollClassForm.paddingBottom -
+                        bottomGap
+
+            val delta = when {
+                rect.bottom > viewportBottom ->
+                    rect.bottom - viewportBottom
+
+                rect.top < viewportTop ->
+                    rect.top - viewportTop
+
+                else -> 0
+            }
+
+            if (delta != 0) {
+                if (smooth) {
+                    scrollClassForm.smoothScrollBy(0, delta)
+                } else {
+                    scrollClassForm.scrollBy(0, delta)
+                }
+            }
+        }
+    }
+
     private fun setTimeFormatter(field: TextInputEditText) {
         field.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) ClassTimeUtils.parse(field.text?.toString().orEmpty())?.let { field.setText(it.formatted) }
+            if (hasFocus) {
+                ensureFieldVisible(field)
+            } else {
+                ClassTimeUtils.parse(field.text?.toString().orEmpty())
+                    ?.let { field.setText(it.formatted) }
+            }
         }
     }
 

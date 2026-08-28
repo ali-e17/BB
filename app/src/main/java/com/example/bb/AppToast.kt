@@ -6,10 +6,17 @@ import android.widget.Toast
 /**
  * Toast یکپارچه برنامه.
  *
- * - همه پیام‌ها از یک مسیر واحد نمایش داده می‌شوند.
- * - پیام قبلی پیش از نمایش پیام جدید لغو می‌شود تا Toastها روی هم انباشته نشوند.
- * - نوع پیام با یک نشان کوتاه مشخص می‌شود.
- * - متن پیام پیش از نمایش، از نظر نگارشی و لحن رسمی یکدست می‌شود.
+ * نکته مهم:
+ * Toast یک پیام کوتاه رابط کاربری است؛ برای جلوگیری از جابه‌جایی بصری نقطه
+ * در متن‌های RTL، در انتهای پیام‌های خبری نقطه قرار نمی‌دهیم.
+ *
+ * همه پیام‌ها قبل از نمایش:
+ * - از کنترل‌های جهت‌دهی قدیمی پاک می‌شوند
+ * - حروف «ي/ى/ك» به «ی/ی/ک» فارسی تبدیل می‌شوند
+ * - فاصله و نیم‌فاصله‌های رایج یکدست می‌شوند
+ * - عبارت‌های محاوره‌ای رایج رسمی‌تر می‌شوند
+ *
+ * API قبلی AppToast حفظ شده و نیازی به تغییر Activityها نیست.
  */
 object AppToast {
 
@@ -22,15 +29,9 @@ object AppToast {
     ): Toast {
         activeToast?.cancel()
 
-        val message = UiTextFormatter.smartDigitsString(
-            normalizeMessage(
-                text?.toString().orEmpty()
-            )
-        )
-
         val toast = Toast.makeText(
             context.applicationContext,
-            decorate(message),
+            normalizeMessage(text?.toString().orEmpty()),
             duration
         )
 
@@ -43,7 +44,7 @@ object AppToast {
         message: CharSequence,
         duration: Int = Toast.LENGTH_SHORT
     ) {
-        showTyped(context, message, duration, "✓")
+        show(context, message, duration)
     }
 
     fun warning(
@@ -51,7 +52,7 @@ object AppToast {
         message: CharSequence,
         duration: Int = Toast.LENGTH_LONG
     ) {
-        showTyped(context, message, duration, "⚠")
+        show(context, message, duration)
     }
 
     fun error(
@@ -59,7 +60,7 @@ object AppToast {
         message: CharSequence,
         duration: Int = Toast.LENGTH_LONG
     ) {
-        showTyped(context, message, duration, "✕")
+        show(context, message, duration)
     }
 
     fun info(
@@ -67,143 +68,99 @@ object AppToast {
         message: CharSequence,
         duration: Int = Toast.LENGTH_SHORT
     ) {
-        showTyped(context, message, duration, "ℹ")
+        show(context, message, duration)
     }
 
-    private fun showTyped(
+    private fun show(
         context: Context,
         message: CharSequence,
-        duration: Int,
-        icon: String
+        duration: Int
     ) {
         activeToast?.cancel()
 
         activeToast = Toast.makeText(
             context.applicationContext,
-            "$icon ${UiTextFormatter.smartDigitsString(normalizeMessage(message.toString()))}",
+            normalizeMessage(message.toString()),
             duration
         ).also { it.show() }
     }
 
     private fun normalizeMessage(raw: String): String {
         var message = raw
+            // حذف LRM/RLM/embedding/isolateهای احتمالیِ رسیده از API یا نسخه‌های قبلی
+            .replace(
+                Regex("[\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]"),
+                ""
+            )
             .trim()
             .replace(Regex("\\s+"), " ")
+            // حروف استاندارد فارسی
+            .replace('ي', 'ی')
+            .replace('ى', 'ی')
+            .replace('ك', 'ک')
 
         if (message.isBlank()) {
-            message = "امکان انجام این عملیات وجود ندارد"
+            return "امکان انجام این عملیات وجود ندارد"
         }
 
-        // یکدست‌سازی عبارت‌های محاوره‌ای یا کم‌رسمی که ممکن است از پاسخ API نیز برسند.
+        // اگر نسخه قدیمی یک علامت را ابتدای رشته گذاشته باشد، پاکش می‌کنیم.
+        message = message.replace(
+            Regex("^[\\s.،؛!?؟…]+"),
+            ""
+        )
+
+        // لحن رسمی و نگارش یکدست
         message = message
             .replace("دوباره بازش کنید", "مجدداً باز کنید")
             .replace("دوباره باز کنید", "مجدداً باز کنید")
             .replace("دوباره تلاش کنید", "مجدداً تلاش کنید")
             .replace("دوباره امتحان کنید", "مجدداً تلاش کنید")
+            .replace("لطفا", "لطفاً")
+            .replace("مجددا", "مجدداً")
             .replace("یک بار", "یک‌بار")
+            .replace("به صورت", "به‌صورت")
+            .replace("به عنوان", "به‌عنوان")
+            .replace("می شود", "می‌شود")
+            .replace("نمی شود", "نمی‌شود")
+            .replace("می گردد", "می‌گردد")
+            .replace("نمی گردد", "نمی‌گردد")
+            .replace(
+                "تنظیمات بدون تغییر است",
+                "تغییری در تنظیمات ایجاد نشده است"
+            )
 
-        return ensureTerminalPunctuation(message)
-    }
+        // فاصله قبل/بعد از علائم فارسی
+        message = message
+            .replace(Regex("\\s+([،؛؟!…])"), "$1")
+            .replace(Regex("([،؛])(?=\\S)"), "$1 ")
+            .replace(Regex("\\.{3,}"), "…")
 
-    private fun ensureTerminalPunctuation(message: String): String {
-        if (message.isBlank()) return "امکان انجام این عملیات وجود ندارد."
+        // سؤال فارسی با علامت سؤال فارسی تمام شود.
+        if (containsPersian(message) && message.endsWith("?")) {
+            message = message.dropLast(1) + "؟"
+        }
 
-        val last = message.last()
-        return if (
-            last == '.' ||
-            last == '!' ||
-            last == '?' ||
-            last == '؟' ||
-            last == '؛' ||
-            last == '…'
-        ) {
-            message
-        } else {
-            "$message."
+        /*
+         * مهم: نقطه انتهای Toast را حذف می‌کنیم.
+         * در پیام کوتاه رابط کاربری از نظر نگارشی الزامی نیست و در بعضی نسخه‌های
+         * Android/فونت‌های RTL همان نقطه به ابتدای جمله رندر می‌شود.
+         * نقطه‌های داخل جمله دست‌نخورده می‌مانند.
+         */
+        message = message.trimEnd()
+        while (message.endsWith(".")) {
+            message = message.dropLast(1).trimEnd()
+        }
+
+        return message.ifBlank {
+            "امکان انجام این عملیات وجود ندارد"
         }
     }
 
-    private fun decorate(message: String): String {
-        if (
-            message.startsWith("✓ ") ||
-            message.startsWith("⚠ ") ||
-            message.startsWith("✕ ") ||
-            message.startsWith("ℹ ")
-        ) {
-            return message
+    private fun containsPersian(value: String): Boolean {
+        return value.any { ch ->
+            ch in '\u0600'..'\u06FF' ||
+                    ch in '\u0750'..'\u077F' ||
+                    ch in '\u08A0'..'\u08FF'
         }
-
-        val icon = when {
-            looksLikeSuccess(message) -> "✓"
-            looksLikeError(message) -> "✕"
-            looksLikeWarning(message) -> "⚠"
-            else -> "ℹ"
-        }
-
-        return "$icon $message"
-    }
-
-    private fun looksLikeSuccess(message: String): Boolean {
-        val words = listOf(
-            "با موفقیت",
-            "ذخیره شد",
-            "ثبت شد",
-            "ثبت نهایی شد",
-            "ارسال شد",
-            "منتشر شد",
-            "بازیابی شد",
-            "حذف شد",
-            "فعال شد",
-            "غیرفعال شد",
-            "بایگانی شد",
-            "تخصیص داده شد",
-            "منتقل شد",
-            "خارج شد",
-            "شروع شد",
-            "تغییر کرد",
-            "آماده ارسال است"
-        )
-        return words.any(message::contains)
-    }
-
-    private fun looksLikeError(message: String): Boolean {
-        val words = listOf(
-            "خطا",
-            "انجام نشد",
-            "کامل نشد",
-            "ناموفق",
-            "برقرار نشد",
-            "قطع شد",
-            "امکان‌پذیر نبود",
-            "امکان پذیر نبود",
-            "معتبر نیست",
-            "در دسترس نیست",
-            "لغو شد",
-            "رد شد"
-        )
-        return words.any(message::contains)
-    }
-
-    private fun looksLikeWarning(message: String): Boolean {
-        val words = listOf(
-            "لطفاً",
-            "ابتدا",
-            "حداقل",
-            "حداکثر",
-            "الزامی است",
-            "باید",
-            "مجاز نیست",
-            "قابل ویرایش نیست",
-            "قابل انجام نیست",
-            "امکان انجام",
-            "انتخاب کنید",
-            "وارد کنید",
-            "کامل کنید",
-            "منتشر نشده",
-            "وجود ندارد",
-            "مشخص نشده",
-            "تأیید نشده"
-        )
-        return words.any(message::contains)
     }
 }

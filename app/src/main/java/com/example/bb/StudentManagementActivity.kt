@@ -107,7 +107,7 @@ class StudentManagementActivity : BaseActivity() {
                     AppToast.makeText(
                         this@StudentManagementActivity,
                         ApiErrorParser.userMessage(response, "دریافت فهرست کلاس‌ها کامل نشد") +
-                            "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد",
+                                "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -118,7 +118,7 @@ class StudentManagementActivity : BaseActivity() {
                 AppToast.makeText(
                     this@StudentManagementActivity,
                     ApiErrorParser.networkMessage(t, "دریافت فهرست کلاس‌ها") +
-                        " فهرست ذخیره‌شده دستگاه نمایش داده شد.",
+                            " فهرست ذخیره‌شده دستگاه نمایش داده شد.",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -185,6 +185,15 @@ class StudentManagementActivity : BaseActivity() {
                 val allStudents = response.body().orEmpty()
                 AppDatabase.replaceStudents(allStudents)
 
+                // فقط شناسه کلاس‌های فعال را مبنای فیلتر قرار می‌دهیم.
+                // ممکن است classId یک دانش‌آموز هنوز به یک کلاس قدیمی/تکمیل‌شده اشاره کند؛
+                // چنین دانش‌آموزی نباید در «دانش‌آموزان کلاس‌دار» دیده شود.
+                val activeClassIds = activeClasses
+                    .asSequence()
+                    .map { it.id.trim() }
+                    .filter { it.isNotEmpty() }
+                    .toHashSet()
+
                 val filtered = allStudents.filter { student ->
                     val normalizedSearch = normalizePersian(search)
                     val normalizedStudent = normalizePersian(
@@ -195,12 +204,17 @@ class StudentManagementActivity : BaseActivity() {
                     val matchesSearch =
                         normalizedSearch.isBlank() || normalizedStudent.contains(normalizedSearch)
 
+                    val studentClassId = student.classId?.trim().orEmpty()
+                    val hasActiveClass =
+                        studentClassId.isNotEmpty() && studentClassId in activeClassIds
+
                     val matchesClass = when (selectedClassId) {
                         null -> true
-                        NO_CLASS -> student.classId.isNullOrBlank()
-                        HAS_CLASS -> !student.classId.isNullOrBlank()
-                        else -> student.classId == selectedClassId
+                        NO_CLASS -> !hasActiveClass
+                        HAS_CLASS -> hasActiveClass
+                        else -> studentClassId == selectedClassId
                     }
+
                     matchesSearch && matchesClass
                 }.sortedWith(Comparator { first, second ->
                     compareStudents(first, second)

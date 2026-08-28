@@ -122,8 +122,8 @@ class ReportCardSetupActivity : BaseActivity() {
 
                         classes += response.body().orEmpty().filter {
                             it.status == ClassStatus.ACTIVE &&
-                                (role == "ADMIN" ||
-                                    (role == "TEACHER" && it.teacherId == userId))
+                                    (role == "ADMIN" ||
+                                            (role == "TEACHER" && it.teacherId == userId))
                         }
                     } else {
                         AppToast.error(
@@ -472,7 +472,6 @@ class ReportCardSetupActivity : BaseActivity() {
                                     selected.className
                                 )
                         )
-                        finish()
                     } else {
                         toast(
                             body?.message?.takeIf { it.isNotBlank() }
