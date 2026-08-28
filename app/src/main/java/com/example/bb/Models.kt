@@ -37,7 +37,8 @@ data class StudentModel(
     var classId: String? = null,
     var registrationDate: String = AppDatabase.today(),
     var isActive: Boolean = true,
-    var avatarName: String? = "avatar_no_profile"
+    var avatarName: String? = "avatar_no_profile",
+    var accountStatus: String = "ACTIVE"
 ) : Serializable {
     val name: String
         get() = "$firstName $lastName"

@@ -107,7 +107,7 @@ class StudentManagementActivity : BaseActivity() {
                     AppToast.makeText(
                         this@StudentManagementActivity,
                         ApiErrorParser.userMessage(response, "دریافت فهرست کلاس‌ها کامل نشد") +
-                            "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد",
+                                "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -118,7 +118,7 @@ class StudentManagementActivity : BaseActivity() {
                 AppToast.makeText(
                     this@StudentManagementActivity,
                     ApiErrorParser.networkMessage(t, "دریافت فهرست کلاس‌ها") +
-                        " فهرست ذخیره‌شده دستگاه نمایش داده شد.",
+                            " فهرست ذخیره‌شده دستگاه نمایش داده شد.",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -290,7 +290,12 @@ class StudentManagementActivity : BaseActivity() {
         )
         val status = view.findViewById<TextView>(R.id.dialogStatus)
         val archive = view.findViewById<MaterialButton>(R.id.btnDialogArchive)
-        status.text = if (student.isActive) "فعال" else "بایگانی‌شده"
+        status.text = when (student.accountStatus.uppercase(Locale.ROOT)) {
+            "ARCHIVED" -> "بایگانی‌شده"
+            "PAYMENT_REQUIRED" -> "نیازمند پرداخت"
+            "RENEWAL_REQUIRED" -> "نیازمند تمدید"
+            else -> "فعال"
+        }
         archive.text = if (student.isActive) "بایگانی کردن" else "فعال‌سازی مجدد"
 
         archive.setOnClickListener {
