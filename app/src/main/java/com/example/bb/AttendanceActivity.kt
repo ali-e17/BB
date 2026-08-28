@@ -1,6 +1,6 @@
 package com.example.bb
 
-
+import android.content.res.Configuration
 import androidx.activity.result.contract.ActivityResultContracts
 import java.io.IOException
 import okhttp3.ResponseBody
@@ -212,10 +212,26 @@ class AttendanceActivity : BaseActivity() {
         }
 
         // تنظیمات استایل آبی آسمانی و فونت جمع‌وجور
-        spinnerClass.setTextColor(android.graphics.Color.parseColor("#9ad9f5"))
+        // رنگ نام کلاس براساس تم
+        val isDarkMode =
+            resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK ==
+                    Configuration.UI_MODE_NIGHT_YES
+
+        val selectedClassTextColor = if (isDarkMode) {
+            // رنگ قبلی در Dark Mode بدون تغییر
+            android.graphics.Color.parseColor("#9AD9F5")
+        } else {
+            // آبی تیره‌تر و خواناتر در Light Mode
+            android.graphics.Color.parseColor("#1E4F7A")
+        }
+
+        spinnerClass.setTextColor(selectedClassTextColor)
         spinnerClass.textSize = 14f
 
-        spinnerClass.setAdapter(createSkyBlueAdapter(this, classNames))
+        spinnerClass.setAdapter(
+            createSkyBlueAdapter(this, classNames)
+        )
         spinnerClass.setOnItemClickListener { _, _, position, _ ->
             selectClass(availableClasses[position])
         }
@@ -235,19 +251,76 @@ class AttendanceActivity : BaseActivity() {
         loadOverview()
     }
 
-    private fun createSkyBlueAdapter(context: Context, items: List<String>): ArrayAdapter<String> {
-        return object : ArrayAdapter<String>(context, android.R.layout.simple_dropdown_item_1line, items) {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getView(position, convertView, parent) as TextView
-                view.setTextColor(android.graphics.Color.parseColor("#9ad9f5"))
+    private fun createSkyBlueAdapter(
+        context: Context,
+        items: List<String>
+    ): ArrayAdapter<String> {
+
+        val isDarkMode =
+            context.resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK ==
+                    Configuration.UI_MODE_NIGHT_YES
+
+        val selectedTextColor = if (isDarkMode) {
+            // همان رنگ قبلی
+            android.graphics.Color.parseColor("#9AD9F5")
+        } else {
+            android.graphics.Color.parseColor("#1E4F7A")
+        }
+
+        val dropDownTextColor = if (isDarkMode) {
+            // همان رنگ قبلی لیست کشویی
+            android.graphics.Color.parseColor("#0EA5E9")
+        } else {
+            // در Light Mode تیره‌تر
+            android.graphics.Color.parseColor("#1E4F7A")
+        }
+
+        return object : ArrayAdapter<String>(
+            context,
+            android.R.layout.simple_dropdown_item_1line,
+            items
+        ) {
+
+            override fun getView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
+
+                val view =
+                    super.getView(
+                        position,
+                        convertView,
+                        parent
+                    ) as TextView
+
+                view.setTextColor(selectedTextColor)
+
+                // اندازه قبلی دقیقاً حفظ شده
                 view.textSize = 14f
+
                 return view
             }
 
-            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getDropDownView(position, convertView, parent) as TextView
-                view.setTextColor(android.graphics.Color.parseColor("#0ea5e9"))
+            override fun getDropDownView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
+
+                val view =
+                    super.getDropDownView(
+                        position,
+                        convertView,
+                        parent
+                    ) as TextView
+
+                view.setTextColor(dropDownTextColor)
+
+                // اندازه قبلی دقیقاً حفظ شده
                 view.textSize = 14f
+
                 return view
             }
         }
