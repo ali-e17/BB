@@ -139,50 +139,8 @@ class ReportCardViewActivity : BaseActivity() {
         renderScoreTable(card)
         renderResultSummary(card)
 
-        /*
-         * پیش‌نمایش و PDF باید تمام اعداد را با رقم انگلیسی نمایش دهند.
-         * PDF از همین printableArea تصویر می‌گیرد؛ بنابراین با یکسان‌سازی
-         * همین View، هر دو خروجی دقیقاً یکسان خواهند بود.
-         */
+        // فقط همین کارنامه گرافیکی و PDF آن: اعداد انگلیسی.
         forceEnglishDigitsInPrintableArea()
-    }
-
-    private fun forceEnglishDigitsInPrintableArea() {
-        forceEnglishDigitsRecursively(
-            printableArea
-        )
-        printableArea.invalidate()
-    }
-
-    private fun forceEnglishDigitsRecursively(
-        view: View
-    ) {
-        if (view is TextView) {
-            view.tag =
-                FORCE_ENGLISH_DIGITS_TAG
-
-            val normalized =
-                UiTextFormatter.normalizeEnglishDigits(
-                    view.text
-                )
-
-            /*
-             * حتی اگر متن منبع از قبل ASCII باشد، دوباره setText می‌کنیم
-             * تا TransformationMethod بعد از تغییر tag فوراً بازاجرا شود.
-             */
-            view.text = normalized
-        }
-
-        if (view is ViewGroup) {
-            for (
-            index in
-            0 until view.childCount
-            ) {
-                forceEnglishDigitsRecursively(
-                    view.getChildAt(index)
-                )
-            }
-        }
     }
 
     private fun renderScoreTable(card: ReportCardDto) {
@@ -452,14 +410,48 @@ class ReportCardViewActivity : BaseActivity() {
     }
 
     private fun formatPublishedDate(value: String?): String =
-        PersianDateUtils.formatDate(
-            value,
-            fallback = "—"
+        UiTextFormatter.normalizeEnglishDigits(
+            PersianDateUtils.formatDate(
+                value,
+                fallback = "—"
+            )
         )
 
+    /**
+     * قانون قطعی کارنامه گرافیکی:
+     * همه اعداد انگلیسی و اعشار فقط با نقطه نمایش داده می‌شوند.
+     * مثال: 12.5
+     */
     private fun format(value: Double): String =
-        if (value % 1.0 == 0.0) value.toInt().toString()
-        else String.format(Locale.US, "%.2f", value)
+        UiTextFormatter.formatEnglishDecimal(value)
+
+    /**
+     * BaseActivity در صفحات عادی اعداد را هوشمند فارسی/انگلیسی می‌کند.
+     * فقط داخل printableArea کارنامه گرافیکی، همه TextViewها مجبور به
+     * نمایش رقم انگلیسی می‌شوند. این تغییر فقط نمایشی است و به داده،
+     * scores، totalScore، cardId یا منطق دریافت کارنامه دست نمی‌زند.
+     */
+    private fun forceEnglishDigitsInPrintableArea() {
+        forceEnglishDigitsRecursively(printableArea)
+    }
+
+    private fun forceEnglishDigitsRecursively(view: View) {
+        if (view is TextView) {
+            view.tag = FORCE_ENGLISH_DIGITS_TAG
+            view.text =
+                UiTextFormatter.normalizeEnglishDigits(
+                    view.text
+                )
+        }
+
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                forceEnglishDigitsRecursively(
+                    view.getChildAt(index)
+                )
+            }
+        }
+    }
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).toInt()

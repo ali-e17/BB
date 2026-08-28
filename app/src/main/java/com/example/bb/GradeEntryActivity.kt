@@ -3,15 +3,16 @@ package com.example.bb
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.text.method.ReplacementTransformationMethod
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
@@ -19,8 +20,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsAnimationCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -44,17 +44,24 @@ class GradeEntryActivity : BaseActivity() {
     private lateinit var incompleteCountText: TextView
     private lateinit var gradeSummaryCard: View
 
-    private var baseRecyclerPaddingBottom: Int = 0
-    private var currentImeBottom: Int = 0
-    private var currentNavigationBottom: Int = 0
-
     private var config: ReportConfigDto? = null
     private val students = mutableListOf<EditableStudent>()
     private lateinit var adapter: RosterAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // همان تنظیمی که در AddEditClassActivity واقعاً استفاده می‌شود.
+        // اجازه می‌دهیم خود Android ارتفاع پنجره را با باز شدن کیبورد کم کند.
+        window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+
         setContentView(R.layout.activity_grade_entry)
+
+        // این صفحه عمداً از edge-to-edge خارج می‌شود تا adjustResize
+        // مثل یک فرم معمولی اندروید عمل کند و کیبورد واقعاً ارتفاع صفحه را کم کند.
+        configureClassicKeyboardResize()
 
         classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
         className = intent.getStringExtra(EXTRA_CLASS_NAME).orEmpty()
@@ -80,9 +87,11 @@ class GradeEntryActivity : BaseActivity() {
         incompleteCountText = findViewById(R.id.txtIncompleteCount)
 
         rvStudents.layoutManager = LinearLayoutManager(this)
+        rvStudents.itemAnimator = null
+        rvStudents.setHasFixedSize(false)
         adapter = RosterAdapter()
         rvStudents.adapter = adapter
-        setupKeyboardAwareScoreEntry()
+        setupKeyboardNavigation()
 
         draftButton.setOnClickListener { save(publish = false) }
         publishButton.setOnClickListener { requestPublish() }
@@ -98,105 +107,37 @@ class GradeEntryActivity : BaseActivity() {
      * دستگاه‌ها کافی نیست. ارتفاع واقعی کیبورد به فضای قابل اسکرول
      * RecyclerView اضافه می‌شود تا فیلد فعال پشت کیبورد نرود.
      */
-    private fun setupKeyboardAwareScoreEntry() {
-        baseRecyclerPaddingBottom = rvStudents.paddingBottom
+    /**
+     * عمداً هیچ WindowInsets/IME padding سفارشی روی RecyclerView اعمال نمی‌کنیم.
+     *
+     * در این صفحه adjustResize فعال است؛ بنابراین وقتی کیبورد باز می‌شود،
+     * خود پنجره کوچک می‌شود. RecyclerView نیز در XML به بالای gradeBottom
+     * متصل است و واقعاً فضای قابل نمایش آن کم می‌شود.
+     */
+    private fun configureClassicKeyboardResize() {
+        val root = findViewById<View>(R.id.rootGradeEntry)
 
-        ViewCompat.setOnApplyWindowInsetsListener(rvStudents) { _, insets ->
-            applyImeInsets(insets)
-            insets
-        }
+        // BaseActivity به‌صورت عمومی edge-to-edge را فعال می‌کند.
+        // برای این فرم خاص آن را خاموش می‌کنیم تا سیستم مستقیماً
+        // فضای IME را از ارتفاع Activity کم کند.
+        ViewCompat.setOnApplyWindowInsetsListener(root, null)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
 
-        ViewCompat.setWindowInsetsAnimationCallback(
-            rvStudents,
-            object : WindowInsetsAnimationCompat.Callback(
-                WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE
-            ) {
-                override fun onProgress(
-                    insets: WindowInsetsCompat,
-                    runningAnimations: MutableList<WindowInsetsAnimationCompat>
-                ): WindowInsetsCompat {
-                    applyImeInsets(insets)
-                    return insets
-                }
+        root.setPadding(0, 0, 0, 0)
 
-                override fun onEnd(animation: WindowInsetsAnimationCompat) {
-                    super.onEnd(animation)
-                    val focused = currentFocus
-                    if (focused != null && isDescendantOfRecycler(focused)) {
-                        focused.postDelayed(
-                            { ensureScoreInputVisible(focused, smooth = false) },
-                            40
-                        )
-                    }
-                }
-            }
+        window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         )
-
-        ViewCompat.requestApplyInsets(rvStudents)
     }
 
-    private fun applyImeInsets(insets: WindowInsetsCompat) {
-        val imeBottom =
-            insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-        val navigationBottom =
-            insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-        val imeVisible =
-            insets.isVisible(WindowInsetsCompat.Type.ime())
-
-        currentImeBottom =
-            if (imeVisible) imeBottom else 0
-        currentNavigationBottom =
-            navigationBottom
-
-        val extraBottom = if (imeVisible) {
-            maxOf(
-                0,
-                imeBottom - navigationBottom
-            )
-        } else {
-            0
-        }
-
-        val wantedBottom =
-            baseRecyclerPaddingBottom + extraBottom
-
-        if (rvStudents.paddingBottom != wantedBottom) {
-            rvStudents.setPadding(
-                rvStudents.paddingLeft,
-                rvStudents.paddingTop,
-                rvStudents.paddingRight,
-                wantedBottom
-            )
-        }
-
-        if (imeVisible) {
-            val focused = currentFocus
-            if (focused != null && isDescendantOfRecycler(focused)) {
-                focused.post {
-                    ensureScoreInputVisible(
-                        focused,
-                        smooth = false
-                    )
-                }
-            }
-        }
-    }
-
-    private fun isDescendantOfRecycler(view: View): Boolean {
-        var current: View? = view
-
-        while (current != null) {
-            if (current === rvStudents) {
-                return true
-            }
-            current = current.parent as? View
-        }
-
-        return false
+    private fun setupKeyboardNavigation() {
+        rvStudents.clipToPadding = false
     }
 
     /**
-     * هر فیلد نمره را داخل ناحیه قابل مشاهده و بالای کیبورد نگه می‌دارد.
+     * از مکانیزم استاندارد خود Android برای آوردن فیلد فوکوس‌شده داخل
+     * viewport استفاده می‌کنیم. این درخواست از EditText به والدها
+     * (کارت -> RecyclerView) منتقل می‌شود.
      */
     private fun ensureScoreInputVisible(
         field: View,
@@ -209,49 +150,32 @@ class GradeEntryActivity : BaseActivity() {
                 return@post
             }
 
-            val fieldRect = Rect()
-            if (!field.getGlobalVisibleRect(fieldRect)) {
-                return@post
-            }
+            val rect = android.graphics.Rect(
+                0,
+                -dp(8),
+                field.width,
+                field.height + dp(88)
+            )
 
-            val rootView = field.rootView
-            val keyboardTop = if (currentImeBottom > 0) {
-                rootView.height - currentImeBottom
-            } else {
-                rootView.height - currentNavigationBottom
-            }
+            field.requestRectangleOnScreen(
+                rect,
+                !smooth
+            )
 
-            val safeBottom =
-                keyboardTop - dp(20)
-
-            val summaryRect = Rect()
-            gradeSummaryCard.getGlobalVisibleRect(summaryRect)
-            val safeTop =
-                summaryRect.bottom + dp(8)
-
-            when {
-                fieldRect.bottom > safeBottom -> {
-                    val delta =
-                        fieldRect.bottom - safeBottom + dp(18)
-
-                    if (smooth) {
-                        rvStudents.smoothScrollBy(0, delta)
-                    } else {
-                        rvStudents.scrollBy(0, delta)
-                    }
+            // یک بار دیگر بعد از resize کامل پنجره.
+            field.postDelayed({
+                if (field.isAttachedToWindow) {
+                    field.requestRectangleOnScreen(
+                        android.graphics.Rect(
+                            0,
+                            -dp(8),
+                            field.width,
+                            field.height + dp(88)
+                        ),
+                        true
+                    )
                 }
-
-                fieldRect.top < safeTop -> {
-                    val delta =
-                        fieldRect.top - safeTop - dp(8)
-
-                    if (smooth) {
-                        rvStudents.smoothScrollBy(0, delta)
-                    } else {
-                        rvStudents.scrollBy(0, delta)
-                    }
-                }
-            }
+            }, 180)
         }
     }
 
@@ -260,17 +184,15 @@ class GradeEntryActivity : BaseActivity() {
     ) {
         field.requestFocus()
 
-        val length =
-            field.text?.length ?: 0
-
+        val length = field.text?.length ?: 0
         if (length > 0) {
-            field.setSelection(
-                0,
-                length
-            )
+            field.setSelection(0, length)
         }
 
-        ensureScoreInputVisible(field)
+        ensureScoreInputVisible(
+            field,
+            smooth = false
+        )
 
         field.postDelayed({
             val imm =
@@ -283,13 +205,14 @@ class GradeEntryActivity : BaseActivity() {
                 InputMethodManager.SHOW_IMPLICIT
             )
 
+            // بعد از باز شدن کامل کیبورد یک بار دیگر موقعیت فیلد اصلاح می‌شود.
             field.postDelayed({
                 ensureScoreInputVisible(
                     field,
                     smooth = false
                 )
-            }, 260)
-        }, 50)
+            }, 220)
+        }, 60)
     }
 
     private fun hideKeyboard(view: View) {
@@ -431,10 +354,10 @@ class GradeEntryActivity : BaseActivity() {
                 publish = publish,
                 students = payload
             )
-        ).enqueue(object : Callback<ApiResponse> {
+        ).enqueue(object : Callback<SaveReportCardsResponse> {
             override fun onResponse(
-                call: Call<ApiResponse>,
-                response: Response<ApiResponse>
+                call: Call<SaveReportCardsResponse>,
+                response: Response<SaveReportCardsResponse>
             ) {
                 setLoading(false)
                 val body = response.body()
@@ -464,11 +387,171 @@ class GradeEntryActivity : BaseActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+            override fun onFailure(call: Call<SaveReportCardsResponse>, t: Throwable) {
                 setLoading(false)
                 toast(ApiErrorParser.networkMessage(t, "ذخیره نمرات"))
             }
         })
+    }
+
+    /**
+     * پیش‌نمایش کارنامه باید دقیقاً نمره‌های همین لحظه فرم را نشان بدهد.
+     *
+     * قبلاً دکمه چشم فقط cardId قبلی را باز می‌کرد. اگر معیارها تغییر کرده
+     * بودند یا کارنامه قبلی invalidate شده بود، سرور یک کارت 0/100 بدون ردیف
+     * داشت و همان نمایش داده می‌شد؛ حتی اگر کاربر نمره‌های جدید را در فرم
+     * وارد کرده بود ولی هنوز ذخیره نکرده بود.
+     *
+     * حالا برای Draft، فقط همین دانش‌آموز را قبل از Preview ذخیره می‌کنیم.
+     */
+    private fun previewStudentWithLatestScores(
+        student: EditableStudent
+    ) {
+        rvStudents.clearFocus()
+
+        // کارنامه منتشرشده باید فقط بعد از «انتشار مجدد» تغییر کند.
+        if (student.status == "PUBLISHED") {
+            val existingCardId =
+                student.cardId.orEmpty()
+
+            if (existingCardId.isBlank()) {
+                AppToast.warning(
+                    this,
+                    "شناسه کارنامه منتشرشده در دسترس نیست؛ صفحه را دوباره باز کنید"
+                )
+                return
+            }
+
+            openReportPreview(
+                existingCardId
+            )
+            return
+        }
+
+        val currentConfig =
+            config ?: return toast(
+                "تنظیمات کارنامه دریافت نشده است؛ صفحه را دوباره باز کنید"
+            )
+
+        val hasAnyScore =
+            currentConfig.components.any { component ->
+                student.scores[component.id] != null
+            }
+
+        if (!hasAnyScore) {
+            AppToast.warning(
+                this,
+                "برای مشاهده پیش‌نمایش، حداقل یک نمره برای این دانش‌آموز وارد کنید"
+            )
+            return
+        }
+
+        setLoading(true)
+
+        RetrofitClient.instance.saveReportCards(
+            SaveReportCardsRequest(
+                classId = classId,
+                expectedConfigRevision =
+                    currentConfig.revision,
+                publish = false,
+                students = listOf(
+                    SaveReportStudentRequest(
+                        studentId = student.id,
+                        expectedRevision =
+                            student.revision,
+                        scores =
+                            student.scores.toMap()
+                    )
+                )
+            )
+        ).enqueue(
+            object :
+                Callback<SaveReportCardsResponse> {
+
+                override fun onResponse(
+                    call: Call<SaveReportCardsResponse>,
+                    response: Response<SaveReportCardsResponse>
+                ) {
+                    setLoading(false)
+
+                    val body =
+                        response.body()
+
+                    if (
+                        response.isSuccessful &&
+                        body?.status == "success"
+                    ) {
+                        val saved =
+                            body.cards.firstOrNull {
+                                it.studentId ==
+                                    student.id
+                            }
+
+                        if (
+                            saved == null ||
+                            saved.cardId.isBlank()
+                        ) {
+                            AppToast.error(
+                                this@GradeEntryActivity,
+                                "پیش‌نویس ذخیره شد اما شناسه کارنامه از سرور دریافت نشد"
+                            )
+                            return
+                        }
+
+                        student.cardId =
+                            saved.cardId
+                        student.revision =
+                            saved.revision
+                        student.status =
+                            saved.status
+
+                        openReportPreview(
+                            saved.cardId
+                        )
+                        return
+                    }
+
+                    toast(
+                        body?.message
+                            ?.takeIf {
+                                it.isNotBlank()
+                            }
+                            ?: ApiErrorParser.userMessage(
+                                response,
+                                "ذخیره پیش‌نمایش کارنامه کامل نشد"
+                            )
+                    )
+                }
+
+                override fun onFailure(
+                    call: Call<SaveReportCardsResponse>,
+                    t: Throwable
+                ) {
+                    setLoading(false)
+
+                    toast(
+                        ApiErrorParser.networkMessage(
+                            t,
+                            "ذخیره پیش‌نمایش کارنامه"
+                        )
+                    )
+                }
+            }
+        )
+    }
+
+    private fun openReportPreview(
+        cardId: String
+    ) {
+        startActivity(
+            Intent(
+                this,
+                ReportCardViewActivity::class.java
+            ).putExtra(
+                ReportCardViewActivity.EXTRA_REPORT_CARD_ID,
+                cardId
+            )
+        )
     }
 
     private fun updateSummary() {
@@ -510,12 +593,18 @@ class GradeEntryActivity : BaseActivity() {
         }
     }
 
+    /**
+     * مقدار خامی که داخل EditText نگه داشته می‌شود.
+     * انگلیسی و با نقطه است تا parsing و Backend پایدار بمانند.
+     */
     private fun format(value: Double): String =
-        if (value % 1.0 == 0.0) {
-            value.toInt().toString()
-        } else {
-            String.format(Locale.US, "%.2f", value)
-        }
+        UiTextFormatter.formatEnglishDecimal(value)
+
+    /**
+     * نمایش عدد در UI فارسی کارنامه: 12.5 -> ۱۲/۵
+     */
+    private fun formatPersian(value: Double): String =
+        UiTextFormatter.formatPersianDecimalSlash(value)
 
     private fun toast(message: String) {
         AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
@@ -534,12 +623,40 @@ class GradeEntryActivity : BaseActivity() {
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).toInt()
 
+    /**
+     * فقط نمایش نمره را فارسی می‌کند.
+     *
+     * مقدار واقعی داخل EditText تغییر نمی‌کند:
+     * 12.5  -> مقدار واقعی
+     * ۱۲/۵  -> چیزی که کاربر می‌بیند
+     *
+     * چون جایگزینی‌ها یک‌به‌یک و هم‌طول هستند، موقعیت Cursor و composing
+     * کیبورد به‌هم نمی‌ریزد.
+     */
+    private class PersianScoreTransformationMethod :
+        ReplacementTransformationMethod() {
+
+        override fun getOriginal(): CharArray =
+            charArrayOf(
+                '0', '1', '2', '3', '4',
+                '5', '6', '7', '8', '9',
+                '.', ',', '،', '٫'
+            )
+
+        override fun getReplacement(): CharArray =
+            charArrayOf(
+                '۰', '۱', '۲', '۳', '۴',
+                '۵', '۶', '۷', '۸', '۹',
+                '/', '/', '/', '/'
+            )
+    }
+
     private data class EditableStudent(
         val id: String,
         val name: String,
         val studentCode: String,
-        val cardId: String?,
-        val status: String,
+        var cardId: String?,
+        var status: String,
         var revision: Int,
         val scores: MutableMap<String, Double?>
     )
@@ -602,25 +719,13 @@ class GradeEntryActivity : BaseActivity() {
                 }
             }
 
-            holder.btnPreviewCard.alpha =
-                if (student.cardId.isNullOrBlank()) 0.45f else 1.0f
+            // چشم همیشه فعال است:
+            // برای پیش‌نویس، قبل از باز شدن کارنامه همین دانش‌آموز
+            // با آخرین نمره‌های داخل فرم ذخیره می‌شود تا Preview قدیمی نباشد.
+            holder.btnPreviewCard.alpha = 1.0f
 
             holder.btnPreviewCard.setOnClickListener {
-                if (student.cardId.isNullOrBlank()) {
-                    toast(
-                        "ابتدا گزینه «ذخیره پیش‌نویس» را انتخاب کنید تا امکان مشاهده کارنامه فراهم شود"
-                    )
-                } else {
-                    startActivity(
-                        Intent(
-                            this@GradeEntryActivity,
-                            ReportCardViewActivity::class.java
-                        ).putExtra(
-                            ReportCardViewActivity.EXTRA_REPORT_CARD_ID,
-                            student.cardId
-                        )
-                    )
-                }
+                previewStudentWithLatestScores(student)
             }
 
             holder.containerGrades.removeAllViews()
@@ -638,24 +743,24 @@ class GradeEntryActivity : BaseActivity() {
                 row.findViewById<TextView>(R.id.txtCompactCriterion).text =
                     component.title
                 row.findViewById<TextView>(R.id.txtCompactMax).text =
-                    "حداکثر نمره: ${format(component.maxScore)}"
+                    "حداکثر نمره: ${formatPersian(component.maxScore)}"
 
                 val input =
                     row.findViewById<TextInputEditText>(R.id.etCompactScore)
 
-                input.setSelectAllOnFocus(true)
-                input.setOnFocusChangeListener { _, hasFocus ->
-                    if (hasFocus) {
-                        ensureScoreInputVisible(input)
+                // مقدار واقعی EditText همان عدد استاندارد باقی می‌ماند،
+                // اما فقط در لایه نمایش، رقم‌ها فارسی دیده می‌شوند.
+                // ReplacementTransformationMethod طول متن را تغییر نمی‌دهد؛
+                // بنابراین Cursor، IME، TextWatcher و ذخیره نمره پایدار می‌مانند.
+                input.transformationMethod =
+                    PersianScoreTransformationMethod()
 
-                        input.postDelayed({
-                            ensureScoreInputVisible(
-                                input,
-                                smooth = false
-                            )
-                        }, 280)
-                    }
-                }
+                input.isEnabled = true
+                input.isFocusable = true
+                input.isFocusableInTouchMode = true
+                input.isClickable = true
+                input.showSoftInputOnFocus = true
+                input.setSelectAllOnFocus(true)
 
                 scoreInputs += input
 
@@ -663,10 +768,74 @@ class GradeEntryActivity : BaseActivity() {
                     input.setText(format(it))
                 }
 
+                fun normalizedScoreText(): String =
+                    UiTextFormatter.normalizeEnglishDigits(
+                        input.text?.toString()?.trim().orEmpty()
+                    )
+                        .replace('٫', '.')
+                        .replace(',', '.')
+                        .replace('/', '.')
+
+                fun parsedScoreOrNull(): Double? {
+                    val raw = normalizedScoreText()
+                    if (raw.isBlank()) return null
+
+                    val value = raw.toDoubleOrNull()
+                        ?: return null
+
+                    return value.takeIf {
+                        it >= 0.0 && it <= component.maxScore
+                    }
+                }
+
+                fun refreshStudentUiAfterEdit() {
+                    if (!holder.itemView.isAttachedToWindow) {
+                        updateSummary()
+                        return
+                    }
+
+                    bindStudentHeader(
+                        holder,
+                        student,
+                        components
+                    )
+                    updateSummary()
+                }
+
+                input.setOnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus) {
+                        ensureScoreInputVisible(
+                            input,
+                            smooth = false
+                        )
+
+                        input.postDelayed({
+                            ensureScoreInputVisible(
+                                input,
+                                smooth = false
+                            )
+                        }, 320)
+                    } else {
+                        val raw = normalizedScoreText()
+                        val parsed = parsedScoreOrNull()
+
+                        input.error =
+                            if (raw.isNotBlank() && parsed == null) {
+                                "نمره باید بین ۰ تا ${formatPersian(component.maxScore)} باشد"
+                            } else {
+                                null
+                            }
+
+                        refreshStudentUiAfterEdit()
+                    }
+                }
+
                 row.findViewById<View>(R.id.btnCompactZero)
                     .setOnClickListener {
                         input.setText("0")
-                        input.clearFocus()
+                        student.scores[component.id] = 0.0
+                        refreshStudentUiAfterEdit()
+                        focusScoreField(input)
                     }
 
                 input.addTextChangedListener(object : TextWatcher {
@@ -685,34 +854,28 @@ class GradeEntryActivity : BaseActivity() {
                     ) = Unit
 
                     override fun afterTextChanged(s: Editable?) {
+                        // عمداً هیچ View، Header، Badge یا RecyclerView را
+                        // در حین تایپ دوباره bind نمی‌کنیم.
+                        // فقط مدل خام به‌روزرسانی می‌شود.
                         val raw =
                             UiTextFormatter.normalizeEnglishDigits(
                                 s?.toString()?.trim().orEmpty()
                             )
-                        val value = raw.toDoubleOrNull()
+                                .replace('٫', '.')
+                                .replace(',', '.')
 
-                        when {
-                            raw.isBlank() -> {
-                                student.scores[component.id] = null
-                                input.error = null
-                            }
-
-                            value == null ||
-                                    value < 0.0 ||
-                                    value > component.maxScore -> {
-                                student.scores[component.id] = null
-                                input.error =
-                                    "۰ تا ${format(component.maxScore)}"
-                            }
-
-                            else -> {
-                                student.scores[component.id] = value
-                                input.error = null
-                            }
+                        if (raw.isBlank()) {
+                            student.scores[component.id] = null
+                            return
                         }
 
-                        bindStudentHeader(holder, student, components)
-                        updateSummary()
+                        val value = raw.toDoubleOrNull()
+
+                        student.scores[component.id] =
+                            value?.takeIf {
+                                it >= 0.0 &&
+                                    it <= component.maxScore
+                            }
                     }
                 })
 
@@ -783,9 +946,9 @@ class GradeEntryActivity : BaseActivity() {
                 student.scores[component.id] ?: 0.0
             }
             holder.txtStudentTotal.text =
-                "نمره فعلی: ${format(currentTotal)}"
+                "نمره فعلی: ${formatPersian(currentTotal)}"
             holder.txtExpandedTotal.text =
-                "جمع نمره‌های واردشده: ${format(currentTotal)} از 100"
+                "جمع نمره‌های واردشده: ${formatPersian(currentTotal)} از ۱۰۰"
 
             val validCount = components.count { component ->
                 student.scores[component.id] != null

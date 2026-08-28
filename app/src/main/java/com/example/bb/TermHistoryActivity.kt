@@ -197,13 +197,8 @@ class TermHistoryActivity : BaseActivity() {
 
         override fun getItemCount(): Int = items.size
 
-        private fun formatScore(value: Double): String {
-            return if (value % 1.0 == 0.0) {
-                value.toInt().toString()
-            } else {
-                String.format(Locale.US, "%.2f", value)
-            }
-        }
+        private fun formatScore(value: Double): String =
+            UiTextFormatter.formatPersianDecimalSlash(value)
     }
 
     companion object {

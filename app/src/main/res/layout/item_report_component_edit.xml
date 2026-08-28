@@ -40,11 +40,14 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etComponentTitle"
+                android:tag="skip_smart_digits"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:breakStrategy="simple"
                 android:hyphenationFrequency="none"
-                android:maxLines="2"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
+                android:singleLine="true"
                 android:textColor="@color/input_text"
                 android:textDirection="firstStrong" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -59,12 +62,16 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etComponentMax"
+                android:tag="skip_smart_digits"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:imeOptions="actionNext"
                 android:inputType="numberDecimal"
                 android:maxLines="1"
-                android:textColor="@color/input_text" />
+                android:singleLine="true"
+                android:textColor="@color/input_text"
+                android:textDirection="ltr" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <ImageView

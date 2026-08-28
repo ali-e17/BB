@@ -171,6 +171,11 @@ open class BaseActivity : AppCompatActivity() {
         if (view is TextView) {
             if (isPasswordField(view)) {
                 configurePasswordField(view)
+            } else if (isSkipSmartDigitsField(view)) {
+                // مهم:
+                // فیلدهای ورودی داینامیک (مثل نمره) باید کاملاً از
+                // SmartDigits و هرگونه دستکاری IME خارج باشند.
+                // اینجا عمداً هیچ setterای روی EditText اجرا نمی‌کنیم.
             } else {
                 if (isForceEnglishDigitsField(view)) {
                     configureForceEnglishDigitsField(view)
@@ -206,6 +211,35 @@ open class BaseActivity : AppCompatActivity() {
         textView: TextView
     ): Boolean =
         textView.tag?.toString() == FORCE_ENGLISH_DIGITS_TAG
+
+    private fun isSkipSmartDigitsField(
+        textView: TextView
+    ): Boolean =
+        textView.tag?.toString() == SKIP_SMART_DIGITS_TAG
+
+    /**
+     * برای EditTextهای داینامیک مثل نمرات کارنامه، TransformationMethod
+     * هوشمند اعمال نمی‌شود. این کار از تغییر نمایش متن در میانه‌ی composing
+     * کیبورد جلوگیری می‌کند.
+     */
+    private fun configureRawEditableField(
+        textView: TextView
+    ) {
+        if (textView !is EditText) return
+
+        // اگر این EditText قبلاً توسط GlobalLayoutListener با
+        // SmartDigitsTransformationMethod پوشانده شده باشد، آن را کامل
+        // برمی‌داریم تا متن واقعی هنگام تایپ بدون واسطه نمایش داده شود.
+        if (textView.transformationMethod is SmartDigitsTransformationMethod) {
+            textView.transformationMethod = null
+        }
+
+        textView.textLocale = Locale.US
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            textView.imeHintLocales = LocaleList(Locale.US)
+        }
+    }
 
     /**
      * فیلدهای کدی مثل کد اتباع:
@@ -586,6 +620,9 @@ open class BaseActivity : AppCompatActivity() {
 
         private const val FORCE_ENGLISH_DIGITS_TAG =
             "force_english_digits"
+
+        private const val SKIP_SMART_DIGITS_TAG =
+            "skip_smart_digits"
 
 
         private const val PREFS_NAME =

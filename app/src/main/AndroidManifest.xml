@@ -1,146 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET" />
-
-    <application
-        android:usesCleartextTraffic="true"
-        android:name=".BBApplication"
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:label="@string/app_name"
-        android:icon="@drawable/app_logo"
-        android:roundIcon="@drawable/app_logo"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.BB">
-
-        <activity
-            android:name="com.example.bb.LoginActivity"
-            android:exported="true">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application android:usesCleartextTraffic="true" android:name=".BBApplication" android:allowBackup="true" android:dataExtractionRules="@xml/data_extraction_rules" android:fullBackupContent="@xml/backup_rules" android:label="@string/app_name" android:icon="@drawable/app_logo" android:roundIcon="@drawable/app_logo" android:supportsRtl="true" android:theme="@style/Theme.BB">
+        <activity android:name="com.example.bb.LoginActivity" android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".UpdateProfileActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".InitialPaymentActivity"
-            android:exported="true"
-            android:launchMode="singleTop">
+        <activity android:name=".MainActivity" android:exported="false"/>
+        <activity android:name=".ProfileActivity" android:exported="false"/>
+        <activity android:name=".UpdateProfileActivity" android:exported="false"/>
+        <activity android:name=".InitialPaymentActivity" android:exported="true" android:launchMode="singleTop">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="bbapp"
-                    android:host="payment-result" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="bbapp" android:host="payment-result"/>
             </intent-filter>
         </activity>
-
-
-        <activity
-            android:name=".AnnouncementsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AnnouncementDetailActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CreateAnnouncementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ReportCardSetupActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".GradeEntryActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ReportCardViewActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StudentManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AddEditStudentActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ClassManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ClassDetailsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".TeacherManagementActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AssignClassActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CompletedClassesActivity"
-            android:exported="false" />
-
-
-        <activity
-            android:name=".AttendanceActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".DictionaryActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AddEditTeacherActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AddEditClassActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-
-        <activity android:name=".TeacherHistoryActivity" />
-
-        <activity
-            android:name=".ForceChangePasswordActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ResultMessagesActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".TermHistoryActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".TrashBinActivity"
-            android:exported="false" />
-
+        <activity android:name=".AnnouncementsActivity" android:exported="false"/>
+        <activity android:name=".AnnouncementDetailActivity" android:exported="false"/>
+        <activity android:name=".CreateAnnouncementActivity" android:exported="false"/>
+        <activity android:name=".ReportCardSetupActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".GradeEntryActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ReportCardViewActivity" android:exported="false"/>
+        <activity android:name=".StudentManagementActivity" android:exported="false"/>
+        <activity android:name=".AddEditStudentActivity" android:exported="false"/>
+        <activity android:name=".ClassManagementActivity" android:exported="false"/>
+        <activity android:name=".ClassDetailsActivity" android:exported="false"/>
+        <activity android:name=".TeacherManagementActivity" android:exported="false"/>
+        <activity android:name=".AssignClassActivity" android:exported="false"/>
+        <activity android:name=".CompletedClassesActivity" android:exported="false"/>
+        <activity android:name=".AttendanceActivity" android:exported="false"/>
+        <activity android:name=".DictionaryActivity" android:exported="false"/>
+        <activity android:name=".AddEditTeacherActivity" android:exported="false"/>
+        <activity android:name=".AddEditClassActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".TeacherHistoryActivity"/>
+        <activity android:name=".ForceChangePasswordActivity" android:exported="false"/>
+        <activity android:name=".ResultMessagesActivity" android:exported="false"/>
+        <activity android:name=".TermHistoryActivity" android:exported="false"/>
+        <activity android:name=".TrashBinActivity" android:exported="false"/>
     </application>
 </manifest>

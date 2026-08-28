@@ -3,6 +3,7 @@ package com.example.bb
 import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
+import android.text.method.ReplacementTransformationMethod
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -82,6 +83,19 @@ class AddEditClassActivity : BaseActivity() {
         etSessionCount = findViewById(R.id.etSessionCount)
         etMinPassingScore = findViewById(R.id.etMinPassingScore)               // 🌟
         etMinConditionalScore = findViewById(R.id.etMinConditionalScore)       // 🌟
+
+        // همان متد پایدار صفحه نمرات:
+        // مقدار واقعی تغییر نمی‌کند، فقط نمایش اعداد فارسی می‌شود.
+        etMinPassingScore.transformationMethod =
+            PersianNumericTransformationMethod()
+        etMinConditionalScore.transformationMethod =
+            PersianNumericTransformationMethod()
+
+        // عدد پیش‌فرض/قبلی با اولین تایپ کامل جایگزین شود؛
+        // دیگر 80 یا 70 به عدد جدید نچسبد.
+        etMinPassingScore.setSelectAllOnFocus(true)
+        etMinConditionalScore.setSelectAllOnFocus(true)
+
         chipGroupDays = findViewById(R.id.chipGroupDays)
         btnSaveClass = findViewById(R.id.btnSaveClass)
         progressSaving = findViewById(R.id.progressSavingClass)
@@ -108,6 +122,11 @@ class AddEditClassActivity : BaseActivity() {
         classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
         if (classId.isBlank()) {
             tvTitle.text = "ایجاد کلاس جدید"
+
+            // فقط برای «کلاس جدید» مقدار پیشنهادی اولیه می‌گذاریم.
+            // کاربر آزاد است هر مقدار معتبر دیگری وارد کند.
+            etMinPassingScore.setText("80")
+            etMinConditionalScore.setText("70")
         } else {
             tvTitle.text = "ویرایش اطلاعات کلاس"
             loadClassForEdit()
@@ -341,35 +360,85 @@ class AddEditClassActivity : BaseActivity() {
     }
 
     private fun loadClassForEdit() {
-        val localClass = AppDatabase.getClassById(classId)
-        if (localClass != null) {
-            bindClass(localClass)
-            return
-        }
+        val localFallback =
+            AppDatabase.getClassById(classId)
 
+        // برای ویرایش، مقدار مرزهای نمره را همیشه از سرور تازه می‌گیریم.
+        // Cacheهای قدیمی ممکن است هنوز 80/70 پیش‌فرض داشته باشند.
         setSavingState(true)
-        RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
-            override fun onResponse(call: Call<List<ClassModel>>, response: Response<List<ClassModel>>) {
-                setSavingState(false)
-                val classes = response.body().orEmpty()
-                if (response.isSuccessful) AppDatabase.replaceClasses(classes)
-                val model = classes.firstOrNull { it.id == classId }
-                if (model == null) {
-                    AppToast.error(this@AddEditClassActivity, "اطلاعات این کلاس در دسترس نیست یا کلاس از سرور حذف شده است")
-                    finish()
-                    return
+
+        RetrofitClient.instance.getClasses()
+            .enqueue(
+                object : Callback<List<ClassModel>> {
+
+                    override fun onResponse(
+                        call: Call<List<ClassModel>>,
+                        response: Response<List<ClassModel>>
+                    ) {
+                        setSavingState(false)
+
+                        val classes =
+                            response.body().orEmpty()
+
+                        val serverModel =
+                            if (response.isSuccessful) {
+                                classes.firstOrNull {
+                                    it.id == classId
+                                }
+                            } else {
+                                null
+                            }
+
+                        if (
+                            response.isSuccessful &&
+                            classes.isNotEmpty()
+                        ) {
+                            AppDatabase.replaceClasses(
+                                classes
+                            )
+                        }
+
+                        val model =
+                            serverModel ?: localFallback
+
+                        if (model == null) {
+                            AppToast.error(
+                                this@AddEditClassActivity,
+                                "اطلاعات این کلاس در دسترس نیست یا کلاس از سرور حذف شده است"
+                            )
+                            finish()
+                            return
+                        }
+
+                        bindClass(model)
+                    }
+
+                    override fun onFailure(
+                        call: Call<List<ClassModel>>,
+                        t: Throwable
+                    ) {
+                        setSavingState(false)
+
+                        if (localFallback != null) {
+                            bindClass(localFallback)
+
+                            AppToast.info(
+                                this@AddEditClassActivity,
+                                "اطلاعات کلاس از حافظه محلی باز شد؛ اتصال سرور در دسترس نبود"
+                            )
+                        } else {
+                            AppToast.error(
+                                this@AddEditClassActivity,
+                                ApiErrorParser.networkMessage(
+                                    t,
+                                    "دریافت اطلاعات کلاس برای ویرایش"
+                                )
+                            )
+                            finish()
+                        }
+                    }
                 }
-                bindClass(model)
-            }
-            override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
-                setSavingState(false)
-                AppToast.error(
-                    this@AddEditClassActivity,
-                    ApiErrorParser.networkMessage(t, "دریافت اطلاعات کلاس برای ویرایش")
-                )
-                finish()
-            }
-        })
+            )
     }
 
     private fun bindClass(model: ClassModel) {
@@ -391,8 +460,8 @@ class AddEditClassActivity : BaseActivity() {
         etStartTime.setText(model.startTime)
         etEndTime.setText(model.endTime)
         etSessionCount.setText(model.sessionCount.toString())
-        etMinPassingScore.setText(model.minPassingScore.toString())           // 🌟
-        etMinConditionalScore.setText(model.minConditionalScore.toString())   // 🌟
+        etMinPassingScore.setText(formatBoundary(model.minPassingScore))
+        etMinConditionalScore.setText(formatBoundary(model.minConditionalScore))
 
         val savedDays = model.daysOfWeek.split("،", ",").map(::normalizeDayLabel).toSet()
         for (index in 0 until chipGroupDays.childCount) {
@@ -505,10 +574,27 @@ class AddEditClassActivity : BaseActivity() {
             return
         }
 
-        val minPassRaw = etMinPassingScore.text?.toString()?.trim().orEmpty()
-        val minCondRaw = etMinConditionalScore.text?.toString()?.trim().orEmpty()
-        val minPass = minPassRaw.toDoubleOrNull()
-        val minCond = minCondRaw.toDoubleOrNull()
+        val minPassRaw =
+            normalizeBoundaryInput(
+                etMinPassingScore.text
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty()
+            )
+
+        val minCondRaw =
+            normalizeBoundaryInput(
+                etMinConditionalScore.text
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty()
+            )
+
+        val minPass =
+            minPassRaw.toDoubleOrNull()
+
+        val minCond =
+            minCondRaw.toDoubleOrNull()
 
         if (minPass == null) {
             etMinPassingScore.error = "حد قبولی را به‌صورت عدد وارد کنید"
@@ -917,6 +1003,45 @@ class AddEditClassActivity : BaseActivity() {
     private fun setSavingState(saving: Boolean) {
         btnSaveClass.isEnabled = !saving
         progressSaving.visibility = if (saving) View.VISIBLE else View.GONE
+    }
+
+    private fun normalizeBoundaryInput(
+        value: String
+    ): String =
+        UiTextFormatter.normalizeEnglishDigits(value)
+            .replace('٫', '.')
+            .replace(',', '.')
+            .replace('،', '.')
+            .replace('/', '.')
+
+    private fun formatBoundary(
+        value: Double
+    ): String =
+        if (value % 1.0 == 0.0) {
+            value.toInt().toString()
+        } else {
+            value.toString()
+        }
+
+    /**
+     * فقط نمایش رقم‌ها را فارسی می‌کند؛ مقدار واقعی فیلد دست‌نخورده می‌ماند.
+     */
+    private class PersianNumericTransformationMethod :
+        ReplacementTransformationMethod() {
+
+        override fun getOriginal(): CharArray =
+            charArrayOf(
+                '0', '1', '2', '3', '4',
+                '5', '6', '7', '8', '9',
+                '.'
+            )
+
+        override fun getReplacement(): CharArray =
+            charArrayOf(
+                '۰', '۱', '۲', '۳', '۴',
+                '۵', '۶', '۷', '۸', '۹',
+                '/'
+            )
     }
 
     private fun normalizeDayLabel(value: String): String = value.replace("\u200C", "").replace(" ", "").trim()

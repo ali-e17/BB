@@ -541,13 +541,8 @@ class MainActivity : BaseActivity() {
     private fun String?.ifNullOrBlank(fallback: String): String =
         this?.takeIf { it.isNotBlank() } ?: fallback
 
-    private fun formatScore(value: Double): String {
-        return if (value % 1.0 == 0.0) {
-            value.toInt().toString()
-        } else {
-            String.format(Locale.US, "%.2f", value)
-        }
-    }
+    private fun formatScore(value: Double): String =
+        UiTextFormatter.formatPersianDecimalSlash(value)
 
     companion object {
         private const val LOCAL_PREFS_NAME = "LocalAppPrefs"

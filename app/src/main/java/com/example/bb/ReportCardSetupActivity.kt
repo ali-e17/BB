@@ -1,9 +1,19 @@
 package com.example.bb
 
 import android.content.Intent
+import android.content.Context
+import android.graphics.Rect
+import android.view.KeyEvent
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.ScrollView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.text.method.ReplacementTransformationMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
@@ -33,6 +43,7 @@ class ReportCardSetupActivity : BaseActivity() {
     private var loading = false
     private var configCall: Call<ReportConfigResponse>? = null
 
+    private lateinit var scrollSetup: ScrollView
     private lateinit var classDropdown: MaterialAutoCompleteTextView
     private lateinit var selectedInfo: TextView
     private lateinit var passRuleText: TextView
@@ -47,10 +58,19 @@ class ReportCardSetupActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // همان روش پایدار صفحه ورود نمرات:
+        // اجازه می‌دهیم خود Android با باز شدن کیبورد ارتفاع پنجره را کم کند.
+        window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+
         setContentView(R.layout.activity_report_card_setup)
+        configureClassicKeyboardResize()
 
         findViewById<ImageView>(R.id.btnSetupBack).setOnClickListener { finish() }
 
+        scrollSetup = findViewById(R.id.scrollReportSetup)
         classDropdown = findViewById(R.id.dropdownClassTarget)
         selectedInfo = findViewById(R.id.txtSelectedClassInfo)
         passRuleText = findViewById(R.id.txtPassRule)
@@ -84,12 +104,30 @@ class ReportCardSetupActivity : BaseActivity() {
             if (components.size >= 8) {
                 AppToast.warning(this, "حداکثر ۸ معیار برای کارنامه قابل تعریف است")
             } else {
+                // قبل از render مجدد، مقادیر تایپ‌شده فعلی را نگه می‌داریم.
+                syncRows()
+
                 components += EditableComponent(
                     UUID.randomUUID().toString(),
                     "",
                     0.0
                 )
+
                 renderComponents()
+
+                // معیار جدید بلافاصله وارد دید می‌شود و فیلد نام آن Focus می‌گیرد.
+                componentContainer.post {
+                    val lastRow =
+                        componentContainer.getChildAt(
+                            componentContainer.childCount - 1
+                        )
+
+                    lastRow
+                        ?.findViewById<TextInputEditText>(
+                            R.id.etComponentTitle
+                        )
+                        ?.let(::focusSetupField)
+                }
             }
         }
 
@@ -188,9 +226,9 @@ class ReportCardSetupActivity : BaseActivity() {
     private fun bindSelectedClass(selected: ClassModel) {
         selectedInfo.text = buildClassInfo(selected)
         passRuleText.text =
-            "حد قبولی بدون ستاره: ${format(selected.minPassingScore)}"
+            "حد قبولی بدون ستاره: ${formatPersian(selected.minPassingScore)}"
         conditionalRuleText.text =
-            "حد مشروطی: ${format(selected.minConditionalScore)}"
+            "حد مشروطی: ${formatPersian(selected.minConditionalScore)}"
         updateTotal()
     }
 
@@ -251,6 +289,9 @@ class ReportCardSetupActivity : BaseActivity() {
     private fun renderComponents() {
         componentContainer.removeAllViews()
 
+        val orderedInputs =
+            mutableListOf<TextInputEditText>()
+
         components.forEachIndexed { index, component ->
             val row = LayoutInflater.from(this).inflate(
                 R.layout.item_report_component_edit,
@@ -264,18 +305,38 @@ class ReportCardSetupActivity : BaseActivity() {
             val maxInput =
                 row.findViewById<TextInputEditText>(R.id.etComponentMax)
 
+            // مقدار واقعی بارم انگلیسی/استاندارد می‌ماند،
+            // فقط نمایش آن مثل صفحه ورود نمره فارسی است.
+            maxInput.transformationMethod =
+                PersianNumericTransformationMethod()
+
             number.text = (index + 1).toString()
             titleInput.setText(component.title)
             maxInput.setText(
                 if (component.maxScore > 0.0) format(component.maxScore) else ""
             )
 
+            // ترتیب واقعی Next روی کیبورد:
+            // نام معیار -> بارم -> نام معیار بعدی -> بارم بعدی
+            orderedInputs += titleInput
+            orderedInputs += maxInput
+
             titleInput.addTextChangedListener(simpleTextWatcher {
                 component.title = it.trim()
             })
 
             maxInput.addTextChangedListener(simpleTextWatcher { raw ->
-                component.maxScore = raw.trim().toDoubleOrNull() ?: 0.0
+                val normalized =
+                    UiTextFormatter.normalizeEnglishDigits(
+                        raw.trim()
+                    )
+                        .replace('٫', '.')
+                        .replace(',', '.')
+                        .replace('/', '.')
+
+                component.maxScore =
+                    normalized.toDoubleOrNull() ?: 0.0
+
                 updateTotalFromModels()
             })
 
@@ -295,11 +356,269 @@ class ReportCardSetupActivity : BaseActivity() {
             componentContainer.addView(row)
         }
 
+        configureSetupInputNavigation(orderedInputs)
+
         addButton.isEnabled = !loading
         addButton.alpha = if (!loading && components.size < 8) 1.0f else 0.72f
         updateTotalFromModels()
     }
 
+
+    /**
+     * همان تنظیمی که در صفحه ورود نمرات پایدار شد:
+     * صفحه از edge-to-edge این Activity خارج می‌شود و adjustResize
+     * مستقیماً فضای کیبورد را از ارتفاع صفحه کم می‌کند.
+     */
+    private fun configureClassicKeyboardResize() {
+        val root =
+            findViewById<View>(
+                R.id.rootReportCardSetup
+            )
+
+        ViewCompat.setOnApplyWindowInsetsListener(
+            root,
+            null
+        )
+
+        WindowCompat.setDecorFitsSystemWindows(
+            window,
+            true
+        )
+
+        root.setPadding(
+            0,
+            0,
+            0,
+            0
+        )
+
+        window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+    }
+
+    /**
+     * فیلد Focus شده را دقیقاً داخل viewport واقعی ScrollView نگه می‌دارد.
+     * چون ScrollView با adjustResize کوتاه می‌شود، پایین viewport همان
+     * بالای واقعی کیبورد است.
+     */
+    private fun ensureSetupFieldVisible(
+        field: View,
+        smooth: Boolean = true
+    ) {
+        if (!field.isAttachedToWindow) return
+
+        scrollSetup.post {
+            if (!field.isAttachedToWindow) {
+                return@post
+            }
+
+            val rect = Rect()
+            field.getDrawingRect(rect)
+
+            runCatching {
+                scrollSetup.offsetDescendantRectToMyCoords(
+                    field,
+                    rect
+                )
+            }.onFailure {
+                // fallback استاندارد Android
+                field.requestRectangleOnScreen(
+                    Rect(
+                        0,
+                        -dp(8),
+                        field.width,
+                        field.height + dp(72)
+                    ),
+                    true
+                )
+                return@post
+            }
+
+            val viewportTop =
+                scrollSetup.scrollY + dp(12)
+
+            val viewportBottom =
+                scrollSetup.scrollY +
+                    scrollSetup.height -
+                    scrollSetup.paddingBottom -
+                    dp(28)
+
+            val delta =
+                when {
+                    rect.bottom > viewportBottom ->
+                        rect.bottom -
+                            viewportBottom +
+                            dp(12)
+
+                    rect.top < viewportTop ->
+                        rect.top -
+                            viewportTop -
+                            dp(8)
+
+                    else -> 0
+                }
+
+            if (delta != 0) {
+                if (smooth) {
+                    scrollSetup.smoothScrollBy(
+                        0,
+                        delta
+                    )
+                } else {
+                    scrollSetup.scrollBy(
+                        0,
+                        delta
+                    )
+                }
+            }
+
+            // یک درخواست ثانویه بعد از کامل شدن Resize کیبورد.
+            field.postDelayed({
+                if (field.isAttachedToWindow) {
+                    field.requestRectangleOnScreen(
+                        Rect(
+                            0,
+                            -dp(8),
+                            field.width,
+                            field.height + dp(72)
+                        ),
+                        true
+                    )
+                }
+            }, 220)
+        }
+    }
+
+    private fun focusSetupField(
+        field: TextInputEditText
+    ) {
+        field.requestFocus()
+
+        val length =
+            field.text?.length ?: 0
+
+        if (length > 0) {
+            field.setSelection(
+                0,
+                length
+            )
+        }
+
+        ensureSetupFieldVisible(
+            field,
+            smooth = false
+        )
+
+        field.postDelayed({
+            val imm =
+                getSystemService(
+                    Context.INPUT_METHOD_SERVICE
+                ) as InputMethodManager
+
+            imm.showSoftInput(
+                field,
+                InputMethodManager.SHOW_IMPLICIT
+            )
+
+            field.postDelayed({
+                ensureSetupFieldVisible(
+                    field,
+                    smooth = false
+                )
+            }, 280)
+        }, 60)
+    }
+
+    private fun configureSetupInputNavigation(
+        inputs: List<TextInputEditText>
+    ) {
+        inputs.forEachIndexed { index, input ->
+            val isLast =
+                index == inputs.lastIndex
+
+            input.imeOptions =
+                if (isLast) {
+                    EditorInfo.IME_ACTION_DONE
+                } else {
+                    EditorInfo.IME_ACTION_NEXT
+                }
+
+            input.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    ensureSetupFieldVisible(
+                        input,
+                        smooth = false
+                    )
+
+                    input.postDelayed({
+                        ensureSetupFieldVisible(
+                            input,
+                            smooth = false
+                        )
+                    }, 320)
+                }
+            }
+
+            input.setOnEditorActionListener {
+                    view,
+                    actionId,
+                    event ->
+
+                val enterPressed =
+                    event?.let {
+                        it.keyCode ==
+                            KeyEvent.KEYCODE_ENTER &&
+                            it.action ==
+                            KeyEvent.ACTION_DOWN
+                    } == true
+
+                when {
+                    !isLast &&
+                        (
+                            actionId ==
+                                EditorInfo.IME_ACTION_NEXT ||
+                                enterPressed
+                            ) -> {
+
+                        focusSetupField(
+                            inputs[index + 1]
+                        )
+                        true
+                    }
+
+                    isLast &&
+                        (
+                            actionId ==
+                                EditorInfo.IME_ACTION_DONE ||
+                                enterPressed
+                            ) -> {
+
+                        val imm =
+                            getSystemService(
+                                Context.INPUT_METHOD_SERVICE
+                            ) as InputMethodManager
+
+                        imm.hideSoftInputFromWindow(
+                            view.windowToken,
+                            0
+                        )
+
+                        view.clearFocus()
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+        }
+    }
+
+    private fun dp(value: Int): Int =
+        (
+            value *
+                resources.displayMetrics.density
+            ).toInt()
 
     private fun confirmComponentRemoval(component: EditableComponent) {
         val displayTitle = component.title.trim().ifBlank { "این معیار" }
@@ -346,12 +665,22 @@ class ReportCardSetupActivity : BaseActivity() {
                     ?.trim()
                     .orEmpty()
 
-                maxScore = row.findViewById<TextInputEditText>(R.id.etComponentMax)
-                    .text
-                    ?.toString()
-                    ?.trim()
-                    ?.toDoubleOrNull()
-                    ?: 0.0
+                val rawMax =
+                    row.findViewById<TextInputEditText>(
+                        R.id.etComponentMax
+                    )
+                        .text
+                        ?.toString()
+                        ?.trim()
+                        .orEmpty()
+
+                maxScore =
+                    UiTextFormatter.normalizeEnglishDigits(rawMax)
+                        .replace('٫', '.')
+                        .replace(',', '.')
+                        .replace('/', '.')
+                        .toDoubleOrNull()
+                        ?: 0.0
             }
         }
     }
@@ -365,7 +694,7 @@ class ReportCardSetupActivity : BaseActivity() {
         val total = components.sumOf { it.maxScore }
         val validTotal = abs(total - 100.0) < 0.001
 
-        totalText.text = "${format(total)} / 100"
+        totalText.text = "${formatPersian(total)} / ${formatPersian(100.0)}"
         totalProgress.progress = total.roundToInt().coerceIn(0, 100)
 
         when {
@@ -379,7 +708,7 @@ class ReportCardSetupActivity : BaseActivity() {
             total < 100.0 -> {
                 totalText.setTextColor(0xFFFF6E14.toInt())
                 totalHint.text =
-                    "${format(100.0 - total)} نمره تا تکمیل بارم باقی مانده است"
+                    "${formatPersian(100.0 - total)} نمره تا تکمیل بارم باقی مانده است"
                 totalHint.setTextColor(0xFFFF6E14.toInt())
                 totalProgress.setIndicatorColor(0xFFFF6E14.toInt())
             }
@@ -387,7 +716,7 @@ class ReportCardSetupActivity : BaseActivity() {
             else -> {
                 totalText.setTextColor(0xFFEF4444.toInt())
                 totalHint.text =
-                    "مجموع بارم‌ها ${format(total - 100.0)} نمره بیشتر از ۱۰۰ است"
+                    "مجموع بارم‌ها ${formatPersian(total - 100.0)} نمره بیشتر از ۱۰۰ است"
                 totalHint.setTextColor(0xFFEF4444.toInt())
                 totalProgress.setIndicatorColor(0xFFEF4444.toInt())
             }
@@ -520,12 +849,17 @@ class ReportCardSetupActivity : BaseActivity() {
         updateContinueState()
     }
 
+    /**
+     * مقدار خام فیلدهای عددی: انگلیسی و با نقطه.
+     */
     private fun format(value: Double): String =
-        if (value % 1.0 == 0.0) {
-            value.toInt().toString()
-        } else {
-            String.format(Locale.US, "%.2f", value)
-        }
+        UiTextFormatter.formatEnglishDecimal(value)
+
+    /**
+     * نمایش عدد در UI فارسی کارنامه: 12.5 -> ۱۲/۵
+     */
+    private fun formatPersian(value: Double): String =
+        UiTextFormatter.formatPersianDecimalSlash(value)
 
     private fun toast(message: String) {
         AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
@@ -534,6 +868,28 @@ class ReportCardSetupActivity : BaseActivity() {
     override fun onDestroy() {
         configCall?.cancel()
         super.onDestroy()
+    }
+
+    /**
+     * فقط لایه نمایش رقم‌ها را فارسی می‌کند.
+     * مقدار واقعی EditText تغییر نمی‌کند، پس TextWatcher/parse/ذخیره پایدار می‌ماند.
+     */
+    private class PersianNumericTransformationMethod :
+        ReplacementTransformationMethod() {
+
+        override fun getOriginal(): CharArray =
+            charArrayOf(
+                '0', '1', '2', '3', '4',
+                '5', '6', '7', '8', '9',
+                '.'
+            )
+
+        override fun getReplacement(): CharArray =
+            charArrayOf(
+                '۰', '۱', '۲', '۳', '۴',
+                '۵', '۶', '۷', '۸', '۹',
+                '/'
+            )
     }
 
     private data class EditableComponent(

@@ -1,6 +1,7 @@
 package com.example.bb
 
 import android.text.SpannableStringBuilder
+import java.util.Locale
 
 /**
  * قواعد یکپارچه نمایش عدد در اپ:
@@ -49,6 +50,41 @@ object UiTextFormatter {
             value.forEach { append(toEnglishDigit(it)) }
         }
     }
+
+    /**
+     * عدد استاندارد برای جاهایی که باید انگلیسی بماند.
+     * مثال: 12.5
+     */
+    fun formatEnglishDecimal(value: Double): String {
+        return if (value % 1.0 == 0.0) {
+            value.toInt().toString()
+        } else {
+            String.format(Locale.US, "%.2f", value)
+                .trimEnd('0')
+                .trimEnd('.')
+        }
+    }
+
+    /**
+     * قانون نمایش عدد در بخش‌های فارسی کارنامه:
+     * 12    -> ۱۲
+     * 12.5  -> ۱۲/۵
+     * 17.25 -> ۱۷/۲۵
+     *
+     * فقط برای نمایش است و روی مقدار ذخیره‌شده/Backend اثری ندارد.
+     */
+    fun formatPersianDecimalSlash(value: Double): String =
+        buildString {
+            formatEnglishDecimal(value).forEach { char ->
+                append(
+                    if (char == '.') {
+                        '/'
+                    } else {
+                        toPersianDigit(char)
+                    }
+                )
+            }
+        }
 
     fun toEnglishDigit(character: Char): Char = when (character) {
         '۰', '٠' -> '0'

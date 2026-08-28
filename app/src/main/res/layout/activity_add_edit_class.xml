@@ -70,13 +70,13 @@
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:orientation="vertical">
           <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="حد پایین قبولی"/>
           <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinPassingScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:imeOptions="actionNext" android:inputType="numberDecimal" android:singleLine="true" android:text="80" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinPassingScore" android:tag="skip_smart_digits" android:selectAllOnFocus="true" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:imeOptions="actionNext" android:inputType="numberDecimal" android:singleLine="true" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
           </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:orientation="vertical">
           <TextView style="@style/ClassFormLabel" android:layout_marginTop="0dp" android:text="حد پایین مشروطی"/>
           <com.google.android.material.textfield.TextInputLayout style="@style/ClassFormOutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinConditionalScore" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:imeOptions="actionDone" android:inputType="numberDecimal" android:singleLine="true" android:text="70" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinConditionalScore" android:tag="skip_smart_digits" android:selectAllOnFocus="true" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center" android:imeOptions="actionDone" android:inputType="numberDecimal" android:singleLine="true" android:textColor="@color/main_text" android:textSize="16sp" android:textStyle="bold"/>
           </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
       </LinearLayout>

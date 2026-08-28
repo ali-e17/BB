@@ -73,9 +73,9 @@
                 android:layout_below="@id/imgLogo"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="16dp"
-                android:text="خوش آمدید"
+                android:text="آموزشگاه زبان خارجی بیان برتر"
                 android:textColor="@color/title_blue"
-                android:textSize="26sp"
+                android:textSize="23sp"
                 android:textStyle="bold" />
 
             <!-- فرم ورود -->
@@ -95,7 +95,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="18dp"
-                    android:hint="کد ملی / شناسه اتباع"
+                    android:hint="نام کاربری"
                     android:layoutDirection="rtl"
                     app:hintTextColor="#FF6B00"
                     android:textColorHint="@color/hint_color"

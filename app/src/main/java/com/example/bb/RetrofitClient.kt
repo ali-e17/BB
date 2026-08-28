@@ -113,6 +113,22 @@ data class SaveReportCardsRequest(
     val publish:Boolean,
     val students:List<SaveReportStudentRequest>
 )
+
+data class SavedReportCardDto(
+    val studentId:String="",
+    val cardId:String="",
+    val revision:Int=0,
+    val totalScore:Double=0.0,
+    val resultCode:String="",
+    val starCount:Int=0,
+    val status:String="DRAFT"
+)
+data class SaveReportCardsResponse(
+    val status:String="",
+    val message:String="",
+    val code:String?=null,
+    val cards:List<SavedReportCardDto> = emptyList()
+)
 data class ReportScoreDto(val componentId:String="",val title:String="",val maxScore:Double=0.0,val score:Double=0.0,val sortOrder:Int=0)
 data class ReportCardDto(
     val id:String="",val classId:String="",val studentId:String="",val studentCode:String="",val studentName:String="",
@@ -214,7 +230,7 @@ interface ApiService
     @GET("get_report_config.php") fun getReportConfig(@Query("class_id") classId:String):Call<ReportConfigResponse>
     @POST("save_report_config.php") fun saveReportConfig(@Body request:SaveReportConfigRequest):Call<SaveReportConfigResponse>
     @GET("get_report_roster.php") fun getReportRoster(@Query("class_id") classId:String):Call<ReportRosterResponse>
-    @POST("save_report_cards.php") fun saveReportCards(@Body request:SaveReportCardsRequest):Call<ApiResponse>
+    @POST("save_report_cards.php") fun saveReportCards(@Body request:SaveReportCardsRequest):Call<SaveReportCardsResponse>
     @GET("get_report_cards.php") fun getReportCards(@Query("class_id") classId:String?=null,@Query("student_id") studentId:String?=null):Call<List<ReportCardDto>>
     @GET("get_report_card.php") fun getReportCard(@Query("id") id:String):Call<ReportCardResponse>
     @GET("get_current_report_cards.php") fun getCurrentReportCards():Call<CurrentReportsResponse>
