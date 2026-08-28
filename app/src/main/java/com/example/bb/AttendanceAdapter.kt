@@ -118,7 +118,13 @@ class AttendanceAdapter(
         render()
 
         holder.present.setOnClickListener {
-            if (record.isLocked) return@setOnClickListener
+            if (record.isLocked) {
+                AppToast.info(
+                    holder.itemView.context,
+                    "این جلسه ثبت نهایی شده است و وضعیت دانش‌آموز برای شما قابل ویرایش نیست"
+                )
+                return@setOnClickListener
+            }
             record.status = AttendanceMarkStatus.PRESENT
             record.delayMinutes = 0
             render()
@@ -126,7 +132,13 @@ class AttendanceAdapter(
         }
 
         holder.absent.setOnClickListener {
-            if (record.isLocked) return@setOnClickListener
+            if (record.isLocked) {
+                AppToast.info(
+                    holder.itemView.context,
+                    "این جلسه ثبت نهایی شده است و وضعیت دانش‌آموز برای شما قابل ویرایش نیست"
+                )
+                return@setOnClickListener
+            }
             record.status = AttendanceMarkStatus.ABSENT
             record.delayMinutes = 0
             render()
@@ -134,7 +146,13 @@ class AttendanceAdapter(
         }
 
         holder.late.setOnClickListener {
-            if (record.isLocked) return@setOnClickListener
+            if (record.isLocked) {
+                AppToast.info(
+                    holder.itemView.context,
+                    "این جلسه ثبت نهایی شده است و وضعیت دانش‌آموز برای شما قابل ویرایش نیست"
+                )
+                return@setOnClickListener
+            }
             showLateDialog(holder, record, ::render)
         }
     }
@@ -171,7 +189,7 @@ class AttendanceAdapter(
                     val minutes = input.text?.toString()?.trim()?.toIntOrNull()
                     if (minutes == null || minutes !in 1..300) {
                         input.error = "عدد بین ۱ تا ۳۰۰ وارد کنید"
-                        Toast.makeText(context, "مدت تأخیر نامعتبر است", Toast.LENGTH_SHORT).show()
+                        AppToast.warning(context, "مدت تأخیر باید عددی بین ۱ تا ۳۰۰ دقیقه باشد", Toast.LENGTH_SHORT)
                         return@setOnClickListener
                     }
 

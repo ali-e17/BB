@@ -59,25 +59,39 @@ class TeacherHistoryActivity : BaseActivity() {
 
                     rvHistory.adapter?.notifyDataSetChanged()
                     tvEmptyState.visibility = if (historyClasses.isEmpty()) View.VISIBLE else View.GONE
+                } else {
+                    showLocalHistory(
+                        ApiErrorParser.userMessage(
+                            response,
+                            "دریافت سوابق کلاس‌های استاد کامل نشد"
+                        ) + " سوابق ذخیره‌شده دستگاه نمایش داده شدند."
+                    )
                 }
             }
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 progressLoading.visibility = View.GONE
-                historyClasses.clear()
-
-                // 🌟 ایمن‌سازی بخش آفلاین دیتابیس
-                historyClasses.addAll(
-                    AppDatabase.getAllClasses(true).filter {
-                        it.teacherPhone == currentTeacherPhone &&
-                                (it.status == ClassStatus.COMPLETED || it.status?.name == "COMPLETED")
-                    }.sortedByDescending { it.completedAt ?: "" }
+                showLocalHistory(
+                    ApiErrorParser.networkMessage(t, "دریافت سوابق کلاس‌های استاد") +
+                        " سوابق ذخیره‌شده دستگاه نمایش داده شدند."
                 )
-
-                rvHistory.adapter?.notifyDataSetChanged()
-                tvEmptyState.visibility = if (historyClasses.isEmpty()) View.VISIBLE else View.GONE
             }
         })
+    }
+
+
+    private fun showLocalHistory(message: String) {
+        historyClasses.clear()
+        historyClasses.addAll(
+            AppDatabase.getAllClasses(true).filter {
+                it.teacherPhone == currentTeacherPhone &&
+                    (it.status == ClassStatus.COMPLETED || it.status?.name == "COMPLETED")
+            }.sortedByDescending { it.completedAt ?: "" }
+        )
+
+        rvHistory.adapter?.notifyDataSetChanged()
+        tvEmptyState.visibility = if (historyClasses.isEmpty()) View.VISIBLE else View.GONE
+        AppToast.error(this, message)
     }
 
     private inner class HistoryAdapter : RecyclerView.Adapter<HistoryViewHolder>() {

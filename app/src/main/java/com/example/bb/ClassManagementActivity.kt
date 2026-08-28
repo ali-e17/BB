@@ -63,7 +63,8 @@ class ClassManagementActivity : BaseActivity() {
                 setLoading(false)
                 if (!response.isSuccessful) {
                     showLocalClasses(
-                        ApiErrorParser.userMessage(response, "دریافت کلاس‌ها انجام نشد؛ اطلاعات محلی نمایش داده شد")
+                        ApiErrorParser.userMessage(response, "دریافت کلاس‌ها کامل نشد") +
+                            "؛ اطلاعات ذخیره‌شده دستگاه نمایش داده شد"
                     )
                     return
                 }
@@ -84,7 +85,7 @@ class ClassManagementActivity : BaseActivity() {
 
     private fun showLocalClasses(message: String) {
         renderClasses(AppDatabase.getAllClasses(false))
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun renderClasses(classes: List<ClassModel>) {
@@ -139,14 +140,14 @@ class ClassManagementActivity : BaseActivity() {
                     val result = response.body()
                     if (response.isSuccessful && result?.status == "success") {
                         AppDatabase.completeClass(model.id)
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@ClassManagementActivity,
                             result.message.ifBlank { "ترم کلاس پایان یافت" },
                             Toast.LENGTH_SHORT
                         ).show()
                         fetchClasses()
                     } else {
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@ClassManagementActivity,
                             result?.message?.takeIf { it.isNotBlank() }
                                 ?: ApiErrorParser.userMessage(response, "پایان ترم ثبت نشد"),
@@ -157,7 +158,7 @@ class ClassManagementActivity : BaseActivity() {
 
                 override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                     setLoading(false)
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@ClassManagementActivity,
                         ApiErrorParser.networkMessage(t, "ثبت پایان ترم"),
                         Toast.LENGTH_LONG
@@ -178,13 +179,13 @@ class ClassManagementActivity : BaseActivity() {
                         override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                             setLoading(false)
                             val body = response.body()
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@ClassManagementActivity,
                                 if (response.isSuccessful && body?.status == "success") {
                                     body.message.ifBlank { "کلاس با موفقیت حذف شد" }
                                 } else {
                                     body?.message?.takeIf { it.isNotBlank() }
-                                        ?: ApiErrorParser.userMessage(response, "حذف کلاس انجام نشد")
+                                        ?: ApiErrorParser.userMessage(response, "حذف کلاس کامل نشد")
                                 },
                                 Toast.LENGTH_LONG
                             ).show()
@@ -192,7 +193,7 @@ class ClassManagementActivity : BaseActivity() {
                         }
                         override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                             setLoading(false)
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@ClassManagementActivity,
                                 ApiErrorParser.networkMessage(t, "حذف کلاس"),
                                 Toast.LENGTH_LONG

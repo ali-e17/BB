@@ -53,13 +53,22 @@ class StudentHistoryActivity : BaseActivity() {
                     val serverClasses = response.body().orEmpty()
                     renderClasses(serverClasses)
                 } else {
-                    Toast.makeText(this@StudentHistoryActivity, "خطا در دریافت سوابق", Toast.LENGTH_SHORT).show()
+                    AppToast.error(
+                        this@StudentHistoryActivity,
+                        ApiErrorParser.userMessage(
+                            response,
+                            "دریافت سوابق کلاس‌های دانش‌آموز کامل نشد"
+                        )
+                    )
                 }
             }
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 progressLoading.visibility = View.GONE
-                Toast.makeText(this@StudentHistoryActivity, "ارتباط با سرور برقرار نشد", Toast.LENGTH_SHORT).show()
+                AppToast.error(
+                    this@StudentHistoryActivity,
+                    ApiErrorParser.networkMessage(t, "دریافت سوابق کلاس‌های دانش‌آموز")
+                )
             }
         })
     }

@@ -56,9 +56,9 @@ class CompletedClassesActivity : BaseActivity() {
                     val serverClasses = response.body().orEmpty()
                     renderClasses(serverClasses)
                 } else {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@CompletedClassesActivity,
-                        ApiErrorParser.userMessage(response, "دریافت کلاس‌های پایان‌یافته انجام نشد"),
+                        ApiErrorParser.userMessage(response, "دریافت کلاس‌های پایان‌یافته کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -66,7 +66,7 @@ class CompletedClassesActivity : BaseActivity() {
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 setLoading(false)
-                Toast.makeText(
+                AppToast.makeText(
                     this@CompletedClassesActivity,
                     ApiErrorParser.networkMessage(t, "دریافت کلاس‌های پایان‌یافته"),
                     Toast.LENGTH_LONG
@@ -102,13 +102,13 @@ class CompletedClassesActivity : BaseActivity() {
                         override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                             setLoading(false)
                             val body = response.body()
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@CompletedClassesActivity,
                                 if (response.isSuccessful && body?.status == "success") {
                                     body.message.ifBlank { "کلاس با موفقیت حذف شد" }
                                 } else {
                                     body?.message?.takeIf { it.isNotBlank() }
-                                        ?: ApiErrorParser.userMessage(response, "حذف کلاس انجام نشد")
+                                        ?: ApiErrorParser.userMessage(response, "حذف کلاس کامل نشد")
                                 },
                                 Toast.LENGTH_LONG
                             ).show()
@@ -116,7 +116,7 @@ class CompletedClassesActivity : BaseActivity() {
                         }
                         override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                             setLoading(false)
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@CompletedClassesActivity,
                                 ApiErrorParser.networkMessage(t, "حذف کلاس"),
                                 Toast.LENGTH_LONG

@@ -47,9 +47,9 @@ class TrashBinActivity : BaseActivity() {
                 if (!response.isSuccessful) {
                     recycler.adapter = TrashAdapter(emptyList(), ::restore, ::permanentDelete)
                     empty.visibility = View.VISIBLE
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@TrashBinActivity,
-                        ApiErrorParser.userMessage(response, "دریافت سطل زباله انجام نشد"),
+                        ApiErrorParser.userMessage(response, "دریافت اطلاعات سطل زباله کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                     return
@@ -60,7 +60,7 @@ class TrashBinActivity : BaseActivity() {
             }
             override fun onFailure(call: Call<List<TrashItem>>, t: Throwable) {
                 progress.visibility = View.GONE; empty.visibility = View.VISIBLE
-                Toast.makeText(
+                AppToast.makeText(
                     this@TrashBinActivity,
                     ApiErrorParser.networkMessage(t, "دریافت سطل زباله"),
                     Toast.LENGTH_LONG
@@ -71,9 +71,9 @@ class TrashBinActivity : BaseActivity() {
 
     private fun restore(item: TrashItem) {
         MaterialAlertDialogBuilder(this).setTitle("بازیابی ${item.name}")
-            .setMessage("این مورد دوباره به فهرست عادی برگردد؟")
+            .setMessage("آیا این مورد به فهرست اصلی بازگردانده شود؟")
             .setNegativeButton("انصراف", null).setPositiveButton("بازیابی") { _, _ ->
-                RetrofitClient.instance.restoreEntity(TrashRequest(entity, item.id)).enqueue(simpleCallback("بازیابی شد"))
+                RetrofitClient.instance.restoreEntity(TrashRequest(entity, item.id)).enqueue(simpleCallback("بازیابی شد", "بازیابی مورد حذف‌شده"))
             }.show()
     }
 
@@ -84,28 +84,28 @@ class TrashBinActivity : BaseActivity() {
             .setMessage("فقط موارد بدون سابقه قابل حذف قطعی‌اند. برای تأیید، کد زیر را وارد کنید:\n$expected")
             .setView(input).setNegativeButton("انصراف", null).setPositiveButton("حذف قطعی") { _, _ ->
                 RetrofitClient.instance.permanentDelete(PermanentDeleteRequest(entity, item.id, input.text.toString().trim()))
-                    .enqueue(simpleCallback("حذف قطعی انجام شد"))
+                    .enqueue(simpleCallback("حذف قطعی انجام شد", "حذف قطعی مورد"))
             }.show()
     }
 
-    private fun simpleCallback(success: String) = object : Callback<ApiResponse> {
+    private fun simpleCallback(success: String, action: String) = object : Callback<ApiResponse> {
         override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
             val body = response.body()
-            Toast.makeText(
+            AppToast.makeText(
                 this@TrashBinActivity,
                 if (response.isSuccessful && body?.status == "success") {
                     body.message.ifBlank { success }
                 } else {
                     body?.message?.takeIf { it.isNotBlank() }
-                        ?: ApiErrorParser.userMessage(response, "عملیات انجام نشد")
+                        ?: ApiErrorParser.userMessage(response, "$action کامل نشد")
                 },
                 Toast.LENGTH_LONG
             ).show()
             if (response.isSuccessful && body?.status == "success") load()
         }
-        override fun onFailure(call: Call<ApiResponse>, t: Throwable) = Toast.makeText(
+        override fun onFailure(call: Call<ApiResponse>, t: Throwable) = AppToast.makeText(
             this@TrashBinActivity,
-            ApiErrorParser.networkMessage(t),
+            ApiErrorParser.networkMessage(t, action),
             Toast.LENGTH_LONG
         ).show()
     }

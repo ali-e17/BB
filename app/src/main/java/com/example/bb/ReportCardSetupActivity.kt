@@ -82,7 +82,7 @@ class ReportCardSetupActivity : BaseActivity() {
 
         addButton.setOnClickListener {
             if (components.size >= 8) {
-                Toast.makeText(this, "حداکثر ۸ معیار مجاز است", Toast.LENGTH_SHORT).show()
+                AppToast.warning(this, "حداکثر ۸ معیار برای کارنامه قابل تعریف است")
             } else {
                 components += EditableComponent(
                     UUID.randomUUID().toString(),
@@ -109,7 +109,8 @@ class ReportCardSetupActivity : BaseActivity() {
                     setLoading(false)
                     classes.clear()
 
-                    if (response.isSuccessful) {
+                    val classesLoadedSuccessfully = response.isSuccessful
+                    if (classesLoadedSuccessfully) {
                         val prefs = getSharedPreferences("LocalAppPrefs", MODE_PRIVATE)
                         val role = prefs
                             .getString("CURRENT_USER_ROLE", "STUDENT")
@@ -124,6 +125,14 @@ class ReportCardSetupActivity : BaseActivity() {
                                 (role == "ADMIN" ||
                                     (role == "TEACHER" && it.teacherId == userId))
                         }
+                    } else {
+                        AppToast.error(
+                            this@ReportCardSetupActivity,
+                            ApiErrorParser.userMessage(
+                                response,
+                                "دریافت کلاس‌های قابل صدور کارنامه کامل نشد"
+                            )
+                        )
                     }
 
                     classDropdown.setAdapter(
@@ -151,9 +160,16 @@ class ReportCardSetupActivity : BaseActivity() {
                     }
 
                     if (classes.isEmpty()) {
-                        selectedInfo.text = "کلاس فعالی برای صدور کارنامه وجود ندارد"
+                        selectedInfo.text = if (classesLoadedSuccessfully) {
+                            "کلاس فعالی برای صدور کارنامه وجود ندارد"
+                        } else {
+                            "فهرست کلاس‌ها دریافت نشد"
+                        }
                         passRuleText.text = "حد قبولی: —"
                         conditionalRuleText.text = "حد مشروطی: —"
+                        if (classesLoadedSuccessfully) {
+                            AppToast.info(this@ReportCardSetupActivity, "کلاس فعالی برای صدور کارنامه وجود ندارد")
+                        }
                     }
 
                     updateTotal()
@@ -161,7 +177,9 @@ class ReportCardSetupActivity : BaseActivity() {
 
                 override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                     setLoading(false)
-                    selectedInfo.text = "دریافت کلاس‌ها انجام نشد"
+                    val message = ApiErrorParser.networkMessage(t, "دریافت کلاس‌های قابل صدور کارنامه")
+                    selectedInfo.text = message
+                    AppToast.error(this@ReportCardSetupActivity, message)
                     updateTotal()
                 }
             })
@@ -194,7 +212,7 @@ class ReportCardSetupActivity : BaseActivity() {
                 if (!response.isSuccessful || body?.status != "success") {
                     toast(
                         body?.message?.takeIf { it.isNotBlank() }
-                            ?: ApiErrorParser.userMessage(response, "دریافت تنظیمات کارنامه انجام نشد")
+                            ?: ApiErrorParser.userMessage(response, "دریافت تنظیمات کارنامه کامل نشد")
                     )
                     return
                 }
@@ -263,9 +281,9 @@ class ReportCardSetupActivity : BaseActivity() {
 
             row.findViewById<View>(R.id.btnRemoveComponent).setOnClickListener {
                 if (components.size == 1) {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this,
-                        "حداقل یک معیار لازم است",
+                        "برای ادامه، تعریف حداقل یک معیار الزامی است",
                         Toast.LENGTH_SHORT
                     ).show()
                 } else {
@@ -277,7 +295,8 @@ class ReportCardSetupActivity : BaseActivity() {
             componentContainer.addView(row)
         }
 
-        addButton.isEnabled = components.size < 8 && !loading
+        addButton.isEnabled = !loading
+        addButton.alpha = if (!loading && components.size < 8) 1.0f else 0.72f
         updateTotalFromModels()
     }
 
@@ -380,17 +399,18 @@ class ReportCardSetupActivity : BaseActivity() {
     private fun updateContinueState() {
         val validTotal =
             abs(components.sumOf { it.maxScore } - 100.0) < 0.001
-        val enabled = !loading && selectedClass != null && validTotal
+        val ready = selectedClass != null && validTotal
 
-        continueButton.isEnabled = enabled
-        continueButton.alpha = if (enabled) 1.0f else 0.55f
-        addButton.isEnabled = !loading && components.size < 8
+        continueButton.isEnabled = !loading
+        continueButton.alpha = if (!loading && ready) 1.0f else 0.72f
+        addButton.isEnabled = !loading
+        addButton.alpha = if (!loading && components.size < 8) 1.0f else 0.72f
         classDropdown.isEnabled = !loading
     }
 
     private fun saveAndContinue() {
         val selected = selectedClass
-            ?: return toast("کلاس را انتخاب کنید")
+            ?: return toast("ابتدا کلاس موردنظر برای صدور کارنامه را انتخاب کنید")
 
         syncRows()
 
@@ -456,7 +476,7 @@ class ReportCardSetupActivity : BaseActivity() {
                     } else {
                         toast(
                             body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "ذخیره تنظیمات کارنامه انجام نشد")
+                                ?: ApiErrorParser.userMessage(response, "ذخیره تنظیمات کارنامه کامل نشد")
                         )
                     }
                 }
@@ -509,7 +529,7 @@ class ReportCardSetupActivity : BaseActivity() {
         }
 
     private fun toast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroy() {

@@ -113,7 +113,7 @@ class UpdateProfileActivity : BaseActivity() {
                 if (response.isSuccessful && body?.status == "success") {
                     val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
                     prefs.edit().putBoolean("MUST_CHANGE_PASSWORD", false).apply()
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@UpdateProfileActivity,
                         body.message.ifBlank { "رمز عبور با موفقیت تغییر کرد" },
                         Toast.LENGTH_SHORT
@@ -135,14 +135,14 @@ class UpdateProfileActivity : BaseActivity() {
                 val message = ApiErrorParser.userMessage(
                     response,
                     apiError,
-                    "تغییر رمز عبور انجام نشد"
+                    "تغییر رمز عبور کامل نشد"
                 )
                 showServerPasswordError(apiError?.code, message)
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 setLoading(false)
-                Toast.makeText(
+                AppToast.makeText(
                     this@UpdateProfileActivity,
                     ApiErrorParser.networkMessage(t, "تغییر رمز عبور"),
                     Toast.LENGTH_LONG
@@ -158,13 +158,14 @@ class UpdateProfileActivity : BaseActivity() {
             "PASSWORD_REQUIRED", "PASSWORD_TOO_SHORT", "PASSWORD_CONTAINS_SPACE",
             "PASSWORD_SAME_AS_USERNAME", "PASSWORD_UNCHANGED" ->
                 showFieldError(newLayout, newPassword, message)
-            else -> Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            else -> AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
     }
 
     private fun showFieldError(layout: TextInputLayout, field: TextInputEditText, message: String) {
         layout.error = message
         field.requestFocus()
+        AppToast.warning(this, message)
     }
 
     private fun clearErrors() {
@@ -205,6 +206,7 @@ class UpdateProfileActivity : BaseActivity() {
 
     private fun clearSessionAndOpenLogin() {
         getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().clear().apply()
+        AppToast.success(applicationContext, "با موفقیت از حساب کاربری خارج شدید")
         startActivity(Intent(this, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })

@@ -38,9 +38,9 @@ class AnnouncementDetailActivity : BaseActivity() {
                     } ?: error("Cannot open destination")
                 } ?: error("Cannot open attachment")
             }.onSuccess {
-                Toast.makeText(this, "پیوست ذخیره شد", Toast.LENGTH_SHORT).show()
+                AppToast.success(this, "پیوست با موفقیت ذخیره شد")
             }.onFailure {
-                Toast.makeText(this, "ذخیره پیوست انجام نشد", Toast.LENGTH_LONG).show()
+                AppToast.error(this, "ذخیره پیوست کامل نشد؛ محل انتخاب‌شده یا فضای ذخیره‌سازی دستگاه را بررسی کنید")
             }
         }
 
@@ -55,7 +55,7 @@ class AnnouncementDetailActivity : BaseActivity() {
         val fallbackId = intent.getStringExtra("ANNOUNCEMENT_ID").orEmpty()
         val loaded = passed ?: AppDatabase.getAnnouncementById(fallbackId)
         if (loaded == null) {
-            Toast.makeText(this, "این اعلان دیگر در دسترس نیست", Toast.LENGTH_SHORT).show()
+            AppToast.warning(this, "این اعلان دیگر در دسترس نیست یا از سرور حذف شده است")
             finish()
             return
         }
@@ -164,7 +164,7 @@ class AnnouncementDetailActivity : BaseActivity() {
     private fun downloadAttachment() {
         val rawUrl = announcement.attachmentUrl
         if (rawUrl.isNullOrBlank()) {
-            Toast.makeText(this, "آدرس پیوست در دسترس نیست", Toast.LENGTH_SHORT).show()
+            AppToast.warning(this, "پیوست این اعلان آدرس دانلود معتبری ندارد")
             return
         }
 
@@ -198,9 +198,9 @@ class AnnouncementDetailActivity : BaseActivity() {
             val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             manager.enqueue(request)
         }.onSuccess {
-            Toast.makeText(this, "دانلود پیوست شروع شد", Toast.LENGTH_SHORT).show()
+            AppToast.success(this, "دانلود پیوست شروع شد")
         }.onFailure {
-            Toast.makeText(this, "شروع دانلود امکان‌پذیر نبود", Toast.LENGTH_LONG).show()
+            AppToast.error(this, "شروع دانلود پیوست امکان‌پذیر نبود؛ فضای ذخیره‌سازی و سرویس دانلود دستگاه را بررسی کنید")
         }
     }
 
@@ -213,7 +213,7 @@ class AnnouncementDetailActivity : BaseActivity() {
                 }
             )
         }.onFailure {
-            Toast.makeText(this, "امکان بازکردن پیوست وجود ندارد", Toast.LENGTH_LONG).show()
+            AppToast.warning(this, "برنامه سازگاری برای باز کردن این نوع فایل روی دستگاه در دسترس نیست")
         }
     }
 

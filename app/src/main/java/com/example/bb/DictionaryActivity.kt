@@ -2559,7 +2559,13 @@ class DictionaryActivity : BaseActivity() {
 
         // 🌟 منطق دکمه کلمه تصادفی کاملاً سازگار با معماری مولتی‌تریدینگ جدید همکارت
         btnRandomWord.setOnClickListener {
-            if (dbHelper == null) return@setOnClickListener
+            if (dbHelper == null) {
+                AppToast.info(
+                    this,
+                    "دیکشنری در حال آماده‌سازی است؛ لطفاً چند لحظه بعد مجدداً تلاش کنید"
+                )
+                return@setOnClickListener
+            }
 
             btnRandomWord.isEnabled = false
             txtEmptyState.text = "در حال انتخاب کلمه..."
@@ -2590,7 +2596,7 @@ class DictionaryActivity : BaseActivity() {
                         etSearch.text = null
                         showResults(listOf(randomEntry))
                     } else {
-                        Toast.makeText(this@DictionaryActivity, "لغتی پیدا نشد، دوباره تلاش کنید", Toast.LENGTH_SHORT).show()
+                        AppToast.info(this@DictionaryActivity, "واژه مناسبی برای نمایش پیدا نشد؛ لطفاً مجدداً تلاش کنید")
                         showInitialState()
                     }
                 }
@@ -2621,8 +2627,10 @@ class DictionaryActivity : BaseActivity() {
                 }.onFailure {
                     etSearch.isEnabled = false
                     btnRandomWord.isEnabled = false
-                    txtEmptyState.text = "دیکشنری آماده نشد. برنامه را یک‌بار ببندید و دوباره باز کنید."
+                    val message = "آماده‌سازی دیکشنری کامل نشد؛ لطفاً برنامه را بسته و مجدداً اجرا کنید"
+                    txtEmptyState.text = message
                     txtEmptyState.visibility = View.VISIBLE
+                    AppToast.error(this@DictionaryActivity, message)
                 }
             }
         }
@@ -2663,8 +2671,10 @@ class DictionaryActivity : BaseActivity() {
                         .onFailure {
                             adapter.updateData(emptyList())
                             rvResults.visibility = View.GONE
-                            txtEmptyState.text = "جستجو انجام نشد. دوباره تلاش کنید."
+                            val message = "جست‌وجوی واژه کامل نشد؛ لطفاً مجدداً تلاش کنید"
+                            txtEmptyState.text = message
                             txtEmptyState.visibility = View.VISIBLE
+                            AppToast.error(this@DictionaryActivity, message)
                         }
                 }
             }

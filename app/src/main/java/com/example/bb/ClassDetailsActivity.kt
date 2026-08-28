@@ -52,7 +52,7 @@ class ClassDetailsActivity : BaseActivity() {
         isEditable = intent.getBooleanExtra(EXTRA_IS_EDITABLE, true)
 
         if (classId.isBlank()) {
-            Toast.makeText(this, "شناسه کلاس مشخص نشده است", Toast.LENGTH_LONG).show()
+            AppToast.error(this, "امکان نمایش اعضای کلاس وجود ندارد؛ شناسه کلاس ارسال نشده است")
             finish()
             return
         }
@@ -102,6 +102,11 @@ class ClassDetailsActivity : BaseActivity() {
                     AppDatabase.replaceClasses(serverClasses)
                 } else {
                     useLocalClasses()
+                    AppToast.error(
+                        this@ClassDetailsActivity,
+                        ApiErrorParser.userMessage(response, "دریافت اطلاعات کلاس کامل نشد") +
+                            "؛ اطلاعات ذخیره‌شده دستگاه استفاده می‌شود"
+                    )
                 }
                 updateClassState()
                 fetchStudents()
@@ -109,6 +114,11 @@ class ClassDetailsActivity : BaseActivity() {
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 useLocalClasses()
+                AppToast.error(
+                    this@ClassDetailsActivity,
+                    ApiErrorParser.networkMessage(t, "دریافت اطلاعات کلاس") +
+                        " اطلاعات ذخیره‌شده دستگاه استفاده می‌شود."
+                )
                 updateClassState()
                 fetchStudents()
             }
@@ -161,13 +171,21 @@ class ClassDetailsActivity : BaseActivity() {
                     AppDatabase.replaceStudents(allStudents)
                     renderCurrentList()
                 } else {
-                    useLocalStudents("سرور لیست دانش‌آموزان را برنگرداند")
+                    useLocalStudents(
+                        ApiErrorParser.userMessage(
+                            response,
+                            "دریافت فهرست دانش‌آموزان کلاس کامل نشد"
+                        ) + "؛ اطلاعات ذخیره‌شده دستگاه نمایش داده شدند"
+                    )
                 }
             }
 
             override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
                 setLoading(false)
-                useLocalStudents("دریافت دانش‌آموزان از سرور ناموفق بود؛ اطلاعات محلی نمایش داده شد")
+                useLocalStudents(
+                    ApiErrorParser.networkMessage(t, "دریافت فهرست دانش‌آموزان کلاس") +
+                        " اطلاعات ذخیره‌شده دستگاه نمایش داده شدند."
+                )
             }
         })
     }
@@ -176,7 +194,7 @@ class ClassDetailsActivity : BaseActivity() {
         allStudents.clear()
         allStudents.addAll(AppDatabase.getAllStudents())
         renderCurrentList()
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun updateModeUi() {
@@ -223,7 +241,7 @@ class ClassDetailsActivity : BaseActivity() {
 
         rvStudents.adapter?.notifyDataSetChanged()
         tvEmptyState.text = when (screenMode) {
-            ScreenMode.MEMBERS -> if (query.isBlank()) "هنوز دانش‌آموزی در این کلاس ثبت نشده است" else "عضوی مطابق جست‌وجوی شما پیدا نشد"
+            ScreenMode.MEMBERS -> if (query.isBlank()) "در حال حاضر دانش‌آموزی در این کلاس ثبت نشده است" else "عضوی مطابق جست‌وجوی شما پیدا نشد"
             ScreenMode.ADD_STUDENT -> if (query.isBlank()) "دانش‌آموز فعالی برای افزودن وجود ندارد" else "دانش‌آموزی مطابق جست‌وجوی شما پیدا نشد"
         }
         tvEmptyState.visibility = if (visibleStudents.isEmpty()) View.VISIBLE else View.GONE
@@ -332,17 +350,35 @@ class ClassDetailsActivity : BaseActivity() {
                     requestInFlight = false
                     val body = response.body()
                     if (response.isSuccessful && body?.status == "success") {
-                        Toast.makeText(this@ClassDetailsActivity, body.message.ifBlank { successMessage }, Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(this@ClassDetailsActivity, body.message.ifBlank { successMessage }, Toast.LENGTH_SHORT).show()
                         fetchStudents()
                     } else {
                         renderCurrentList()
-                        Toast.makeText(this@ClassDetailsActivity, body?.message?.takeIf { it.isNotBlank() } ?: "تغییر عضویت در سرور ثبت نشد", Toast.LENGTH_LONG).show()
+                        val action = when {
+                            targetClassId == null -> "خارج کردن دانش‌آموز از کلاس"
+                            !student.classId.isNullOrBlank() -> "انتقال دانش‌آموز به کلاس جدید"
+                            else -> "افزودن دانش‌آموز به کلاس"
+                        }
+                        AppToast.makeText(
+                            this@ClassDetailsActivity,
+                            body?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, "$action کامل نشد"),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
                 override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                     requestInFlight = false
                     renderCurrentList()
-                    Toast.makeText(this@ClassDetailsActivity, "ارتباط با سرور برای تغییر عضویت برقرار نشد", Toast.LENGTH_LONG).show()
+                    val action = when {
+                        targetClassId == null -> "خارج کردن دانش‌آموز از کلاس"
+                        !student.classId.isNullOrBlank() -> "انتقال دانش‌آموز به کلاس جدید"
+                        else -> "افزودن دانش‌آموز به کلاس"
+                    }
+                    AppToast.error(
+                        this@ClassDetailsActivity,
+                        ApiErrorParser.networkMessage(t, action)
+                    )
                 }
             })
     }

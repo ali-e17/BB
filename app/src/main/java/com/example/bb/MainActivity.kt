@@ -16,7 +16,8 @@ import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.Calendar
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.Locale
 
 class MainActivity : BaseActivity() {
@@ -60,9 +61,7 @@ class MainActivity : BaseActivity() {
         val txtUserName = findViewById<TextView>(R.id.txtUserName)
         val txtRoleBadge = findViewById<TextView>(R.id.txtRoleBadge)
 
-        txtGreeting.text = greetingForHour(
-            Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        )
+        txtGreeting.text = getSeasonalGreeting()
 
         txtUserName.text = prefs
             .getString(PREF_CURRENT_DISPLAY_NAME, "")
@@ -92,11 +91,10 @@ class MainActivity : BaseActivity() {
                     )
                 )
             }.onFailure {
-                Toast.makeText(
+                AppToast.warning(
                     this,
-                    "امکان باز کردن سایت آموزشگاه وجود ندارد",
-                    Toast.LENGTH_SHORT
-                ).show()
+                    "مرورگر مناسبی برای باز کردن سایت آموزشگاه در دسترس نیست"
+                )
             }
         }
     }
@@ -111,6 +109,11 @@ class MainActivity : BaseActivity() {
 
         btnThemeToggle.setOnClickListener {
             val darkModeEnabled = isDarkMode()
+
+            AppToast.info(
+                applicationContext,
+                if (darkModeEnabled) "حالت روشن فعال شد" else "حالت تاریک فعال شد"
+            )
 
             AppCompatDelegate.setDefaultNightMode(
                 if (darkModeEnabled) {
@@ -251,9 +254,9 @@ class MainActivity : BaseActivity() {
             }
 
             else -> {
-                Toast.makeText(
+                AppToast.makeText(
                     this,
-                    "این بخش هنوز آماده نشده است",
+                    "این بخش در نسخه فعلی برنامه فعال نیست",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -292,7 +295,7 @@ class MainActivity : BaseActivity() {
                 ),
                 DashboardItem(
                     TITLE_ISSUE_REPORT,
-                    "ثبت nمرات و صدور کارنامه",
+                    "ثبت نمرات و صدور کارنامه",
                     R.drawable.home_issue_report
                 ),
                 DashboardItem(
@@ -346,9 +349,7 @@ class MainActivity : BaseActivity() {
         super.onResume()
 
         findViewById<TextView>(R.id.txtGreeting)?.text =
-            greetingForHour(
-                Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-            )
+            getSeasonalGreeting()
 
         val prefs = getSharedPreferences(
             LOCAL_PREFS_NAME,
@@ -363,18 +364,62 @@ class MainActivity : BaseActivity() {
     }
 
     /**
-     * متن خوش‌آمدگویی براساس ساعت
+     * پیام خوش‌آمدگویی براساس ساعت رسمی ایران و فصل شمسی.
      */
-    private fun greetingForHour(hour: Int): String {
-        return when (hour) {
-            in 0..4 -> "شب بخیر 🌙"
-            in 4..11 -> "صبح بخیر ☕"
-            in 12..13 -> "ظهر بخیر ☀️"
-            in 14..16 -> "بعدازظهر بخیر🕑"
-            in 17..19 -> "عصر بخیر 🌆"
-            else -> "شب بخیر 🌃"
+    private fun getSeasonalGreeting(): String {
+        val iranNow = ZonedDateTime.now(ZoneId.of(IRAN_TIME_ZONE))
+        val persianDate = PersianDateUtils.gregorianToPersian(
+            iranNow.year,
+            iranNow.monthValue,
+            iranNow.dayOfMonth
+        )
+        val minutes = iranNow.hour * 60 + iranNow.minute
+
+        return when (persianDate.month) {
+            in 1..3 -> greetingForSpring(minutes)
+            in 4..6 -> greetingForSummer(minutes)
+            in 7..9 -> greetingForAutumn(minutes)
+            else -> greetingForWinter(minutes)
         }
     }
+
+    private fun greetingForSpring(minutes: Int): String = when {
+        minutes < timeInMinutes(5, 0) -> "شب بخیر 🌙"
+        minutes < timeInMinutes(12, 0) -> "صبح بخیر ☕"
+        minutes < timeInMinutes(14, 0) -> "ظهر بخیر ☀️"
+        minutes < timeInMinutes(17, 0) -> "بعدازظهر بخیر 🕑"
+        minutes < timeInMinutes(19, 30) -> "عصر بخیر 🌆"
+        else -> "شب بخیر 🌃"
+    }
+
+    private fun greetingForSummer(minutes: Int): String = when {
+        minutes < timeInMinutes(5, 0) -> "شب بخیر 🌙"
+        minutes < timeInMinutes(12, 0) -> "صبح بخیر ☕"
+        minutes < timeInMinutes(14, 0) -> "ظهر بخیر ☀️"
+        minutes < timeInMinutes(17, 0) -> "بعدازظهر بخیر 🕑"
+        minutes < timeInMinutes(20, 0) -> "عصر بخیر 🌆"
+        else -> "شب بخیر 🌃"
+    }
+
+    private fun greetingForAutumn(minutes: Int): String = when {
+        minutes < timeInMinutes(5, 30) -> "شب بخیر 🌙"
+        minutes < timeInMinutes(12, 0) -> "صبح بخیر ☕"
+        minutes < timeInMinutes(14, 0) -> "ظهر بخیر ☀️"
+        minutes < timeInMinutes(16, 30) -> "بعدازظهر بخیر 🕑"
+        minutes < timeInMinutes(18, 0) -> "عصر بخیر 🌆"
+        else -> "شب بخیر 🌃"
+    }
+
+    private fun greetingForWinter(minutes: Int): String = when {
+        minutes < timeInMinutes(6, 0) -> "شب بخیر 🌙"
+        minutes < timeInMinutes(12, 0) -> "صبح بخیر ☕"
+        minutes < timeInMinutes(13, 30) -> "ظهر بخیر ☀️"
+        minutes < timeInMinutes(15, 30) -> "بعدازظهر بخیر 🕑"
+        minutes < timeInMinutes(17, 30) -> "عصر بخیر 🌆"
+        else -> "شب بخیر 🌃"
+    }
+
+    private fun timeInMinutes(hour: Int, minute: Int): Int = hour * 60 + minute
 
     private fun isDarkMode(): Boolean {
         return resources.configuration.uiMode and
@@ -416,10 +461,10 @@ class MainActivity : BaseActivity() {
                     val body = response.body()
                     val apiError = ApiErrorParser.parse(response)
                     if (!response.isSuccessful || body?.status != "success") {
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@MainActivity,
                             body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, apiError, "دریافت وضعیت کارنامه انجام نشد"),
+                                ?: ApiErrorParser.userMessage(response, apiError, "دریافت وضعیت کارنامه کامل نشد"),
                             Toast.LENGTH_LONG
                         ).show()
                         return
@@ -427,7 +472,7 @@ class MainActivity : BaseActivity() {
 
                     val items = body.items
                     if (items.isEmpty()) {
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@MainActivity,
                             body.message.ifBlank { "کلاس فعالی برای شما ثبت نشده است" },
                             Toast.LENGTH_LONG
@@ -468,7 +513,7 @@ class MainActivity : BaseActivity() {
                     call: Call<CurrentReportsResponse>,
                     throwable: Throwable
                 ) {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@MainActivity,
                         ApiErrorParser.networkMessage(throwable, "دریافت وضعیت کارنامه"),
                         Toast.LENGTH_LONG
@@ -485,9 +530,9 @@ class MainActivity : BaseActivity() {
                     .putExtra(ReportCardViewActivity.EXTRA_REPORT_CARD_ID, card.id)
             )
         } else {
-            Toast.makeText(
+            AppToast.makeText(
                 this,
-                item.message.ifBlank { "کارنامه این ترم هنوز منتشر نشده است" },
+                item.message.ifBlank { "کارنامه این ترم تاکنون منتشر نشده است" },
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -527,6 +572,9 @@ class MainActivity : BaseActivity() {
 
         private const val SCHOOL_WEBSITE_URL =
             "https://bayan-e-bartar.ir/"
+
+        private const val IRAN_TIME_ZONE =
+            "Asia/Tehran"
 
         private const val LANGUAGE_FA = "fa"
         private const val LANGUAGE_EN = "en"

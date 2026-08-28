@@ -94,7 +94,7 @@ class GradeEntryActivity : BaseActivity() {
                     ) {
                         toast(
                             body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "دریافت فهرست نمرات انجام نشد")
+                                ?: ApiErrorParser.userMessage(response, "دریافت فهرست نمرات کامل نشد")
                         )
                         return
                     }
@@ -139,6 +139,11 @@ class GradeEntryActivity : BaseActivity() {
     private fun requestPublish() {
         rvStudents.clearFocus()
 
+        if (students.isEmpty()) {
+            AppToast.warning(this, "دانش‌آموزی برای انتشار کارنامه در این کلاس وجود ندارد")
+            return
+        }
+
         val components = config?.components.orEmpty()
         val incomplete = students.any { student ->
             components.any { component -> student.scores[component.id] == null }
@@ -168,7 +173,19 @@ class GradeEntryActivity : BaseActivity() {
 
     private fun save(publish: Boolean) {
         rvStudents.clearFocus()
-        val currentConfig = config ?: return toast("تنظیمات کارنامه دریافت نشده است")
+
+        if (students.isEmpty()) {
+            AppToast.warning(
+                this,
+                if (publish) "دانش‌آموزی برای انتشار کارنامه در این کلاس وجود ندارد"
+                else "دانش‌آموزی برای ذخیره نمرات در این کلاس وجود ندارد"
+            )
+            return
+        }
+
+        val currentConfig = config ?: return toast(
+            "تنظیمات کارنامه دریافت نشده است؛ لطفاً صفحه را مجدداً باز کنید یا اتصال اینترنت را بررسی کنید"
+        )
 
         val payload = students.map { student ->
             SaveReportStudentRequest(
@@ -209,7 +226,7 @@ class GradeEntryActivity : BaseActivity() {
 
                 toast(
                     body?.message?.takeIf { it.isNotBlank() }
-                        ?: ApiErrorParser.userMessage(response, apiError, "ذخیره نمرات انجام نشد")
+                        ?: ApiErrorParser.userMessage(response, apiError, "ذخیره نمرات کامل نشد")
                 )
                 if (apiError?.code == "CONFIG_REVISION_CONFLICT" ||
                     apiError?.code == "REVISION_CONFLICT" ||
@@ -248,10 +265,10 @@ class GradeEntryActivity : BaseActivity() {
         val hasStudents = students.isNotEmpty()
         draftButton.visibility = if (hasPublished) View.GONE else View.VISIBLE
         publishButton.text = if (hasPublished) "انتشار مجدد" else "انتشار نهایی"
-        draftButton.isEnabled = hasStudents
-        publishButton.isEnabled = hasStudents
-        draftButton.alpha = if (hasStudents) 1f else 0.55f
-        publishButton.alpha = if (hasStudents) 1f else 0.55f
+        draftButton.isEnabled = true
+        publishButton.isEnabled = true
+        draftButton.alpha = if (hasStudents) 1f else 0.72f
+        publishButton.alpha = if (hasStudents) 1f else 0.72f
     }
 
     private fun setLoading(value: Boolean) {
@@ -273,7 +290,7 @@ class GradeEntryActivity : BaseActivity() {
         }
 
     private fun toast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun roundedBadge(
@@ -363,7 +380,7 @@ class GradeEntryActivity : BaseActivity() {
             holder.btnPreviewCard.setOnClickListener {
                 if (student.cardId.isNullOrBlank()) {
                     toast(
-                        "ابتدا «ذخیره پیش‌نویس» را بزنید تا امکان مشاهده کارنامه فراهم شود"
+                        "ابتدا گزینه «ذخیره پیش‌نویس» را انتخاب کنید تا امکان مشاهده کارنامه فراهم شود"
                     )
                 } else {
                     startActivity(

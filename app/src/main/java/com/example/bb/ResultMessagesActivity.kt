@@ -47,7 +47,7 @@ class ResultMessagesActivity : BaseActivity() {
         saveButton.setOnClickListener { submit() }
         restoreButton.setOnClickListener {
             render(ReportCardViewActivity.DEFAULT_RESULT_MESSAGES)
-            toast("متن‌های اصلی جای‌گذاری شدند؛ برای ثبت نهایی، ذخیره را بزنید")
+            toast("متن‌های اصلی جای‌گذاری شدند؛ برای ثبت نهایی، گزینه «ذخیره» را انتخاب کنید")
         }
 
         load()
@@ -76,8 +76,8 @@ class ResultMessagesActivity : BaseActivity() {
                             ApiErrorParser.userMessage(
                                 response,
                                 apiError,
-                                "دریافت متن‌ها انجام نشد؛ متن‌های اصلی نمایش داده شدند"
-                            )
+                                "دریافت متن‌های کارنامه کامل نشد"
+                            ) + "؛ متن‌های اصلی نمایش داده شدند"
                         )
                     }
                 }
@@ -176,7 +176,7 @@ class ResultMessagesActivity : BaseActivity() {
                 } else {
                     toast(
                         body?.message?.takeIf { it.isNotBlank() }
-                            ?: ApiErrorParser.userMessage(response, apiError, "ذخیره متن‌ها انجام نشد")
+                            ?: ApiErrorParser.userMessage(response, apiError, "ذخیره متن‌ها کامل نشد")
                     )
                 }
             }
@@ -198,6 +198,6 @@ class ResultMessagesActivity : BaseActivity() {
     }
 
     private fun toast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 }

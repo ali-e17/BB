@@ -59,7 +59,7 @@ class ReportCardViewActivity : BaseActivity() {
 
         val reportCardId = intent.getStringExtra(EXTRA_REPORT_CARD_ID).orEmpty()
         if (reportCardId.isBlank()) {
-            toast("شناسه کارنامه موجود نیست")
+            toast("شناسه کارنامه در دسترس نیست")
             finish()
             return
         }
@@ -260,7 +260,7 @@ class ReportCardViewActivity : BaseActivity() {
 
     private fun writePdf(uri: Uri) {
         if (printableArea.width <= 0 || printableArea.height <= 0) {
-            toast("پیش‌نمایش کارنامه هنوز آماده نشده است")
+            toast("پیش‌نمایش کارنامه آماده نیست")
             return
         }
 
@@ -280,7 +280,7 @@ class ReportCardViewActivity : BaseActivity() {
         } catch (_: Throwable) {
             progress.visibility = View.GONE
             pdfButton.isEnabled = currentCard != null
-            toast("آماده‌سازی کارنامه برای PDF انجام نشد. دوباره تلاش کنید.")
+            toast("آماده‌سازی کارنامه برای فایل PDF کامل نشد. لطفاً مجدداً تلاش کنید.")
             return
         }
 
@@ -300,11 +300,11 @@ class ReportCardViewActivity : BaseActivity() {
                 }.onFailure { error ->
                     val message = when (error) {
                         is SecurityException ->
-                            "اجازه ذخیره فایل داده نشد. یک محل دیگر را انتخاب کنید."
+                            "مجوز ذخیره فایل صادر نشد؛ لطفاً محل دیگری را انتخاب کنید."
                         is IOException ->
-                            "فایل PDF ذخیره نشد. فضای ذخیره‌سازی و محل انتخاب‌شده را بررسی کنید."
+                            "ذخیره فایل PDF کامل نشد؛ لطفاً فضای ذخیره‌سازی و محل انتخاب‌شده را بررسی کنید."
                         else ->
-                            "ساخت فایل PDF انجام نشد. دوباره تلاش کنید."
+                            "ساخت فایل PDF کامل نشد. لطفاً مجدداً تلاش کنید."
                     }
                     toast(message)
                 }
@@ -419,7 +419,7 @@ class ReportCardViewActivity : BaseActivity() {
         (value * resources.displayMetrics.density).toInt()
 
     private fun toast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
 

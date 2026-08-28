@@ -46,7 +46,7 @@ class AssignClassActivity : BaseActivity() {
 
         teacherId = intent.getStringExtra(EXTRA_TEACHER_ID).orEmpty()
         if (teacherId.isBlank()) {
-            Toast.makeText(this, "استاد مشخص نشده است", Toast.LENGTH_LONG).show()
+            AppToast.error(this, "امکان مدیریت کلاس‌های استاد وجود ندارد؛ شناسه استاد ارسال نشده است")
             finish()
             return
         }
@@ -95,7 +95,10 @@ class AssignClassActivity : BaseActivity() {
             ) {
                 setLoading(false)
                 if (!response.isSuccessful) {
-                    useLocalClasses("سرور لیست کلاس‌ها را برنگرداند")
+                    useLocalClasses(
+                        ApiErrorParser.userMessage(response, "دریافت فهرست کلاس‌ها کامل نشد") +
+                            "؛ کلاس‌های ذخیره‌شده دستگاه نمایش داده شدند"
+                    )
                     return
                 }
 
@@ -107,7 +110,10 @@ class AssignClassActivity : BaseActivity() {
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 setLoading(false)
-                useLocalClasses("اتصال به سرور برقرار نشد؛ کلاس‌های محلی نمایش داده شدند")
+                useLocalClasses(
+                    ApiErrorParser.networkMessage(t, "دریافت فهرست کلاس‌ها") +
+                        " کلاس‌های ذخیره‌شده دستگاه نمایش داده شدند."
+                )
             }
         })
     }
@@ -116,7 +122,7 @@ class AssignClassActivity : BaseActivity() {
         allClasses.clear()
         allClasses.addAll(AppDatabase.getAllClasses())
         renderCurrentList()
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun updateModeUi() {
@@ -164,7 +170,7 @@ class AssignClassActivity : BaseActivity() {
         rvClasses.adapter?.notifyDataSetChanged()
         tvEmptyState.text = when (screenMode) {
             ScreenMode.ASSIGNED -> if (query.isBlank()) {
-                "هنوز کلاسی به این استاد تخصیص داده نشده است"
+                "در حال حاضر کلاسی به این استاد تخصیص داده نشده است"
             } else {
                 "کلاس تخصیص‌یافته‌ای مطابق جست‌وجوی شما پیدا نشد"
             }
@@ -258,7 +264,7 @@ class AssignClassActivity : BaseActivity() {
                     model.teacherPhone = if (newTeacherId == null) null else selectedTeacher?.phone
                     model.teacherName = if (newTeacherId == null) "" else selectedTeacher?.name.orEmpty()
                     AppDatabase.upsertClass(model)
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AssignClassActivity,
                         result.message.ifBlank { successMessage },
                         Toast.LENGTH_SHORT
@@ -266,10 +272,17 @@ class AssignClassActivity : BaseActivity() {
                     fetchClasses()
                 } else {
                     renderCurrentList()
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AssignClassActivity,
                         result?.message?.takeIf { it.isNotBlank() }
-                            ?: "تغییر تخصیص استاد در سرور ثبت نشد",
+                            ?: ApiErrorParser.userMessage(
+                                response,
+                                if (newTeacherId == null) {
+                                    "حذف تخصیص استاد کامل نشد"
+                                } else {
+                                    "تخصیص کلاس به استاد کامل نشد"
+                                }
+                            ),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -278,11 +291,13 @@ class AssignClassActivity : BaseActivity() {
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 requestInFlight = false
                 renderCurrentList()
-                Toast.makeText(
+                AppToast.error(
                     this@AssignClassActivity,
-                    "ارتباط با سرور برای تغییر تخصیص استاد برقرار نشد",
-                    Toast.LENGTH_LONG
-                ).show()
+                    ApiErrorParser.networkMessage(
+                        t,
+                        if (newTeacherId == null) "حذف تخصیص استاد" else "تخصیص کلاس به استاد"
+                    )
+                )
             }
         })
     }

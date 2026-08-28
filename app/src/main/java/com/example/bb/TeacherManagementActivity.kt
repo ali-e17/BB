@@ -166,9 +166,9 @@ class TeacherManagementActivity : BaseActivity() {
 
                     if (!teacher.isActive) {
 
-                        Toast.makeText(
+                        AppToast.makeText(
                             this,
-                            "ابتدا استاد را فعال کنید",
+                            "برای مشاهده یا تخصیص کلاس‌ها، ابتدا حساب استاد را فعال کنید",
                             Toast.LENGTH_SHORT
                         ).show()
 
@@ -236,6 +236,11 @@ class TeacherManagementActivity : BaseActivity() {
                                     false
                                 )
                             )
+                            AppToast.error(
+                                this@TeacherManagementActivity,
+                                ApiErrorParser.userMessage(response, "دریافت کلاس‌ها برای مدیریت اساتید کامل نشد") +
+                                    "؛ اطلاعات ذخیره‌شده دستگاه استفاده می‌شود"
+                            )
                         }
 
                         loadTeachers()
@@ -253,6 +258,11 @@ class TeacherManagementActivity : BaseActivity() {
                             AppDatabase.getAllClasses(
                                 false
                             )
+                        )
+                        AppToast.error(
+                            this@TeacherManagementActivity,
+                            ApiErrorParser.networkMessage(t, "دریافت کلاس‌ها برای مدیریت اساتید") +
+                                " اطلاعات ذخیره‌شده دستگاه استفاده می‌شود."
                         )
 
                         loadTeachers()
@@ -295,7 +305,12 @@ class TeacherManagementActivity : BaseActivity() {
 
                         } else {
 
-                            showLocal()
+                            showLocal(
+                                ApiErrorParser.userMessage(
+                                    response,
+                                    "دریافت فهرست اساتید کامل نشد"
+                                ) + "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد"
+                            )
                         }
                     }
 
@@ -305,14 +320,17 @@ class TeacherManagementActivity : BaseActivity() {
                         t: Throwable
                     ) {
 
-                        showLocal()
+                        showLocal(
+                            ApiErrorParser.networkMessage(t, "دریافت فهرست اساتید") +
+                                " فهرست ذخیره‌شده دستگاه نمایش داده شد."
+                        )
                     }
                 }
             )
     }
 
 
-    private fun showLocal() {
+    private fun showLocal(message: String = "فهرست ذخیره‌شده اساتید نمایش داده شد") {
 
         teachers.clear()
 
@@ -322,9 +340,9 @@ class TeacherManagementActivity : BaseActivity() {
 
         applyFilters()
 
-        Toast.makeText(
+        AppToast.makeText(
             this,
-            "فهرست ذخیره‌شده اساتید نمایش داده شد",
+            message,
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -688,16 +706,10 @@ class TeacherManagementActivity : BaseActivity() {
                             teacherClasses.isNotEmpty()
 
 
-                archive.isEnabled =
-                    !blocked
-
-
-                archive.alpha =
-                    if (blocked) {
-                        .5f
-                    } else {
-                        1f
-                    }
+                // دکمه بایگانی حتی در صورت وجود کلاس فعال قابل لمس می‌ماند
+                // تا علت عدم امکان بایگانی با پیام روشن به کاربر اعلام شود.
+                archive.isEnabled = true
+                archive.alpha = 1f
 
 
                 hint.visibility =
@@ -722,6 +734,26 @@ class TeacherManagementActivity : BaseActivity() {
         ) {
 
             archive.setOnClickListener {
+
+                val hasActiveClasses = classes.any {
+                    it.status == ClassStatus.ACTIVE &&
+                        (
+                            it.teacherId == teacher.id ||
+                                (
+                                    it.teacherId.isNullOrBlank() &&
+                                        normalizePhone(it.teacherPhone) ==
+                                        normalizePhone(teacher.phone)
+                                )
+                        )
+                }
+
+                if (teacher.isActive && hasActiveClasses) {
+                    AppToast.warning(
+                        this@TeacherManagementActivity,
+                        "امکان بایگانی این استاد وجود ندارد؛ ابتدا تخصیص او به تمام کلاس‌های فعال را حذف کنید"
+                    )
+                    return@setOnClickListener
+                }
 
                 archive.isEnabled =
                     false
@@ -762,13 +794,18 @@ class TeacherManagementActivity : BaseActivity() {
 
                                     render()
 
+                                    AppToast.success(
+                                        this@TeacherManagementActivity,
+                                        if (teacher.isActive) "استاد فعال شد" else "استاد بایگانی شد"
+                                    )
+
                                     dialog.dismiss()
 
                                     loadTeachers()
 
                                 } else {
 
-                                    Toast.makeText(
+                                    AppToast.makeText(
                                         this@TeacherManagementActivity,
                                         response.body()
                                             ?.message
@@ -778,7 +815,7 @@ class TeacherManagementActivity : BaseActivity() {
                                             ?: ApiErrorParser
                                                 .userMessage(
                                                     response,
-                                                    "تغییر وضعیت استاد انجام نشد"
+                                                    "تغییر وضعیت استاد کامل نشد"
                                                 ),
                                         Toast.LENGTH_LONG
                                     ).show()
@@ -795,7 +832,7 @@ class TeacherManagementActivity : BaseActivity() {
                                     true
 
 
-                                Toast.makeText(
+                                AppToast.makeText(
                                     this@TeacherManagementActivity,
                                     ApiErrorParser
                                         .networkMessage(
@@ -888,12 +925,12 @@ class TeacherManagementActivity : BaseActivity() {
                                                     ?: ApiErrorParser
                                                         .userMessage(
                                                             response,
-                                                            "حذف استاد انجام نشد"
+                                                            "حذف استاد کامل نشد"
                                                         )
                                             }
 
 
-                                        Toast.makeText(
+                                        AppToast.makeText(
                                             this@TeacherManagementActivity,
                                             message,
                                             Toast.LENGTH_LONG
@@ -918,7 +955,7 @@ class TeacherManagementActivity : BaseActivity() {
                                         t: Throwable
                                     ) {
 
-                                        Toast.makeText(
+                                        AppToast.makeText(
                                             this@TeacherManagementActivity,
                                             ApiErrorParser
                                                 .networkMessage(
@@ -1010,7 +1047,7 @@ class TeacherManagementActivity : BaseActivity() {
 
                                         } else {
 
-                                            Toast.makeText(
+                                            AppToast.makeText(
                                                 this@TeacherManagementActivity,
                                                 body?.message
                                                     ?.takeIf {
@@ -1019,7 +1056,7 @@ class TeacherManagementActivity : BaseActivity() {
                                                     ?: ApiErrorParser
                                                         .userMessage(
                                                             response,
-                                                            "ساخت رمز موقت انجام نشد"
+                                                            "ساخت رمز موقت کامل نشد"
                                                         ),
                                                 Toast.LENGTH_LONG
                                             ).show()
@@ -1036,7 +1073,7 @@ class TeacherManagementActivity : BaseActivity() {
                                             true
 
 
-                                        Toast.makeText(
+                                        AppToast.makeText(
                                             this@TeacherManagementActivity,
                                             ApiErrorParser
                                                 .networkMessage(

@@ -85,7 +85,7 @@ class AttendanceActivity : BaseActivity() {
         currentUserId = prefs.getString("CURRENT_USER_ID", "").orEmpty()
 
         if (role == UserRole.STUDENT) {
-            Toast.makeText(this, "این بخش مخصوص استاد و مدیر است", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(this, "دسترسی به این بخش فقط برای مدیر و استاد امکان‌پذیر است", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -122,9 +122,22 @@ class AttendanceActivity : BaseActivity() {
     private fun setupActions() {
         spinnerClass.setOnClickListener { spinnerClass.showDropDown() }
         btnAttendanceDate.setOnClickListener {
-            val session = currentSession ?: return@setOnClickListener
-            if (session.isFinalized && session.canEdit) {
-                showDatePicker()
+            val session = currentSession
+            if (session == null) {
+                AppToast.info(this, "لطفاً ابتدا یک جلسه را انتخاب کنید")
+                return@setOnClickListener
+            }
+
+            when {
+                session.isFinalized && session.canEdit -> showDatePicker()
+                !session.isFinalized -> AppToast.info(
+                    this,
+                    "تاریخ جلسه هنگام ثبت نهایی انتخاب می‌شود"
+                )
+                else -> AppToast.warning(
+                    this,
+                    "تاریخ این جلسه فقط توسط مدیر قابل ویرایش است"
+                )
             }
         }
         btnExportAttendance.setOnClickListener { confirmAttendanceExport() }
@@ -144,20 +157,28 @@ class AttendanceActivity : BaseActivity() {
                     AppDatabase.replaceClasses(classes)
                     applyClasses(classes)
                 } else {
-                    applyLocalClasses("دریافت کلاس‌ها از سرور انجام نشد")
+                    applyLocalClasses(
+                        ApiErrorParser.userMessage(
+                            response,
+                            "دریافت کلاس‌های حضور و غیاب کامل نشد"
+                        ) + "؛ فهرست ذخیره‌شده دستگاه نمایش داده شد"
+                    )
                 }
             }
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 setLoading(false)
-                applyLocalClasses("اتصال به سرور برقرار نشد؛ فهرست ذخیره‌شده نمایش داده شد")
+                applyLocalClasses(
+                    ApiErrorParser.networkMessage(t, "دریافت کلاس‌های حضور و غیاب") +
+                        " فهرست ذخیره‌شده دستگاه نمایش داده شد."
+                )
             }
         })
     }
 
     private fun applyLocalClasses(message: String) {
         applyClasses(AppDatabase.getAllClasses(includeCompleted = role == UserRole.ADMIN))
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun applyClasses(source: List<ClassModel>) {
@@ -244,7 +265,9 @@ class AttendanceActivity : BaseActivity() {
                     setLoading(false)
                     val body = response.body()
                     if (!response.isSuccessful || body?.status != "success") {
-                        showEmpty(errorMessage(response, body?.message ?: "دریافت جلسات انجام نشد"))
+                        val message = errorMessage(response, body?.message ?: "دریافت جلسات حضور و غیاب کامل نشد")
+                        showEmpty(message)
+                        AppToast.error(this@AttendanceActivity, message)
                         return
                     }
 
@@ -267,7 +290,7 @@ class AttendanceActivity : BaseActivity() {
                     }
 
                     if (target == null) {
-                        showEmpty("برای این کلاس هنوز جلسه‌ای قابل نمایش نیست")
+                        showEmpty("برای این کلاس جلسه‌ای برای نمایش وجود ندارد")
                     } else {
                         loadSession(target)
                     }
@@ -275,7 +298,9 @@ class AttendanceActivity : BaseActivity() {
 
                 override fun onFailure(call: Call<AttendanceOverviewResponse>, t: Throwable) {
                     setLoading(false)
-                    showEmpty("دریافت اطلاعات حضور و غیاب ناموفق بود")
+                    val message = ApiErrorParser.networkMessage(t, "دریافت اطلاعات حضور و غیاب")
+                    showEmpty(message)
+                    AppToast.error(this@AttendanceActivity, message)
                 }
             })
     }
@@ -371,7 +396,9 @@ class AttendanceActivity : BaseActivity() {
                     setLoading(false)
                     val body = response.body()
                     if (!response.isSuccessful || body?.status != "success") {
-                        showEmpty(errorMessage(response, body?.message ?: "دریافت جلسه انجام نشد"))
+                        val message = errorMessage(response, body?.message ?: "دریافت اطلاعات جلسه حضور و غیاب کامل نشد")
+                        showEmpty(message)
+                        AppToast.error(this@AttendanceActivity, message)
                         return
                     }
                     currentSession = body
@@ -385,7 +412,9 @@ class AttendanceActivity : BaseActivity() {
 
                 override fun onFailure(call: Call<AttendanceSessionResponse>, t: Throwable) {
                     setLoading(false)
-                    showEmpty("اتصال برای دریافت جلسه برقرار نشد")
+                    val message = ApiErrorParser.networkMessage(t, "دریافت اطلاعات جلسه حضور و غیاب")
+                    showEmpty(message)
+                    AppToast.error(this@AttendanceActivity, message)
                 }
             })
     }
@@ -460,7 +489,9 @@ class AttendanceActivity : BaseActivity() {
 
         val session = currentSession
         if (session == null) {
-            saveButton.isEnabled = false
+            saveButton.text = "ثبت حضور و غیاب"
+            saveButton.isEnabled = true
+            saveButton.alpha = 0.72f
             txtMarkingHint.text = "یک جلسه را انتخاب کنید"
             return
         }
@@ -469,43 +500,68 @@ class AttendanceActivity : BaseActivity() {
         when {
             session.isFinalized && !session.canEdit -> {
                 saveButton.text = "ثبت نهایی شده؛ فقط مدیر امکان ویرایش دارد"
-                saveButton.isEnabled = false
+                saveButton.isEnabled = true
+                saveButton.alpha = 0.72f
                 txtMarkingHint.text = "این جلسه قفل شده و برای استاد فقط قابل مشاهده است"
             }
 
             session.isFinalized && session.canEdit -> {
                 saveButton.text = "ذخیره اصلاحات مدیر"
-                saveButton.isEnabled = allMarked
+                saveButton.isEnabled = true
+                saveButton.alpha = if (allMarked) 1f else 0.72f
                 txtMarkingHint.text = if (allMarked) {
                     "اصلاحات با ثبت سابقه مدیریتی ذخیره می‌شوند"
                 } else {
-                    "$unmarked دانش‌آموز هنوز بررسی نشده است"
+                    "وضعیت $unmarked دانش‌آموز هنوز بررسی نشده است"
                 }
             }
 
             else -> {
                 saveButton.text = "ثبت نهایی جلسه ${session.sessionNumber}"
-                saveButton.isEnabled = allMarked
+                saveButton.isEnabled = true
+                saveButton.alpha = if (allMarked) 1f else 0.72f
                 txtMarkingHint.text = if (allMarked) {
                     "همه دانش‌آموزان بررسی شدند؛ جلسه آماده ثبت نهایی است"
                 } else {
-                    "$unmarked دانش‌آموز هنوز بررسی نشده است"
+                    "وضعیت $unmarked دانش‌آموز هنوز بررسی نشده است"
                 }
             }
         }
     }
 
     private fun handleSaveClick() {
-        val session = currentSession ?: return
+        val session = currentSession
+        if (session == null) {
+            AppToast.info(
+                this,
+                if (selectedClass == null) {
+                    "لطفاً ابتدا یک کلاس را انتخاب کنید"
+                } else {
+                    "لطفاً ابتدا جلسه موردنظر را انتخاب کنید"
+                }
+            )
+            return
+        }
+
+        if (records.isEmpty()) {
+            AppToast.warning(this, "دانش‌آموز فعالی برای ثبت حضور و غیاب در این جلسه وجود ندارد")
+            return
+        }
+
         val unmarked = records.count { it.status == AttendanceMarkStatus.UNMARKED }
-        if (records.isEmpty() || unmarked > 0) {
-            Toast.makeText(this, "ابتدا وضعیت همه دانش‌آموزان را مشخص کنید", Toast.LENGTH_SHORT).show()
+        if (unmarked > 0) {
+            AppToast.warning(
+                this,
+                "وضعیت $unmarked دانش‌آموز مشخص نشده است؛ لطفاً وضعیت همه دانش‌آموزان را تعیین کنید"
+            )
             return
         }
 
         if (session.isFinalized) {
             if (session.canEdit && role == UserRole.ADMIN) {
                 showAdminEditDialog(session)
+            } else {
+                AppToast.warning(this, "این جلسه ثبت نهایی شده است و فقط مدیر امکان ویرایش آن را دارد")
             }
         } else {
             showFinalizeDatePicker(session)
@@ -520,9 +576,9 @@ class AttendanceActivity : BaseActivity() {
 
         val model = selectedClass ?: run {
 
-            Toast.makeText(
+            AppToast.makeText(
                 this,
-                "ابتدا یک کلاس را انتخاب کنید",
+                "لطفاً ابتدا یک کلاس را انتخاب کنید",
                 Toast.LENGTH_SHORT
             ).show()
 
@@ -532,9 +588,9 @@ class AttendanceActivity : BaseActivity() {
 
         if (overview?.sessions.isNullOrEmpty()) {
 
-            Toast.makeText(
+            AppToast.makeText(
                 this,
-                "برای این کلاس هنوز جلسه ثبت‌شده‌ای وجود ندارد",
+                "برای این کلاس جلسه ثبت‌شده‌ای وجود ندارد",
                 Toast.LENGTH_LONG
             ).show()
 
@@ -599,9 +655,9 @@ class AttendanceActivity : BaseActivity() {
 
         if (token.isBlank()) {
 
-            Toast.makeText(
+            AppToast.makeText(
                 this,
-                "نشست ورود معتبر نیست؛ یک‌بار خارج و دوباره وارد شوید",
+                "نشست کاربری معتبر نیست؛ لطفاً از حساب کاربری خارج شده و مجدداً وارد شوید",
                 Toast.LENGTH_LONG
             ).show()
 
@@ -630,9 +686,12 @@ class AttendanceActivity : BaseActivity() {
 
                             setLoading(false)
 
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@AttendanceActivity,
-                                "دریافت فایل اکسل از سرور ناموفق بود (کد ${response.code()})",
+                                ApiErrorParser.userMessage(
+                                    response,
+                                    "دریافت فایل اکسل حضور و غیاب کامل نشد"
+                                ),
                                 Toast.LENGTH_LONG
                             ).show()
 
@@ -664,7 +723,7 @@ class AttendanceActivity : BaseActivity() {
                             setLoading(false)
 
 
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@AttendanceActivity,
                                 "فایل اکسل با موفقیت ذخیره شد",
                                 Toast.LENGTH_LONG
@@ -675,18 +734,18 @@ class AttendanceActivity : BaseActivity() {
 
                             setLoading(false)
 
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@AttendanceActivity,
                                 when (e) {
 
                                     is SecurityException ->
-                                        "اجازه ذخیره فایل داده نشد؛ محل دیگری را انتخاب کنید"
+                                        "مجوز ذخیره فایل صادر نشد؛ لطفاً محل دیگری را انتخاب کنید"
 
                                     is IOException ->
-                                        "ذخیره فایل اکسل انجام نشد؛ محل ذخیره یا فضای دستگاه را بررسی کنید"
+                                        "ذخیره فایل اکسل کامل نشد؛ لطفاً محل ذخیره و فضای ذخیره‌سازی دستگاه را بررسی کنید"
 
                                     else ->
-                                        "خطا در ذخیره فایل اکسل: ${e.message}"
+                                        "ذخیره فایل اکسل کامل نشد؛ لطفاً محل ذخیره، مجوز دسترسی و فضای آزاد دستگاه را بررسی کنید"
                                 },
                                 Toast.LENGTH_LONG
                             ).show()
@@ -701,9 +760,9 @@ class AttendanceActivity : BaseActivity() {
 
                         setLoading(false)
 
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@AttendanceActivity,
-                            "اتصال برای دانلود اکسل برقرار نشد؛ دوباره تلاش کنید",
+                            ApiErrorParser.networkMessage(t, "دانلود فایل اکسل حضور و غیاب"),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -776,16 +835,20 @@ class AttendanceActivity : BaseActivity() {
                 setSaving(false)
                 val body = response.body()
                 if (response.isSuccessful && body?.status == "success") {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AttendanceActivity,
-                        "جلسه ثبت نهایی شد و اعلان‌ها ساخته شدند",
+                        if (body.createdAnnouncements > 0) {
+                            "جلسه ${session.sessionNumber} ثبت نهایی شد؛ ${body.createdAnnouncements} اعلان غیبت یا تأخیر برای دانش‌آموزان ارسال شد"
+                        } else {
+                            "جلسه ${session.sessionNumber} ثبت نهایی شد؛ اعلان غیبت یا تأخیری برای این جلسه لازم نبود"
+                        },
                         Toast.LENGTH_LONG
                     ).show()
                     loadOverview(preferredSessionNumber = session.sessionNumber)
                 } else {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AttendanceActivity,
-                        errorMessage(response, body?.message ?: "ثبت نهایی انجام نشد"),
+                        errorMessage(response, body?.message ?: "ثبت نهایی کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -793,9 +856,9 @@ class AttendanceActivity : BaseActivity() {
 
             override fun onFailure(call: Call<AttendanceSaveResponse>, t: Throwable) {
                 setSaving(false)
-                Toast.makeText(
+                AppToast.makeText(
                     this@AttendanceActivity,
-                    "اتصال هنگام ثبت نهایی برقرار نشد؛ دوباره تلاش کنید",
+                    ApiErrorParser.networkMessage(t, "ثبت نهایی حضور و غیاب"),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -821,16 +884,20 @@ class AttendanceActivity : BaseActivity() {
                 setSaving(false)
                 val body = response.body()
                 if (response.isSuccessful && body?.status == "success") {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AttendanceActivity,
-                        "اصلاحات مدیر ذخیره شد",
+                        if (body.createdAnnouncements > 0) {
+                            "اصلاحات جلسه ${session.sessionNumber} ذخیره شد؛ ${body.createdAnnouncements} اعلان مرتبط برای دانش‌آموزان به‌روزرسانی شد"
+                        } else {
+                            "اصلاحات جلسه ${session.sessionNumber} با موفقیت ذخیره شد"
+                        },
                         Toast.LENGTH_LONG
                     ).show()
                     loadOverview(preferredSessionNumber = session.sessionNumber)
                 } else {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AttendanceActivity,
-                        errorMessage(response, body?.message ?: "ذخیره اصلاحات انجام نشد"),
+                        errorMessage(response, body?.message ?: "ذخیره اصلاحات کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -838,9 +905,9 @@ class AttendanceActivity : BaseActivity() {
 
             override fun onFailure(call: Call<AttendanceSaveResponse>, t: Throwable) {
                 setSaving(false)
-                Toast.makeText(
+                AppToast.makeText(
                     this@AttendanceActivity,
-                    "اتصال هنگام ذخیره اصلاحات برقرار نشد",
+                    ApiErrorParser.networkMessage(t, "ذخیره اصلاحات حضور و غیاب"),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -1093,9 +1160,9 @@ class AttendanceActivity : BaseActivity() {
                     }
 
                     if (selected.after(today)) {
-                        Toast.makeText(
+                        AppToast.makeText(
                             this,
-                            "تاریخ آینده قابل ثبت نیست",
+                            "ثبت تاریخ آینده مجاز نیست",
                             Toast.LENGTH_SHORT
                         ).show()
                         return@setOnClickListener

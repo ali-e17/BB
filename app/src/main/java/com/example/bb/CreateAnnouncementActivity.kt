@@ -56,6 +56,7 @@ class CreateAnnouncementActivity : BaseActivity() {
     private lateinit var txtSelectedFileName: TextView
     private lateinit var txtSelectedFileMeta: TextView
     private lateinit var btnSend: MaterialButton
+    private var sending = false
 
     private val attachmentPicker =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -71,7 +72,7 @@ class CreateAnnouncementActivity : BaseActivity() {
             val metadata = readAttachmentMetadata(uri)
             val maxSize = 20L * 1024L * 1024L
             if (metadata.sizeBytes != null && metadata.sizeBytes > maxSize) {
-                Toast.makeText(this, "حداکثر حجم پیوست ۲۰ مگابایت است", Toast.LENGTH_LONG).show()
+                AppToast.makeText(this, "حداکثر حجم مجاز برای فایل پیوست ۲۰ مگابایت است", Toast.LENGTH_LONG).show()
                 return@registerForActivityResult
             }
 
@@ -80,6 +81,10 @@ class CreateAnnouncementActivity : BaseActivity() {
             attachmentMimeType = contentResolver.getType(uri)
             attachmentSizeBytes = metadata.sizeBytes
             renderAttachment()
+            AppToast.success(
+                this,
+                "پیوست «${attachmentName ?: "فایل انتخابی"}» آماده ارسال است"
+            )
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,7 +101,7 @@ class CreateAnnouncementActivity : BaseActivity() {
         }.getOrDefault(UserRole.TEACHER)
 
         if (role == UserRole.STUDENT) {
-            Toast.makeText(this, "دانش‌آموز فقط امکان مشاهده اعلانات را دارد", Toast.LENGTH_SHORT).show()
+            AppToast.makeText(this, "دانش‌آموزان فقط امکان مشاهده اعلانات را دارند", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -124,9 +129,9 @@ class CreateAnnouncementActivity : BaseActivity() {
                     AppDatabase.replaceClasses(classes)
                     applyAvailableClasses(classes)
                 } else if (availableClasses.isEmpty()) {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@CreateAnnouncementActivity,
-                        "فهرست کلاس‌ها از سرور دریافت نشد",
+                        ApiErrorParser.userMessage(response, "دریافت فهرست کلاس‌ها برای ارسال اعلان کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -134,9 +139,10 @@ class CreateAnnouncementActivity : BaseActivity() {
 
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 if (availableClasses.isEmpty()) {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@CreateAnnouncementActivity,
-                        "اتصال به سرور برقرار نشد؛ کلاس ذخیره‌شده‌ای وجود ندارد",
+                        ApiErrorParser.networkMessage(t, "دریافت فهرست کلاس‌ها برای ارسال اعلان") +
+                            " کلاس ذخیره‌شده‌ای هم روی دستگاه وجود ندارد.",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -220,9 +226,9 @@ class CreateAnnouncementActivity : BaseActivity() {
 
     private fun showClassPicker() {
         if (availableClasses.isEmpty()) {
-            Toast.makeText(
+            AppToast.makeText(
                 this,
-                if (role == UserRole.TEACHER) "هنوز کلاسی به این استاد تخصیص داده نشده است"
+                if (role == UserRole.TEACHER) "در حال حاضر کلاسی به این استاد تخصیص داده نشده است"
                 else "کلاس فعالی وجود ندارد",
                 Toast.LENGTH_LONG
             ).show()
@@ -259,7 +265,7 @@ class CreateAnnouncementActivity : BaseActivity() {
             .map { it.className }
 
         if (names.isEmpty()) {
-            txtSelectedClassesSummary.text = "هنوز کلاسی انتخاب نشده است"
+            txtSelectedClassesSummary.text = "در حال حاضر کلاسی انتخاب نشده است"
             txtSelectedClassesSummary.textDirection = View.TEXT_DIRECTION_RTL
             txtSelectedClassesSummary.gravity = Gravity.RIGHT
         } else {
@@ -364,6 +370,7 @@ class CreateAnnouncementActivity : BaseActivity() {
             attachmentMimeType = null
             attachmentSizeBytes = null
             renderAttachment()
+            AppToast.info(this, "پیوست از اعلان حذف شد")
         }
         renderAttachment()
     }
@@ -396,13 +403,35 @@ class CreateAnnouncementActivity : BaseActivity() {
                 AnnouncementScope.SELECTED_CLASSES
             }
 
-            if (title.isBlank() || body.isBlank()) {
-                Toast.makeText(this, "عنوان و متن اعلان را کامل کنید", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            if (scope == AnnouncementScope.SELECTED_CLASSES && selectedClassIds.isEmpty()) {
-                Toast.makeText(this, "حداقل یک کلاس را انتخاب کنید", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+            when {
+                title.isBlank() -> {
+                    etTitle.requestFocus()
+                    AppToast.warning(this, "عنوان اعلان را وارد کنید")
+                    return@setOnClickListener
+                }
+
+                body.isBlank() -> {
+                    etBody.requestFocus()
+                    AppToast.warning(this, "متن اعلان را وارد کنید")
+                    return@setOnClickListener
+                }
+
+                availableClasses.isEmpty() -> {
+                    AppToast.warning(
+                        this,
+                        if (role == UserRole.TEACHER) {
+                            "کلاس فعالی به شما تخصیص داده نشده است؛ امکان ارسال اعلان وجود ندارد."
+                        } else {
+                            "کلاس فعالی برای ارسال اعلان وجود ندارد."
+                        }
+                    )
+                    return@setOnClickListener
+                }
+
+                scope == AnnouncementScope.SELECTED_CLASSES && selectedClassIds.isEmpty() -> {
+                    AppToast.warning(this, "حداقل یک کلاس را برای دریافت اعلان انتخاب کنید")
+                    return@setOnClickListener
+                }
             }
 
             sendOnlineAnnouncement(title, body, scope)
@@ -422,7 +451,10 @@ class CreateAnnouncementActivity : BaseActivity() {
 
         val temporaryFile = runCatching { createTemporaryAttachmentFile() }
             .getOrElse {
-                Toast.makeText(this, "خواندن فایل پیوست امکان‌پذیر نبود", Toast.LENGTH_LONG).show()
+                AppToast.error(
+                    this,
+                    "خواندن فایل پیوست امکان‌پذیر نبود؛ فایل را مجدداً انتخاب کنید یا مجوز دسترسی به فایل را بررسی کنید"
+                )
                 return
             }
         val attachmentPart = temporaryFile?.let { file ->
@@ -452,7 +484,7 @@ class CreateAnnouncementActivity : BaseActivity() {
                 setSending(false)
                 val result = response.body()
                 if (response.isSuccessful && result?.status == "success") {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@CreateAnnouncementActivity,
                         result.message.ifBlank { "اعلان با موفقیت ارسال شد" },
                         Toast.LENGTH_SHORT
@@ -460,22 +492,24 @@ class CreateAnnouncementActivity : BaseActivity() {
                     setResult(RESULT_OK)
                     finish()
                 } else {
-                    Toast.makeText(
+                    AppToast.error(
                         this@CreateAnnouncementActivity,
-                        result?.message ?: "ارسال اعلان انجام نشد",
-                        Toast.LENGTH_LONG
-                    ).show()
+                        result?.message?.takeIf { it.isNotBlank() }
+                            ?: ApiErrorParser.userMessage(
+                                response,
+                                "ارسال اعلان کامل نشد"
+                            )
+                    )
                 }
             }
 
             override fun onFailure(call: Call<CreateAnnouncementResponse>, t: Throwable) {
                 temporaryFile?.delete()
                 setSending(false)
-                Toast.makeText(
+                AppToast.error(
                     this@CreateAnnouncementActivity,
-                    "اتصال به سرور برقرار نشد؛ اعلان ارسال نشد",
-                    Toast.LENGTH_LONG
-                ).show()
+                    ApiErrorParser.networkMessage(t, "ارسال اعلان")
+                )
             }
         })
     }
@@ -494,27 +528,34 @@ class CreateAnnouncementActivity : BaseActivity() {
         return file
     }
 
-    private fun setSending(sending: Boolean) {
-        btnSend.text = if (sending) "در حال ارسال..." else "ارسال اعلان"
+    private fun setSending(value: Boolean) {
+        sending = value
+        btnSend.text = if (value) "در حال ارسال..." else "ارسال اعلان"
+        updateSendState()
+    }
+
+    /**
+     * دکمه ارسال هنگام ناقص بودن فرم عمداً قابل لمس می‌ماند تا با لمس آن
+     * دلیل دقیق آماده نبودن فرم به کاربر گفته شود. فقط هنگام ارسال واقعی غیرفعال می‌شود.
+     */
+    private fun updateSendState() {
         if (sending) {
             btnSend.isEnabled = false
             btnSend.alpha = 0.65f
-        } else {
-            updateSendState()
+            return
         }
-    }
 
-    private fun updateSendState() {
         val titleReady = !etTitle.text.isNullOrBlank()
         val bodyReady = !etBody.text.isNullOrBlank()
         val audienceReady =
-            (role == UserRole.ADMIN &&
-                    audienceToggle.checkedButtonId == R.id.btnAudienceAll &&
-                    availableClasses.isNotEmpty()) ||
+            availableClasses.isNotEmpty() && (
+                (role == UserRole.ADMIN &&
+                    audienceToggle.checkedButtonId == R.id.btnAudienceAll) ||
                     selectedClassIds.isNotEmpty()
+            )
 
-        btnSend.isEnabled = titleReady && bodyReady && audienceReady
-        btnSend.alpha = if (btnSend.isEnabled) 1f else 0.55f
+        btnSend.isEnabled = true
+        btnSend.alpha = if (titleReady && bodyReady && audienceReady) 1f else 0.72f
     }
 
 

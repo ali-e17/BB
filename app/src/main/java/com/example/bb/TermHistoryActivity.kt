@@ -89,11 +89,13 @@ class TermHistoryActivity : BaseActivity() {
                     } else {
                         recycler.visibility = View.INVISIBLE
                         empty.visibility = View.VISIBLE
-                        emptyText.text = ApiErrorParser.userMessage(
+                        val message = ApiErrorParser.userMessage(
                             response,
                             apiError,
-                            "دریافت کارنامه‌ها و سوابق تحصیلی انجام نشد"
+                            "دریافت کارنامه‌ها و سوابق تحصیلی کامل نشد"
                         )
+                        emptyText.text = message
+                        AppToast.error(this@TermHistoryActivity, message)
                     }
                 }
 
@@ -101,10 +103,12 @@ class TermHistoryActivity : BaseActivity() {
                     progress.visibility = View.GONE
                     recycler.visibility = View.INVISIBLE
                     empty.visibility = View.VISIBLE
-                    emptyText.text = ApiErrorParser.networkMessage(
+                    val message = ApiErrorParser.networkMessage(
                         t,
                         "دریافت کارنامه‌ها و سوابق تحصیلی"
                     )
+                    emptyText.text = message
+                    AppToast.error(this@TermHistoryActivity, message)
                 }
             })
     }
@@ -159,8 +163,8 @@ class TermHistoryActivity : BaseActivity() {
 
             val hasPublishedCard = !item.reportCardId.isNullOrBlank()
             holder.result.visibility = View.VISIBLE
-            holder.result.isEnabled = hasPublishedCard
-            holder.result.alpha = if (hasPublishedCard) 1f else 0.62f
+            holder.result.isEnabled = true
+            holder.result.alpha = if (hasPublishedCard) 1f else 0.72f
             holder.result.text = if (hasPublishedCard) {
                 buildString {
                     append("مشاهده کارنامه")
@@ -170,13 +174,24 @@ class TermHistoryActivity : BaseActivity() {
                     }
                 }
             } else if (item.isCurrent) {
-                "کارنامه این ترم هنوز منتشر نشده است"
+                "کارنامه این ترم تاکنون منتشر نشده است"
             } else {
                 "برای این ترم کارنامه‌ای منتشر نشده است"
             }
 
             holder.result.setOnClickListener {
-                if (hasPublishedCard) onReport(item)
+                if (hasPublishedCard) {
+                    onReport(item)
+                } else {
+                    AppToast.info(
+                        holder.itemView.context,
+                        if (item.isCurrent) {
+                            "کارنامه این ترم تاکنون منتشر نشده است"
+                        } else {
+                            "برای این ترم کارنامه‌ای منتشر نشده است"
+                        }
+                    )
+                }
             }
         }
 

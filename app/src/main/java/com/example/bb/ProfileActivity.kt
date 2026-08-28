@@ -72,9 +72,9 @@ class ProfileActivity : BaseActivity() {
 
                 if (!profileErrorShown) {
                     profileErrorShown = true
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@ProfileActivity,
-                        ApiErrorParser.userMessage(response, "اطلاعات پروفایل دریافت نشد"),
+                        ApiErrorParser.userMessage(response, "دریافت اطلاعات پروفایل کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -83,7 +83,7 @@ class ProfileActivity : BaseActivity() {
             override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
                 if (!profileErrorShown) {
                     profileErrorShown = true
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@ProfileActivity,
                         ApiErrorParser.networkMessage(t, "دریافت اطلاعات پروفایل"),
                         Toast.LENGTH_LONG
@@ -141,12 +141,12 @@ class ProfileActivity : BaseActivity() {
                             .edit().putString("CURRENT_AVATAR_NAME", avatarName).apply()
                         ivAvatar.setImageResource(selected)
                         dialog.dismiss()
-                        Toast.makeText(this@ProfileActivity, "عکس پروفایل ذخیره شد", Toast.LENGTH_SHORT).show()
+                        AppToast.makeText(this@ProfileActivity, "عکس پروفایل ذخیره شد", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@ProfileActivity,
                             body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "ذخیره عکس پروفایل انجام نشد"),
+                                ?: ApiErrorParser.userMessage(response, "ذخیره عکس پروفایل کامل نشد"),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -154,7 +154,7 @@ class ProfileActivity : BaseActivity() {
 
                 override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                     avatarRequestInProgress = false
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@ProfileActivity,
                         ApiErrorParser.networkMessage(t, "ذخیره عکس پروفایل"),
                         Toast.LENGTH_LONG
@@ -196,6 +196,7 @@ class ProfileActivity : BaseActivity() {
             remove("MUST_CHANGE_PASSWORD")
             apply()
         }
+        AppToast.success(applicationContext, "با موفقیت از حساب کاربری خارج شدید")
         startActivity(Intent(this, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
@@ -249,9 +250,10 @@ class ProfileActivity : BaseActivity() {
                         (body.status.isNotBlank() && body.status != "success") ||
                         addressUrl.isBlank()
                     ) {
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@ProfileActivity,
-                            "نشانی آموزشگاه در حال حاضر در دسترس نیست",
+                            body?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, "دریافت نشانی آموزشگاه کامل نشد"),
                             Toast.LENGTH_SHORT
                         ).show()
                         return
@@ -264,9 +266,9 @@ class ProfileActivity : BaseActivity() {
                     call: Call<ContactInfoResponse>,
                     t: Throwable
                 ) {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@ProfileActivity,
-                        "دریافت نشانی آموزشگاه انجام نشد. اتصال اینترنت را بررسی کنید.",
+                        ApiErrorParser.networkMessage(t, "دریافت نشانی آموزشگاه"),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -277,9 +279,9 @@ class ProfileActivity : BaseActivity() {
         val uri = runCatching { Uri.parse(url) }.getOrNull()
 
         if (uri == null || (uri.scheme != "http" && uri.scheme != "https")) {
-            Toast.makeText(
+            AppToast.makeText(
                 this,
-                "لینک نشانی آموزشگاه معتبر نیست",
+                "نشانی ثبت‌شده آموزشگاه معتبر نیست",
                 Toast.LENGTH_SHORT
             ).show()
             return
@@ -294,9 +296,9 @@ class ProfileActivity : BaseActivity() {
             try {
                 startActivity(Intent(Intent.ACTION_VIEW, uri))
             } catch (_: Exception) {
-                Toast.makeText(
+                AppToast.makeText(
                     this,
-                    "برنامه‌ای برای باز کردن نشانی پیدا نشد",
+                    "برنامه مناسبی برای باز کردن نشانی آموزشگاه در دسترس نیست؛ لطفاً مرورگر یا برنامه نقشه را بررسی کنید",
                     Toast.LENGTH_SHORT
                 ).show()
             }

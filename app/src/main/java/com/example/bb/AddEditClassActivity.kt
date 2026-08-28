@@ -107,9 +107,9 @@ class AddEditClassActivity : BaseActivity() {
                     classNameOptionsLoaded = false
                     refreshClassNameDropdown()
                     spinnerClassName.isEnabled = existingClass != null
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AddEditClassActivity,
-                        ApiErrorParser.userMessage(response, "دریافت فهرست نام کلاس‌ها انجام نشد"),
+                        ApiErrorParser.userMessage(response, "دریافت فهرست نام کلاس‌ها کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -119,7 +119,7 @@ class AddEditClassActivity : BaseActivity() {
                 classNameOptionsLoaded = false
                 refreshClassNameDropdown()
                 spinnerClassName.isEnabled = existingClass != null
-                Toast.makeText(
+                AppToast.makeText(
                     this@AddEditClassActivity,
                     ApiErrorParser.networkMessage(t, "دریافت فهرست نام کلاس‌ها"),
                     Toast.LENGTH_LONG
@@ -219,19 +219,19 @@ class AddEditClassActivity : BaseActivity() {
                                     setBusy(false)
                                     val body = response.body()
                                     if (response.isSuccessful && body?.status == "success") {
-                                        Toast.makeText(
+                                        AppToast.makeText(
                                             this@AddEditClassActivity,
                                             body.message.ifBlank { "نام کلاس از فهرست حذف شد" },
                                             Toast.LENGTH_SHORT
                                         ).show()
                                         loadClassNameOptions { renderRows() }
                                     } else {
-                                        Toast.makeText(
+                                        AppToast.makeText(
                                             this@AddEditClassActivity,
                                             body?.message?.takeIf { it.isNotBlank() }
                                                 ?: ApiErrorParser.userMessage(
                                                     response,
-                                                    "حذف نام کلاس انجام نشد"
+                                                    "حذف نام کلاس کامل نشد"
                                                 ),
                                             Toast.LENGTH_LONG
                                         ).show()
@@ -240,7 +240,7 @@ class AddEditClassActivity : BaseActivity() {
 
                                 override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                                     setBusy(false)
-                                    Toast.makeText(
+                                    AppToast.makeText(
                                         this@AddEditClassActivity,
                                         ApiErrorParser.networkMessage(t, "حذف نام کلاس"),
                                         Toast.LENGTH_LONG
@@ -261,10 +261,12 @@ class AddEditClassActivity : BaseActivity() {
                 name.isBlank() -> {
                     inputLayout.error = "نام کلاس را وارد کنید"
                     input.requestFocus()
+                    AppToast.warning(this, "برای افزودن به فهرست، نام کلاس را وارد کنید")
                 }
                 name.length > 100 -> {
                     inputLayout.error = "نام کلاس حداکثر ۱۰۰ کاراکتر است"
                     input.requestFocus()
+                    AppToast.warning(this, "نام کلاس نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد")
                 }
                 else -> {
                     setBusy(true)
@@ -279,24 +281,26 @@ class AddEditClassActivity : BaseActivity() {
                             val body = response.body()
                             if (response.isSuccessful && body?.status == "success") {
                                 input.setText("")
-                                Toast.makeText(
+                                AppToast.makeText(
                                     this@AddEditClassActivity,
                                     body.message.ifBlank { "نام کلاس به فهرست اضافه شد" },
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 loadClassNameOptions { renderRows() }
                             } else {
-                                inputLayout.error = body?.message?.takeIf { it.isNotBlank() }
+                                val message = body?.message?.takeIf { it.isNotBlank() }
                                     ?: ApiErrorParser.userMessage(
                                         response,
-                                        "افزودن نام کلاس انجام نشد"
+                                        "افزودن نام کلاس کامل نشد"
                                     )
+                                inputLayout.error = message
+                                AppToast.error(this@AddEditClassActivity, message)
                             }
                         }
 
                         override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                             setBusy(false)
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@AddEditClassActivity,
                                 ApiErrorParser.networkMessage(t, "افزودن نام کلاس"),
                                 Toast.LENGTH_LONG
@@ -326,7 +330,7 @@ class AddEditClassActivity : BaseActivity() {
                 if (response.isSuccessful) AppDatabase.replaceClasses(classes)
                 val model = classes.firstOrNull { it.id == classId }
                 if (model == null) {
-                    Toast.makeText(this@AddEditClassActivity, "اطلاعات کلاس پیدا نشد", Toast.LENGTH_LONG).show()
+                    AppToast.error(this@AddEditClassActivity, "اطلاعات این کلاس در دسترس نیست یا کلاس از سرور حذف شده است")
                     finish()
                     return
                 }
@@ -334,7 +338,10 @@ class AddEditClassActivity : BaseActivity() {
             }
             override fun onFailure(call: Call<List<ClassModel>>, t: Throwable) {
                 setSavingState(false)
-                Toast.makeText(this@AddEditClassActivity, "دریافت اطلاعات کلاس از سرور ناموفق بود", Toast.LENGTH_LONG).show()
+                AppToast.error(
+                    this@AddEditClassActivity,
+                    ApiErrorParser.networkMessage(t, "دریافت اطلاعات کلاس برای ویرایش")
+                )
                 finish()
             }
         })
@@ -343,7 +350,7 @@ class AddEditClassActivity : BaseActivity() {
     private fun bindClass(model: ClassModel) {
         existingClass = model
         if (model.status != ClassStatus.ACTIVE) {
-            Toast.makeText(this, "کلاس پایان‌یافته قابل ویرایش نیست", Toast.LENGTH_LONG).show()
+            AppToast.makeText(this, "کلاس پایان‌یافته قابل ویرایش نیست", Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -386,6 +393,7 @@ class AddEditClassActivity : BaseActivity() {
         if (classCode.isBlank()) {
             etClassCode.error = "کد دستی کلاس الزامی است"
             etClassCode.requestFocus()
+            AppToast.warning(this, "کد کلاس را وارد کنید")
             return
         }
 
@@ -395,15 +403,17 @@ class AddEditClassActivity : BaseActivity() {
         if (className.isBlank()) {
             spinnerClassName.error = "نام کلاس را انتخاب کنید"
             spinnerClassName.requestFocus()
+            AppToast.warning(this, "نام کلاس را از فهرست انتخاب کنید")
             return
         }
         if (className != oldClassName && (!classNameOptionsLoaded || className !in activeNames)) {
             spinnerClassName.error = if (!classNameOptionsLoaded) {
-                "فهرست نام کلاس‌ها هنوز دریافت نشده است"
+                "فهرست نام کلاس‌ها دریافت نشده است؛ لطفاً اتصال اینترنت را بررسی کرده و مجدداً تلاش کنید"
             } else {
                 "نام کلاس را از فهرست انتخاب کنید"
             }
             spinnerClassName.requestFocus()
+            AppToast.warning(this, spinnerClassName.error?.toString() ?: "نام کلاس معتبر نیست")
             return
         }
 
@@ -411,6 +421,7 @@ class AddEditClassActivity : BaseActivity() {
         if (classLevel.isBlank()) {
             etClassLevel.error = "سطح کلاس الزامی است"
             etClassLevel.requestFocus()
+            AppToast.warning(this, "سطح کلاس را وارد کنید")
             return
         }
 
@@ -418,6 +429,7 @@ class AddEditClassActivity : BaseActivity() {
         if (bookName.isBlank()) {
             etBookName.error = "نام کتاب الزامی است"
             etBookName.requestFocus()
+            AppToast.warning(this, "نام کتاب کلاس را وارد کنید")
             return
         }
 
@@ -425,6 +437,7 @@ class AddEditClassActivity : BaseActivity() {
         if (termYear.isBlank()) {
             etTermYear.error = "سال ترم الزامی است"
             etTermYear.requestFocus()
+            AppToast.warning(this, "سال ترم را وارد کنید")
             return
         }
 
@@ -432,14 +445,30 @@ class AddEditClassActivity : BaseActivity() {
         if (termSeason !in listOf("بهار", "تابستان", "پاییز", "زمستان")) {
             spinnerTermSeason.error = "فصل ترم را انتخاب کنید"
             spinnerTermSeason.requestFocus()
+            AppToast.warning(this, "فصل ترم را انتخاب کنید")
             return
         }
 
-        val startTime = ClassTimeUtils.parse(etStartTime.text?.toString().orEmpty()) ?: return
-        val endTime = ClassTimeUtils.parse(etEndTime.text?.toString().orEmpty()) ?: return
+        val startTime = ClassTimeUtils.parse(etStartTime.text?.toString().orEmpty())
+        if (startTime == null) {
+            etStartTime.error = "ساعت شروع معتبر وارد کنید"
+            etStartTime.requestFocus()
+            AppToast.warning(this, "ساعت شروع کلاس را با فرمت صحیح وارد کنید؛ مثل 16:30")
+            return
+        }
+
+        val endTime = ClassTimeUtils.parse(etEndTime.text?.toString().orEmpty())
+        if (endTime == null) {
+            etEndTime.error = "ساعت پایان معتبر وارد کنید"
+            etEndTime.requestFocus()
+            AppToast.warning(this, "ساعت پایان کلاس را با فرمت صحیح وارد کنید؛ مثل 18:00")
+            return
+        }
 
         if (endTime.minutesFromMidnight <= startTime.minutesFromMidnight) {
             etEndTime.error = "ساعت پایان باید بعد از ساعت شروع باشد"
+            etEndTime.requestFocus()
+            AppToast.warning(this, "ساعت پایان کلاس باید بعد از ساعت شروع باشد")
             return
         }
 
@@ -447,6 +476,7 @@ class AddEditClassActivity : BaseActivity() {
         if (sessionCount == null || sessionCount < 1) {
             etSessionCount.error = "تعداد جلسات باید حداقل ۱ باشد"
             etSessionCount.requestFocus()
+            AppToast.warning(this, "تعداد جلسات را به‌صورت عدد و حداقل ۱ وارد کنید")
             return
         }
 
@@ -458,26 +488,31 @@ class AddEditClassActivity : BaseActivity() {
         if (minPass == null) {
             etMinPassingScore.error = "حد قبولی را به‌صورت عدد وارد کنید"
             etMinPassingScore.requestFocus()
+            AppToast.warning(this, "حد قبولی را به‌صورت عدد وارد کنید")
             return
         }
         if (minCond == null) {
             etMinConditionalScore.error = "حد مشروطی را به‌صورت عدد وارد کنید"
             etMinConditionalScore.requestFocus()
+            AppToast.warning(this, "حد مشروطی را به‌صورت عدد وارد کنید")
             return
         }
         if (minCond < 0.0 || minPass <= 0.0) {
             etMinConditionalScore.error = "مرزهای نمره نمی‌توانند منفی باشند"
             etMinConditionalScore.requestFocus()
+            AppToast.warning(this, "حد قبولی و مشروطی باید مقادیر معتبر و غیرمنفی باشند")
             return
         }
         if (minPass >= 83.0) {
             etMinPassingScore.error = "حد پایین قبولی باید حتماً کمتر از ۸۳ باشد"
             etMinPassingScore.requestFocus()
+            AppToast.warning(this, "حد قبولی باید کمتر از ۸۳ باشد")
             return
         }
         if (minCond >= minPass) {
             etMinConditionalScore.error = "حد مشروطی باید کمتر از حد قبولی باشد"
             etMinConditionalScore.requestFocus()
+            AppToast.warning(this, "حد مشروطی باید کمتر از حد قبولی باشد")
             return
         }
 
@@ -488,7 +523,7 @@ class AddEditClassActivity : BaseActivity() {
         }
 
         if (selectedDays.isEmpty()) {
-            Toast.makeText(this, "حداقل یک روز برگزاری را انتخاب کنید", Toast.LENGTH_LONG).show()
+            AppToast.makeText(this, "حداقل یک روز برگزاری را انتخاب کنید", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -524,14 +559,15 @@ class AddEditClassActivity : BaseActivity() {
                 setSavingState(false)
                 if (response.isSuccessful && response.body()?.status == "success") {
                     AppDatabase.upsertClass(model)
+                    AppToast.success(this@AddEditClassActivity, "کلاس با موفقیت ساخته شد")
                     setResult(RESULT_OK); finish()
                 } else {
-                    Toast.makeText(this@AddEditClassActivity, response.body()?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "ثبت کلاس انجام نشد"), Toast.LENGTH_LONG).show()
+                    AppToast.makeText(this@AddEditClassActivity, response.body()?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "ثبت کلاس کامل نشد"), Toast.LENGTH_LONG).show()
                 }
             }
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 setSavingState(false)
-                Toast.makeText(this@AddEditClassActivity, ApiErrorParser.networkMessage(t, "ثبت اطلاعات کلاس"), Toast.LENGTH_LONG).show()
+                AppToast.makeText(this@AddEditClassActivity, ApiErrorParser.networkMessage(t, "ثبت اطلاعات کلاس"), Toast.LENGTH_LONG).show()
             }
         })
     }
@@ -543,18 +579,19 @@ class AddEditClassActivity : BaseActivity() {
                 setSavingState(false)
                 if (response.isSuccessful && response.body()?.status == "success") {
                     AppDatabase.upsertClass(model)
+                    AppToast.success(this@AddEditClassActivity, "اطلاعات کلاس با موفقیت ویرایش شد")
                     setResult(RESULT_OK); finish()
                 } else {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@AddEditClassActivity,
-                        response.body()?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "ویرایش کلاس انجام نشد"),
+                        response.body()?.message?.takeIf { it.isNotBlank() } ?: ApiErrorParser.userMessage(response, "ویرایش کلاس کامل نشد"),
                         Toast.LENGTH_LONG
                     ).show()
                 }
             }
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 setSavingState(false)
-                Toast.makeText(this@AddEditClassActivity, ApiErrorParser.networkMessage(t, "ویرایش اطلاعات کلاس"), Toast.LENGTH_LONG).show()
+                AppToast.makeText(this@AddEditClassActivity, ApiErrorParser.networkMessage(t, "ویرایش اطلاعات کلاس"), Toast.LENGTH_LONG).show()
             }
         })
     }

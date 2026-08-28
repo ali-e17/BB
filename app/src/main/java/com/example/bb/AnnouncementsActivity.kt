@@ -81,13 +81,19 @@ class AnnouncementsActivity : BaseActivity() {
                     AppDatabase.replaceAnnouncements(items)
                     render(items)
                 } else {
-                    showLocalFallback("دریافت اعلانات آنلاین انجام نشد")
+                    showLocalFallback(
+                        ApiErrorParser.userMessage(response, "دریافت اعلانات آنلاین کامل نشد") +
+                            "؛ اعلانات ذخیره‌شده دستگاه نمایش داده شدند"
+                    )
                 }
             }
 
             override fun onFailure(call: Call<List<Announcement>>, t: Throwable) {
                 setLoading(false)
-                showLocalFallback("اتصال به سرور برقرار نشد؛ اعلانات ذخیره‌شده دستگاه نمایش داده شدند")
+                showLocalFallback(
+                    ApiErrorParser.networkMessage(t, "دریافت اعلانات") +
+                        " اعلانات ذخیره‌شده دستگاه نمایش داده شدند."
+                )
             }
         })
     }
@@ -97,7 +103,7 @@ class AnnouncementsActivity : BaseActivity() {
             it.copy(isRead = AppDatabase.isAnnouncementRead(it.id, role, identityKey))
         }
         render(local)
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        AppToast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun render(items: List<Announcement>) {

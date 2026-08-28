@@ -76,6 +76,10 @@ class LoginActivity : BaseActivity() {
                 .edit()
                 .putBoolean("IS_DARK_MODE", !dark)
                 .apply()
+            AppToast.info(
+                applicationContext,
+                if (dark) "حالت روشن فعال شد" else "حالت تاریک فعال شد"
+            )
             AppCompatDelegate.setDefaultNightMode(
                 if (dark) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
             )
@@ -86,9 +90,25 @@ class LoginActivity : BaseActivity() {
                 .filter(Char::isDigit)
             val password = etPassword.text?.toString().orEmpty()
 
-            if (nationalId.length != 10 || password.isBlank()) {
-                Toast.makeText(this, "کد ملی ۱۰ رقمی و رمز عبور را وارد کنید", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+            when {
+                nationalId.isBlank() -> {
+                    etUsername.error = "کد ملی را وارد کنید"
+                    etUsername.requestFocus()
+                    AppToast.warning(this, "برای ورود، کد ملی خود را وارد کنید")
+                    return@setOnClickListener
+                }
+                nationalId.length != 10 -> {
+                    etUsername.error = "کد ملی باید ۱۰ رقم باشد"
+                    etUsername.requestFocus()
+                    AppToast.warning(this, "کد ملی باید دقیقاً ۱۰ رقم باشد")
+                    return@setOnClickListener
+                }
+                password.isBlank() -> {
+                    etPassword.error = "رمز عبور را وارد کنید"
+                    etPassword.requestFocus()
+                    AppToast.warning(this, "برای ورود، رمز عبور را وارد کنید")
+                    return@setOnClickListener
+                }
             }
 
             btnLogin.isEnabled = false
@@ -128,10 +148,10 @@ class LoginActivity : BaseActivity() {
                             }
                             finish()
                         } else {
-                            Toast.makeText(
+                            AppToast.makeText(
                                 this@LoginActivity,
                                 body?.message?.takeIf { it.isNotBlank() }
-                                    ?: ApiErrorParser.userMessage(response, "ورود انجام نشد. اطلاعات را بررسی کنید."),
+                                    ?: ApiErrorParser.userMessage(response, "ورود به حساب کامل نشد؛ لطفاً کد ملی و رمز عبور را بررسی کنید."),
                                 Toast.LENGTH_LONG
                             ).show()
                             etPassword.text?.clear()
@@ -141,7 +161,7 @@ class LoginActivity : BaseActivity() {
                     override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                         btnLogin.isEnabled = true
                         btnLogin.text = "ورود"
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@LoginActivity,
                             ApiErrorParser.networkMessage(t, "ورود به حساب"),
                             Toast.LENGTH_LONG
@@ -252,10 +272,11 @@ class LoginActivity : BaseActivity() {
                         (body.status.isNotBlank() && body.status != "success") ||
                         addressUrl.isBlank()
                     ) {
-                        Toast.makeText(
+                        AppToast.makeText(
                             this@LoginActivity,
-                            "نشانی آموزشگاه در حال حاضر در دسترس نیست",
-                            Toast.LENGTH_SHORT
+                            body?.message?.takeIf { it.isNotBlank() }
+                                ?: ApiErrorParser.userMessage(response, "دریافت نشانی آموزشگاه کامل نشد"),
+                            Toast.LENGTH_LONG
                         ).show()
                         return
                     }
@@ -267,10 +288,10 @@ class LoginActivity : BaseActivity() {
                     call: Call<ContactInfoResponse>,
                     t: Throwable
                 ) {
-                    Toast.makeText(
+                    AppToast.makeText(
                         this@LoginActivity,
-                        "دریافت نشانی آموزشگاه انجام نشد. اتصال اینترنت را بررسی کنید.",
-                        Toast.LENGTH_SHORT
+                        ApiErrorParser.networkMessage(t, "دریافت نشانی آموزشگاه"),
+                        Toast.LENGTH_LONG
                     ).show()
                 }
             })
@@ -280,9 +301,9 @@ class LoginActivity : BaseActivity() {
         val uri = runCatching { Uri.parse(url) }.getOrNull()
 
         if (uri == null || (uri.scheme != "http" && uri.scheme != "https")) {
-            Toast.makeText(
+            AppToast.makeText(
                 this,
-                "لینک نشانی آموزشگاه معتبر نیست",
+                "نشانی ثبت‌شده آموزشگاه معتبر نیست",
                 Toast.LENGTH_SHORT
             ).show()
             return
@@ -297,9 +318,9 @@ class LoginActivity : BaseActivity() {
             try {
                 startActivity(Intent(Intent.ACTION_VIEW, uri))
             } catch (_: Exception) {
-                Toast.makeText(
+                AppToast.makeText(
                     this,
-                    "برنامه‌ای برای باز کردن نشانی پیدا نشد",
+                    "برنامه مناسبی برای باز کردن نشانی آموزشگاه در دسترس نیست؛ لطفاً مرورگر یا برنامه نقشه را بررسی کنید",
                     Toast.LENGTH_SHORT
                 ).show()
             }
