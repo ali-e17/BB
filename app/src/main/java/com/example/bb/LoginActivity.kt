@@ -149,7 +149,7 @@ class LoginActivity : BaseActivity() {
                             finish()
                         } else {
                             AppToast.makeText(
-                                this@LoginActivity,
+                                this@LoginActivity.applicationContext,
                                 body?.message?.takeIf { it.isNotBlank() }
                                     ?: ApiErrorParser.userMessage(response, "ورود به حساب کامل نشد؛ لطفاً کد ملی و رمز عبور را بررسی کنید."),
                                 Toast.LENGTH_LONG
@@ -162,7 +162,7 @@ class LoginActivity : BaseActivity() {
                         btnLogin.isEnabled = true
                         btnLogin.text = "ورود"
                         AppToast.makeText(
-                            this@LoginActivity,
+                            this@LoginActivity.applicationContext,
                             ApiErrorParser.networkMessage(t, "ورود به حساب"),
                             Toast.LENGTH_LONG
                         ).show()
@@ -273,9 +273,11 @@ class LoginActivity : BaseActivity() {
                         addressUrl.isBlank()
                     ) {
                         AppToast.makeText(
-                            this@LoginActivity,
-                            body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "دریافت نشانی آموزشگاه کامل نشد"),
+                            this@LoginActivity.applicationContext,
+                            ApiErrorParser.userMessage(
+                                response,
+                                "دریافت نشانی آموزشگاه انجام نشد"
+                            ),
                             Toast.LENGTH_LONG
                         ).show()
                         return
@@ -289,7 +291,7 @@ class LoginActivity : BaseActivity() {
                     t: Throwable
                 ) {
                     AppToast.makeText(
-                        this@LoginActivity,
+                        this@LoginActivity.applicationContext,
                         ApiErrorParser.networkMessage(t, "دریافت نشانی آموزشگاه"),
                         Toast.LENGTH_LONG
                     ).show()

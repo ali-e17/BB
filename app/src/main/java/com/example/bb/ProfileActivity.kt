@@ -251,9 +251,11 @@ class ProfileActivity : BaseActivity() {
                         addressUrl.isBlank()
                     ) {
                         AppToast.makeText(
-                            this@ProfileActivity,
-                            body?.message?.takeIf { it.isNotBlank() }
-                                ?: ApiErrorParser.userMessage(response, "دریافت نشانی آموزشگاه کامل نشد"),
+                            this@ProfileActivity.applicationContext,
+                            ApiErrorParser.userMessage(
+                                response,
+                                "دریافت نشانی آموزشگاه انجام نشد"
+                            ),
                             Toast.LENGTH_SHORT
                         ).show()
                         return
@@ -267,7 +269,7 @@ class ProfileActivity : BaseActivity() {
                     t: Throwable
                 ) {
                     AppToast.makeText(
-                        this@ProfileActivity,
+                        this@ProfileActivity.applicationContext,
                         ApiErrorParser.networkMessage(t, "دریافت نشانی آموزشگاه"),
                         Toast.LENGTH_SHORT
                     ).show()
