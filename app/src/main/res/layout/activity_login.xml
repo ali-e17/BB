@@ -13,11 +13,12 @@
         محتوای لاگین زیر Footer ثابت نرود.
     -->
     <ScrollView
+        android:id="@+id/scrollLogin"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:clipToPadding="false"
-        android:paddingBottom="140dp">
+        android:paddingBottom="24dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -107,6 +108,10 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etUsername"
+                        android:nextFocusForward="@id/etPassword"
+                        android:nextFocusDown="@id/etPassword"
+                        android:imeOptions="actionNext"
+                        android:singleLine="true"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:textColor="@color/input_text"
@@ -139,6 +144,8 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPassword"
+                        android:imeOptions="actionDone"
+                        android:singleLine="true"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:textColor="@color/input_text"
@@ -163,24 +170,27 @@
 
             </LinearLayout>
 
+
+            <!--
+                اطلاعات تماس بخشی از خود ScrollView است و دیگر Overlay نیست؛
+                بنابراین هنگام باز شدن کیبورد روی فیلدهای ورود قرار نمی‌گیرد.
+            -->
+            <include
+                android:id="@+id/contactFooter"
+                layout="@layout/view_contact_footer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/layoutLoginForm"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="30dp"
+                android:layout_marginBottom="24dp" />
+
         </RelativeLayout>
 
     </ScrollView>
 
-    <!--
-        Footer ثابت پایین صفحه.
-        marginStart / marginEnd = 32dp
-        دقیقاً برابر Padding افقی فرم لاگین است؛
-        بنابراین عرض کارت Footer دقیقاً با دکمه ورود هماهنگ می‌شود.
-    -->
-    <include
-        android:id="@+id/contactFooter"
-        layout="@layout/view_contact_footer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
-        android:layout_marginBottom="12dp" />
+    
+
 
 </FrameLayout>

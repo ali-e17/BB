@@ -51,6 +51,12 @@ open class BaseActivity : AppCompatActivity() {
     private var smartDigitsLayoutListener:
         ViewTreeObserver.OnGlobalLayoutListener? = null
 
+    private var formFocusRoot: View? =
+        null
+
+    private var formFocusListener:
+        ViewTreeObserver.OnGlobalFocusChangeListener? = null
+
     private val membershipCheckRunnable =
         object : Runnable {
 
@@ -85,6 +91,7 @@ open class BaseActivity : AppCompatActivity() {
     override fun onDestroy() {
         stopMembershipWatcher()
         removeSmartDigitsObserver()
+        removeUniversalFocusObserver()
         super.onDestroy()
     }
 
@@ -112,6 +119,7 @@ open class BaseActivity : AppCompatActivity() {
 
     private fun afterContentViewSet() {
         applyRootInsets()
+        setupUniversalFocusReveal()
         setupSmartDigitsRendering()
     }
 
@@ -131,6 +139,133 @@ open class BaseActivity : AppCompatActivity() {
             root
         )
     }
+
+    // =========================================================
+    // Universal keyboard / focused-field visibility
+    // =========================================================
+
+    private fun setupUniversalFocusReveal() {
+
+        removeUniversalFocusObserver()
+
+        val content =
+            findViewById<ViewGroup>(
+                android.R.id.content
+            )
+
+        val root =
+            content.getChildAt(0)
+                ?: return
+
+        formFocusRoot = root
+
+        val listener =
+            ViewTreeObserver.OnGlobalFocusChangeListener {
+                    _,
+                    newFocus ->
+
+                if (
+                    newFocus is EditText &&
+                    newFocus.isAttachedToWindow
+                ) {
+                    ensureFocusedFieldVisible(
+                        newFocus
+                    )
+                }
+            }
+
+        formFocusListener = listener
+
+        root.viewTreeObserver
+            .addOnGlobalFocusChangeListener(
+                listener
+            )
+    }
+
+    /**
+     * به ScrollView / NestedScrollView / RecyclerView والد اجازه می‌دهد
+     * فیلد فعال را بعد از باز شدن IME داخل ناحیه قابل مشاهده بیاورد.
+     * هیچ ارتفاع ثابتی از کیبورد استفاده نمی‌شود.
+     */
+    protected fun ensureFocusedFieldVisible(
+        field: View
+    ) {
+        if (!field.isAttachedToWindow) {
+            return
+        }
+
+        val density =
+            resources.displayMetrics.density
+
+        fun request(
+            immediate: Boolean
+        ) {
+            if (!field.isAttachedToWindow) {
+                return
+            }
+
+            field.requestRectangleOnScreen(
+                Rect(
+                    0,
+                    -(12f * density).toInt(),
+                    field.width,
+                    field.height +
+                        (96f * density).toInt()
+                ),
+                immediate
+            )
+        }
+
+        field.post {
+            request(false)
+        }
+
+        field.postDelayed(
+            {
+                request(true)
+            },
+            180L
+        )
+
+        field.postDelayed(
+            {
+                request(true)
+            },
+            360L
+        )
+
+        // برای IMEهایی که انیمیشن باز شدن طولانی‌تری دارند.
+        field.postDelayed(
+            {
+                request(true)
+            },
+            560L
+        )
+    }
+
+    private fun removeUniversalFocusObserver() {
+
+        val root =
+            formFocusRoot
+
+        val listener =
+            formFocusListener
+
+        if (
+            root != null &&
+            listener != null &&
+            root.viewTreeObserver.isAlive
+        ) {
+            root.viewTreeObserver
+                .removeOnGlobalFocusChangeListener(
+                    listener
+                )
+        }
+
+        formFocusRoot = null
+        formFocusListener = null
+    }
+
 
     // =========================================================
     // Smart digits
@@ -169,17 +304,30 @@ open class BaseActivity : AppCompatActivity() {
         view: View
     ) {
         if (view is TextView) {
-            if (isPasswordField(view)) {
-                configurePasswordField(view)
-            } else if (isSkipSmartDigitsField(view)) {
-                // مهم:
-                // فیلدهای ورودی داینامیک (مثل نمره) باید کاملاً از
-                // SmartDigits و هرگونه دستکاری IME خارج باشند.
-                // اینجا عمداً هیچ setterای روی EditText اجرا نمی‌کنیم.
-            } else {
-                if (isForceEnglishDigitsField(view)) {
-                    configureForceEnglishDigitsField(view)
+            /*
+             * قانون مهم پایداری ورودی:
+             * Transformation عمومی SmartDigits روی EditText اعمال نمی‌شود.
+             *
+             * این کار جلوی تداخل با composing کیبورد، Cursor و InputConnection
+             * را می‌گیرد. تبدیل رقم برای Backend هنگام Submit انجام می‌شود و
+             * فیلدهایی که نمایش خاص می‌خواهند (مثل نمره کارنامه) Transformation
+             * اختصاصی و ثابت خودشان را دارند.
+             */
+            if (view is EditText) {
+                when {
+                    isPasswordField(view) ->
+                        configurePasswordField(view)
+
+                    isSkipSmartDigitsField(view) ->
+                        Unit
+
+                    isForceEnglishDigitsField(view) ->
+                        configureForceEnglishDigitsField(view)
+
+                    else ->
+                        Unit
                 }
+            } else {
                 applySmartDigitsTransformation(view)
             }
         }

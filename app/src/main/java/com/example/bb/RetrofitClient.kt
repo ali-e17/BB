@@ -204,6 +204,7 @@ interface ApiService
     @POST("toggle_teacher_active.php") fun toggleTeacherActive(@Body request:ToggleTeacherActiveRequest):Call<ApiResponse>
 
     @GET("get_classes.php") fun getClasses():Call<List<ClassModel>>
+    @GET("get_teacher_history.php") fun getTeacherHistory(@Query("teacher_id") teacherId:String?=null):Call<List<ClassModel>>
     @POST("add_class.php") fun addClass(@Body model:ClassModel):Call<ApiResponse>
     @POST("update_class.php") fun updateClass(@Body model:ClassModel):Call<ApiResponse>
     @POST("complete_class.php") fun completeClass(@Body request:CompleteClassRequest):Call<ApiResponse>

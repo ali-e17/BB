@@ -10,6 +10,8 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen // 🌟 اینپورت لایبرری اسپلش
 import com.google.android.material.textfield.TextInputEditText
@@ -69,6 +71,39 @@ class LoginActivity : BaseActivity() {
         val btnThemeToggle = findViewById<ImageView>(R.id.btnThemeToggle)
 
         updateThemeIcon(btnThemeToggle)
+
+        /*
+         * ترتیب ثابت کیبورد:
+         * نام کاربری -> رمز عبور -> ورود
+         */
+        etUsername.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                etPassword.requestFocus()
+                ensureFocusedFieldVisible(etPassword)
+                true
+            } else {
+                false
+            }
+        }
+
+        etPassword.setOnEditorActionListener { view, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val imm =
+                    getSystemService(
+                        Context.INPUT_METHOD_SERVICE
+                    ) as InputMethodManager
+
+                imm.hideSoftInputFromWindow(
+                    view.windowToken,
+                    0
+                )
+
+                btnLogin.performClick()
+                true
+            } else {
+                false
+            }
+        }
 
         btnThemeToggle.setOnClickListener {
             val dark = isDarkMode()

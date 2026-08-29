@@ -38,7 +38,7 @@ class AddEditTeacherActivity : BaseActivity() {
             title.text = "ویرایش اطلاعات استاد"
             first.setText(editing.firstName)
             last.setText(editing.lastName)
-            phone.setText("0${editing.phone.removePrefix("0")}")
+            phone.setText(editing.phone.removePrefix("0"))
             national.setText(editing.nationalId)
             save.text = "ذخیره تغییرات"
         }
@@ -51,8 +51,19 @@ class AddEditTeacherActivity : BaseActivity() {
 
             val firstValue = first.text?.toString()?.trim().orEmpty()
             val lastValue = last.text?.toString()?.trim().orEmpty()
-            val phoneValue = phone.text?.toString()?.replace(" ", "")?.trim().orEmpty()
-            val nationalValue = national.text?.toString()?.trim().orEmpty()
+            val phoneValue =
+                UiTextFormatter.normalizeEnglishDigits(
+                    phone.text?.toString().orEmpty()
+                )
+                    .replace(" ", "")
+                    .replace("-", "")
+                    .trim()
+
+            val nationalValue =
+                UiTextFormatter.normalizeEnglishDigits(
+                    national.text?.toString().orEmpty()
+                )
+                    .filter { it in '0'..'9' }
 
             when {
                 firstValue.isBlank() -> {
@@ -73,12 +84,13 @@ class AddEditTeacherActivity : BaseActivity() {
                     AppToast.warning(this, "شماره تماس استاد را وارد کنید.")
                 }
 
-                phoneValue.length !in 10..11 || !phoneValue.all(Char::isDigit) -> {
-                    phone.error = "شماره تماس معتبر نیست"
+                !phoneValue.matches(Regex("^9[0-9]{9}$")) -> {
+                    phone.error =
+                        "شماره تماس باید دقیقاً ۱۰ رقم و بدون صفر اول باشد"
                     phone.requestFocus()
                     AppToast.warning(
                         this,
-                        "شماره تماس باید ۱۰ رقم بدون صفر اول یا ۱۱ رقم با صفر اول باشد."
+                        "شماره تماس استاد باید دقیقاً ۱۰ رقم و بدون صفر اول باشد"
                     )
                 }
 
@@ -88,14 +100,15 @@ class AddEditTeacherActivity : BaseActivity() {
                     AppToast.warning(this, "کد ملی استاد را وارد کنید.")
                 }
 
-                nationalValue.length != 10 || !nationalValue.all(Char::isDigit) -> {
+                nationalValue.length != 10 ||
+                    !nationalValue.all { it in '0'..'9' } -> {
                     national.error = "کد ملی باید ۱۰ رقم باشد"
                     national.requestFocus()
                     AppToast.warning(this, "کد ملی باید دقیقاً ۱۰ رقم باشد.")
                 }
 
                 else -> {
-                    val normalizedPhone = phoneValue.removePrefix("0")
+                    val normalizedPhone = phoneValue
                     val isEditing = editing != null
 
                     val model = TeacherModel(

@@ -59,14 +59,7 @@ class ReportCardSetupActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // همان روش پایدار صفحه ورود نمرات:
-        // اجازه می‌دهیم خود Android با باز شدن کیبورد ارتفاع پنجره را کم کند.
-        window.setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-        )
-
         setContentView(R.layout.activity_report_card_setup)
-        configureClassicKeyboardResize()
 
         findViewById<ImageView>(R.id.btnSetupBack).setOnClickListener { finish() }
 
@@ -369,34 +362,6 @@ class ReportCardSetupActivity : BaseActivity() {
      * صفحه از edge-to-edge این Activity خارج می‌شود و adjustResize
      * مستقیماً فضای کیبورد را از ارتفاع صفحه کم می‌کند.
      */
-    private fun configureClassicKeyboardResize() {
-        val root =
-            findViewById<View>(
-                R.id.rootReportCardSetup
-            )
-
-        ViewCompat.setOnApplyWindowInsetsListener(
-            root,
-            null
-        )
-
-        WindowCompat.setDecorFitsSystemWindows(
-            window,
-            true
-        )
-
-        root.setPadding(
-            0,
-            0,
-            0,
-            0
-        )
-
-        window.setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-        )
-    }
-
     /**
      * فیلد Focus شده را دقیقاً داخل viewport واقعی ScrollView نگه می‌دارد.
      * چون ScrollView با adjustResize کوتاه می‌شود، پایین viewport همان

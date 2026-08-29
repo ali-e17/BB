@@ -63,9 +63,6 @@ class AddEditClassActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // این صفحه Edge-to-Edge است؛ بنابراین resize سنتی به‌تنهایی قابل اتکا نیست.
-        // فضای IME را با WindowInsets به‌صورت صریح مدیریت می‌کنیم.
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
         setContentView(R.layout.activity_add_edit_class)
 
         findViewById<ImageView>(R.id.btnClassEditBack).setOnClickListener { finish() }
@@ -100,7 +97,6 @@ class AddEditClassActivity : BaseActivity() {
         btnSaveClass = findViewById(R.id.btnSaveClass)
         progressSaving = findViewById(R.id.progressSavingClass)
 
-        setupImeAwareLayout()
 
         spinnerClassName.isEnabled = false
         spinnerClassName.setOnClickListener { openDropdown(spinnerClassName) }
@@ -847,84 +843,6 @@ class AddEditClassActivity : BaseActivity() {
      * ریشه صفحه اضافه می‌کند؛ در نتیجه NestedScrollView واقعاً فقط فضای بالای
      * کیبورد را در اختیار دارد.
      */
-    private fun setupImeAwareLayout() {
-        val root = findViewById<View>(R.id.rootAddEditClass)
-
-        val initialLeft = root.paddingLeft
-        val initialTop = root.paddingTop
-        val initialRight = root.paddingRight
-        val initialBottom = root.paddingBottom
-
-        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
-
-            val bottomInset = if (imeVisible) {
-                maxOf(bars.bottom, ime.bottom)
-            } else {
-                bars.bottom
-            }
-
-            view.setPadding(
-                initialLeft + bars.left,
-                initialTop + bars.top,
-                initialRight + bars.right,
-                initialBottom + bottomInset
-            )
-
-            if (imeVisible) {
-                scrollClassForm.post {
-                    currentFocus?.let { focused ->
-                        if (isClassFormField(focused)) {
-                            ensureFieldVisible(focused, extraBottomDp = 24)
-                        }
-                    }
-                }
-            }
-
-            insets
-        }
-
-        ViewCompat.setWindowInsetsAnimationCallback(
-            root,
-            object : WindowInsetsAnimationCompat.Callback(
-                WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE
-            ) {
-                override fun onProgress(
-                    insets: WindowInsetsCompat,
-                    runningAnimations: MutableList<WindowInsetsAnimationCompat>
-                ): WindowInsetsCompat {
-                    return insets
-                }
-
-                override fun onEnd(animation: WindowInsetsAnimationCompat) {
-                    super.onEnd(animation)
-
-                    val insets = ViewCompat.getRootWindowInsets(root)
-                    val imeVisible =
-                        insets?.isVisible(WindowInsetsCompat.Type.ime()) == true
-
-                    if (imeVisible) {
-                        scrollClassForm.post {
-                            currentFocus?.let { focused ->
-                                if (isClassFormField(focused)) {
-                                    ensureFieldVisible(
-                                        focused,
-                                        extraBottomDp = 24,
-                                        smooth = false
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        ViewCompat.requestApplyInsets(root)
-    }
-
     private fun isClassFormField(view: View): Boolean =
         view === etClassCode ||
                 view === spinnerClassName ||

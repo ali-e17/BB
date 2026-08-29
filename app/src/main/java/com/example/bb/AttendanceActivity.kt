@@ -109,7 +109,7 @@ class AttendanceActivity : BaseActivity() {
         recycler = findViewById(R.id.rvAttendance)
         btnExportAttendance = findViewById(R.id.btnExportAttendance)
         saveButton = findViewById(R.id.btnSaveAttendance)
-        btnExportAttendance.visibility = if (role == UserRole.ADMIN) View.VISIBLE else View.GONE
+        btnExportAttendance.visibility = if (role == UserRole.ADMIN || role == UserRole.TEACHER) View.VISIBLE else View.GONE
         progress = findViewById(R.id.progressAttendance)
         emptyState = findViewById(R.id.attendanceEmptyState)
     }
@@ -242,7 +242,7 @@ class AttendanceActivity : BaseActivity() {
 
     private fun selectClass(model: ClassModel) {
         selectedClass = model
-        btnExportAttendance.isEnabled = role == UserRole.ADMIN
+        btnExportAttendance.isEnabled = role == UserRole.ADMIN || role == UserRole.TEACHER
         selectedSessionNumber = 0
         currentSession = null
         records.clear()
@@ -645,7 +645,7 @@ class AttendanceActivity : BaseActivity() {
 
     private fun confirmAttendanceExport() {
 
-        if (role != UserRole.ADMIN) return
+        if (role != UserRole.ADMIN && role != UserRole.TEACHER) return
 
         val model = selectedClass ?: run {
 

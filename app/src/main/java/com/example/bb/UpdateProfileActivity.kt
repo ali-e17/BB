@@ -2,9 +2,14 @@ package com.example.bb
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
+import android.view.ViewTreeObserver
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -30,6 +35,10 @@ class UpdateProfileActivity : BaseActivity() {
     private lateinit var confirmPassword: TextInputEditText
     private lateinit var saveButton: MaterialButton
     private lateinit var progress: View
+    private lateinit var passwordScroll: ScrollView
+
+    private var passwordLayoutListener:
+        ViewTreeObserver.OnGlobalLayoutListener? = null
 
     private var forced = false
     private var openMainAfterChange = false
@@ -48,11 +57,15 @@ class UpdateProfileActivity : BaseActivity() {
         confirmPassword = findViewById(R.id.etConfirmPassword)
         saveButton = findViewById(R.id.btnUpdatePassword)
         progress = findViewById(R.id.progressUpdatePassword)
+        passwordScroll = findViewById(R.id.rootUpdateProfile)
 
         val backButton = findViewById<ImageView>(R.id.btnUpdateProfileBack)
         backButton.setOnClickListener { handleBack() }
         renderMode()
         saveButton.setOnClickListener { submitPasswordChange() }
+
+        setupPasswordKeyboardFlow()
+        setupPasswordFormScroll()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = handleBack()
@@ -77,6 +90,278 @@ class UpdateProfileActivity : BaseActivity() {
             if (forced) View.VISIBLE else View.GONE
         saveButton.text = if (forced) "ذخیره و ورود به برنامه" else "تغییر رمز عبور"
     }
+
+    private fun setupPasswordKeyboardFlow() {
+        oldPassword.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                newPassword.requestFocus()
+                revealPasswordField(
+                    newLayout,
+                    smooth = false
+                )
+                true
+            } else {
+                false
+            }
+        }
+
+        newPassword.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                confirmPassword.requestFocus()
+                revealPasswordField(
+                    confirmLayout,
+                    smooth = false
+                )
+                true
+            } else {
+                false
+            }
+        }
+
+        confirmPassword.setOnEditorActionListener { view, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val imm =
+                    getSystemService(
+                        Context.INPUT_METHOD_SERVICE
+                    ) as InputMethodManager
+
+                imm.hideSoftInputFromWindow(
+                    view.windowToken,
+                    0
+                )
+
+                submitPasswordChange()
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    /**
+     * این صفحه اسکرول اختصاصی خودش را دارد.
+     * Global SystemBarInsets دست نخورده می‌ماند؛ از paddingBottom واقعی IME
+     * همان سیستم برای محاسبه محدوده امن استفاده می‌کنیم.
+     */
+    private fun setupPasswordFormScroll() {
+        val focusListener =
+            View.OnFocusChangeListener {
+                    view,
+                    hasFocus ->
+
+                if (!hasFocus) {
+                    return@OnFocusChangeListener
+                }
+
+                val target =
+                    when (view.id) {
+                        R.id.etOldPassword ->
+                            oldLayout
+
+                        R.id.etNewPassword ->
+                            newLayout
+
+                        R.id.etConfirmPassword ->
+                            confirmLayout
+
+                        else ->
+                            null
+                    }
+
+                target?.let {
+                    revealPasswordField(
+                        it,
+                        smooth = false
+                    )
+                }
+            }
+
+        oldPassword.onFocusChangeListener =
+            focusListener
+
+        newPassword.onFocusChangeListener =
+            focusListener
+
+        confirmPassword.onFocusChangeListener =
+            focusListener
+
+        /*
+         * روی بعضی گوشی‌ها، مخصوصاً IMEهایی با انیمیشن طولانی،
+         * ارتفاع قابل استفاده صفحه طی چند Frame عوض می‌شود.
+         * هر بار فقط فیلد فوکوس‌شده دوباره بررسی می‌شود.
+         */
+        val listener =
+            ViewTreeObserver.OnGlobalLayoutListener {
+
+                val target =
+                    when {
+                        oldPassword.hasFocus() ->
+                            oldLayout
+
+                        newPassword.hasFocus() ->
+                            newLayout
+
+                        confirmPassword.hasFocus() ->
+                            confirmLayout
+
+                        else ->
+                            null
+                    }
+
+                target?.post {
+                    revealPasswordField(
+                        target,
+                        smooth = false
+                    )
+                }
+            }
+
+        passwordLayoutListener =
+            listener
+
+        passwordScroll
+            .viewTreeObserver
+            .addOnGlobalLayoutListener(
+                listener
+            )
+    }
+
+    private fun revealPasswordField(
+        target: View,
+        smooth: Boolean
+    ) {
+        if (
+            !::passwordScroll.isInitialized ||
+            !target.isAttachedToWindow
+        ) {
+            return
+        }
+
+        fun revealNow(
+            animate: Boolean
+        ) {
+            if (!target.isAttachedToWindow) {
+                return
+            }
+
+            val rect =
+                Rect()
+
+            target.getDrawingRect(
+                rect
+            )
+
+            runCatching {
+                passwordScroll
+                    .offsetDescendantRectToMyCoords(
+                        target,
+                        rect
+                    )
+            }.onFailure {
+                target.requestRectangleOnScreen(
+                    Rect(
+                        0,
+                        -dp(12),
+                        target.width,
+                        target.height +
+                            dp(72)
+                    ),
+                    true
+                )
+                return
+            }
+
+            /*
+             * paddingBottom ریشه هنگام IME همان ارتفاع واقعی کیبورد است.
+             * بنابراین viewportBottom همیشه بالای خود کیبورد قرار می‌گیرد.
+             */
+            val viewportTop =
+                passwordScroll.scrollY +
+                    passwordScroll.paddingTop +
+                    dp(12)
+
+            val viewportBottom =
+                passwordScroll.scrollY +
+                    passwordScroll.height -
+                    passwordScroll.paddingBottom -
+                    dp(28)
+
+            /*
+             * فضای اضافی برای Error/HelperText زیر TextInputLayout.
+             */
+            val targetBottom =
+                rect.bottom +
+                    dp(52)
+
+            val delta =
+                when {
+                    targetBottom >
+                        viewportBottom ->
+
+                        targetBottom -
+                            viewportBottom
+
+                    rect.top <
+                        viewportTop ->
+
+                        rect.top -
+                            viewportTop -
+                            dp(8)
+
+                    else ->
+                        0
+                }
+
+            if (delta != 0) {
+                if (animate) {
+                    passwordScroll
+                        .smoothScrollBy(
+                            0,
+                            delta
+                        )
+                } else {
+                    passwordScroll
+                        .scrollBy(
+                            0,
+                            delta
+                        )
+                }
+            }
+        }
+
+        target.post {
+            revealNow(false)
+        }
+
+        target.postDelayed(
+            {
+                revealNow(false)
+            },
+            180L
+        )
+
+        target.postDelayed(
+            {
+                revealNow(smooth)
+            },
+            360L
+        )
+
+        target.postDelayed(
+            {
+                revealNow(false)
+            },
+            620L
+        )
+    }
+
+    private fun dp(
+        value: Int
+    ): Int =
+        (
+            value *
+                resources.displayMetrics.density
+            ).toInt()
 
     private fun submitPasswordChange() {
         clearErrors()
@@ -165,6 +450,14 @@ class UpdateProfileActivity : BaseActivity() {
     private fun showFieldError(layout: TextInputLayout, field: TextInputEditText, message: String) {
         layout.error = message
         field.requestFocus()
+
+        layout.post {
+            revealPasswordField(
+                layout,
+                smooth = false
+            )
+        }
+
         AppToast.warning(this, message)
     }
 
@@ -211,6 +504,30 @@ class UpdateProfileActivity : BaseActivity() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
         finish()
+    }
+
+    override fun onDestroy() {
+        passwordLayoutListener
+            ?.let { listener ->
+
+                if (
+                    ::passwordScroll.isInitialized &&
+                    passwordScroll
+                        .viewTreeObserver
+                        .isAlive
+                ) {
+                    passwordScroll
+                        .viewTreeObserver
+                        .removeOnGlobalLayoutListener(
+                            listener
+                        )
+                }
+            }
+
+        passwordLayoutListener =
+            null
+
+        super.onDestroy()
     }
 
     companion object {

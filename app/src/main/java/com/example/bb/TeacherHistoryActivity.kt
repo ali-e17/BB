@@ -19,7 +19,8 @@ class TeacherHistoryActivity : BaseActivity() {
     private lateinit var rvHistory: RecyclerView
     private lateinit var tvEmptyState: TextView
     private lateinit var progressLoading: View
-    private lateinit var currentTeacherPhone: String
+    private var currentTeacherId: String = ""
+    private var currentTeacherPhone: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,14 +36,24 @@ class TeacherHistoryActivity : BaseActivity() {
         rvHistory.adapter = HistoryAdapter()
 
         val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-        currentTeacherPhone = prefs.getString("CURRENT_PHONE", "").orEmpty()
+        currentTeacherId =
+            prefs.getString(
+                "CURRENT_USER_ID",
+                ""
+            ).orEmpty()
+
+        currentTeacherPhone =
+            prefs.getString(
+                "CURRENT_PHONE",
+                ""
+            ).orEmpty()
 
         fetchHistory()
     }
 
     private fun fetchHistory() {
         progressLoading.visibility = View.VISIBLE
-        RetrofitClient.instance.getClasses().enqueue(object : Callback<List<ClassModel>> {
+        RetrofitClient.instance.getTeacherHistory().enqueue(object : Callback<List<ClassModel>> {
             override fun onResponse(call: Call<List<ClassModel>>, response: Response<List<ClassModel>>) {
                 progressLoading.visibility = View.GONE
                 if (response.isSuccessful) {
@@ -51,10 +62,14 @@ class TeacherHistoryActivity : BaseActivity() {
 
                     // 🌟 جلوگیری از کرش: فیلتر امن و جاگذاری رشته خالی به جای مقادیر نال هنگام سورت
                     historyClasses.addAll(
-                        allClasses.filter {
-                            it.teacherPhone == currentTeacherPhone &&
-                                    (it.status == ClassStatus.COMPLETED || it.status?.name == "COMPLETED")
-                        }.sortedByDescending { it.completedAt ?: "" }
+                        allClasses
+                            .filter {
+                                it.status == ClassStatus.COMPLETED ||
+                                    it.status?.name == "COMPLETED"
+                            }
+                            .sortedByDescending {
+                                it.completedAt ?: ""
+                            }
                     )
 
                     rvHistory.adapter?.notifyDataSetChanged()

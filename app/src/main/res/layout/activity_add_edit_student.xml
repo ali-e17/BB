@@ -169,7 +169,7 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etForeignCode"
-                        android:tag="force_english_digits"
+                        android:tag="skip_smart_digits"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:digits="0123456789۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"

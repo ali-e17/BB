@@ -16,7 +16,7 @@
         android:paddingStart="24dp"
         android:paddingTop="16dp"
         android:paddingEnd="24dp"
-        android:paddingBottom="28dp">
+        android:paddingBottom="80dp">
 
         <RelativeLayout
             android:id="@+id/updateProfileToolbar"
@@ -92,6 +92,10 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etOldPassword"
+                android:nextFocusForward="@id/etNewPassword"
+                android:nextFocusDown="@id/etNewPassword"
+                android:imeOptions="actionNext"
+                android:singleLine="true"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:gravity="left|center_vertical"
@@ -123,6 +127,10 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNewPassword"
+                android:nextFocusForward="@id/etConfirmPassword"
+                android:nextFocusDown="@id/etConfirmPassword"
+                android:imeOptions="actionNext"
+                android:singleLine="true"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:gravity="left|center_vertical"
@@ -154,6 +162,8 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etConfirmPassword"
+                android:imeOptions="actionDone"
+                android:singleLine="true"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:gravity="left|center_vertical"

@@ -580,7 +580,9 @@ class TeacherManagementActivity : BaseActivity() {
 
 
             phone.text =
-                teacher.phone
+                UiTextFormatter.smartDigitsString(
+                    teacher.phone
+                )
 
 
             val teacherClasses =

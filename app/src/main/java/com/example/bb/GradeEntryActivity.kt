@@ -51,17 +51,7 @@ class GradeEntryActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // همان تنظیمی که در AddEditClassActivity واقعاً استفاده می‌شود.
-        // اجازه می‌دهیم خود Android ارتفاع پنجره را با باز شدن کیبورد کم کند.
-        window.setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-        )
-
         setContentView(R.layout.activity_grade_entry)
-
-        // این صفحه عمداً از edge-to-edge خارج می‌شود تا adjustResize
-        // مثل یک فرم معمولی اندروید عمل کند و کیبورد واقعاً ارتفاع صفحه را کم کند.
-        configureClassicKeyboardResize()
 
         classId = intent.getStringExtra(EXTRA_CLASS_ID).orEmpty()
         className = intent.getStringExtra(EXTRA_CLASS_NAME).orEmpty()
@@ -114,22 +104,6 @@ class GradeEntryActivity : BaseActivity() {
      * خود پنجره کوچک می‌شود. RecyclerView نیز در XML به بالای gradeBottom
      * متصل است و واقعاً فضای قابل نمایش آن کم می‌شود.
      */
-    private fun configureClassicKeyboardResize() {
-        val root = findViewById<View>(R.id.rootGradeEntry)
-
-        // BaseActivity به‌صورت عمومی edge-to-edge را فعال می‌کند.
-        // برای این فرم خاص آن را خاموش می‌کنیم تا سیستم مستقیماً
-        // فضای IME را از ارتفاع Activity کم کند.
-        ViewCompat.setOnApplyWindowInsetsListener(root, null)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-
-        root.setPadding(0, 0, 0, 0)
-
-        window.setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-        )
-    }
-
     private fun setupKeyboardNavigation() {
         rvStudents.clipToPadding = false
     }
