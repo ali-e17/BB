@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Font is applied by Theme BEFORE views are measured/inflated.
+        This avoids runtime setTypeface hacks that can desync
+        Material TextInputLayout floating-hint cutout measurements.
+
+        Required font file:
+        app/src/main/res/font/vazirmatn.ttf
+    -->
+    <style name="Theme.BB.Vazirmatn" parent="Theme.BB">
+        <item name="android:fontFamily">@font/vazirmatn</item>
+        <item name="fontFamily">@font/vazirmatn</item>
+    </style>
+</resources>
