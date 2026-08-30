@@ -1,7 +1,7 @@
 package com.example.bb
 
 object SchoolClassCatalog {
-    val classNames: List<String> = listOf(
+    val BUILT_IN_FALLBACKS: List<String> = listOf(
         "Kids: Pockets 1A",
         "Kids: Pockets 1B",
         "Kids: Pockets 1C",
@@ -54,4 +54,8 @@ object SchoolClassCatalog {
         "Advanced: AEF 5B",
         "Advanced: AEF 5C"
     )
+
+    val classNames: List<String>
+        get() = RemoteConfigManager.current().classNameFallbacks.ifEmpty { BUILT_IN_FALLBACKS }
 }
+

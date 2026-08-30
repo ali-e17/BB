@@ -57,6 +57,7 @@
 
             <!-- لوگوی آموزشگاه -->
             <ImageView
+                android:id="@+id/imgInitialPaymentLogo"
                 android:layout_width="112dp"
                 android:layout_height="112dp"
                 android:contentDescription="@null"

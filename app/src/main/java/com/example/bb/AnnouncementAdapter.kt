@@ -45,8 +45,8 @@ class AnnouncementAdapter(
         holder.txtTitle.text = displayTitle
         applyDynamicAlignment(holder.txtTitle, displayTitle)
 
-        holder.txtSender.setTypeface(null, if (isRead) Typeface.NORMAL else Typeface.BOLD)
-        holder.txtTitle.setTypeface(null, if (isRead) Typeface.NORMAL else Typeface.BOLD)
+        holder.txtSender.setTypeface(holder.txtSender.typeface, if (isRead) Typeface.NORMAL else Typeface.BOLD)
+        holder.txtTitle.setTypeface(holder.txtTitle.typeface, if (isRead) Typeface.NORMAL else Typeface.BOLD)
         holder.txtReadState.text = if (isRead) "✓" else "●"
         holder.txtReadState.contentDescription = if (isRead) "خوانده‌شده" else "خوانده‌نشده"
         holder.txtReadState.setTextColor(

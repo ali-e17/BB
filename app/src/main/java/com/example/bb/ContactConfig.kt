@@ -1,12 +1,20 @@
 package com.example.bb
 
 object ContactConfig {
+    const val CONTACT_API = "contact_info.php"
 
-    const val PHONE_NUMBER = "03142660690"
+    val phoneNumber: String
+        get() = RemoteConfigManager.current().contact.phone
 
-    const val EITAA_NUMBER = "09014269723"
+    val phoneDisplay: String
+        get() = RemoteConfigManager.current().contact.phoneDisplay
 
-    const val CONTACT_API =
-        "contact_info.php"
+    val eitaaNumber: String
+        get() = RemoteConfigManager.current().contact.eitaaNumber
 
+    val eitaaUrl: String
+        get() = RemoteConfigManager.current().contact.eitaaUrl
+
+    val addressUrl: String
+        get() = RemoteConfigManager.current().contact.addressUrl
 }

@@ -15,7 +15,18 @@ class BBApplication : Application() {
         )
 
         super.onCreate()
+
+        // Load the last successful config before Retrofit or any Activity needs it.
+        // A fresh server copy is fetched asynchronously; offline launches continue
+        // using the persisted device cache (or built-in defaults on first install).
+        RemoteConfigManager.init(this)
         RetrofitClient.init(this)
+        RemoteConfigManager.refreshIfStale(force = true)
+
         AppDatabase.init(this)
+
+        // کانال‌ها و بررسی دوره‌ای اعلان/کارنامه بدون وابستگی به Firebase.
+        AppNotificationCenter.ensureChannels(this)
+        AppNotificationScheduler.schedule(this)
     }
 }

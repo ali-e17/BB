@@ -1,9 +1,14 @@
 package com.example.bb
 
 object ApiConfig {
-    // دامنه به‌عنوان Host ارسال می‌شود تا Apache پوشه public_html همین اکانت را انتخاب کند.
-    // تا زمان اصلاح DNS عمومی، OkHttp این دامنه را مستقیماً به IP هاست متصل می‌کند.
-    const val BASE_URL = "https://bayan-e-bartar.ir/api/"
-    const val API_HOST = "bayan-e-bartar.ir     "
-    const val API_IP = "5.144.129.239"
+    /**
+     * A fresh install needs exactly one stable network anchor to discover all
+     * other URLs. Keep this endpoint alive when moving domains long enough for
+     * installed apps to learn the new configUrl/apiBaseUrl.
+     */
+    const val BOOTSTRAP_CONFIG_URL = "https://bayan-e-bartar.ir/api/app_config.php"
+
+    // Offline/fresh-install fallbacks only. Runtime requests use RemoteConfigManager.
+    const val DEFAULT_API_BASE_URL = "https://bayan-e-bartar.ir/api/"
+    const val DEFAULT_WEBSITE_URL = "https://bayan-e-bartar.ir/"
 }

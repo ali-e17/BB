@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -23,7 +24,9 @@ import java.util.Locale
 class MainActivity : BaseActivity() {
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var dashboardAdapter: DashboardAdapter
     private lateinit var currentUserRole: UserRole
+    private var currentUserId: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,7 +41,7 @@ class MainActivity : BaseActivity() {
             ?: prefs.getString(PREF_CURRENT_USER_ROLE, UserRole.STUDENT.name)
             ?: UserRole.STUDENT.name
 
-        val currentUserId = prefs
+        currentUserId = prefs
             .getString(PREF_CURRENT_USER_ID, "")
             .orEmpty()
 
@@ -46,11 +49,38 @@ class MainActivity : BaseActivity() {
             UserRole.valueOf(roleString.uppercase(Locale.ROOT))
         }.getOrDefault(UserRole.STUDENT)
 
+        requestNotificationPermissionIfNeeded()
+        AppNotificationScheduler.schedule(this)
+
         setupHeader(prefs)
         setupTopBarWebsiteLink()
         setupThemeButton()
         setupProfileButton()
         setupDashboard(currentUserId)
+        showCachedDashboardIndicators()
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (currentUserRole == UserRole.ADMIN || Build.VERSION.SDK_INT < 33) return
+        val permission = "android.permission.POST_NOTIFICATIONS"
+        if (checkSelfPermission(permission) == android.content.pm.PackageManager.PERMISSION_GRANTED) return
+
+        val prefs = getSharedPreferences("NotificationPermissionPrefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("ASKED_ONCE", false)) return
+
+        prefs.edit().putBoolean("ASKED_ONCE", true).apply()
+        requestPermissions(arrayOf(permission), REQUEST_NOTIFICATION_PERMISSION)
+    }
+
+    override fun onRemoteConfigChanged(config: AppRemoteConfig) {
+        findViewById<TextView>(R.id.txtTopBarSchoolName)?.apply {
+            text = config.schoolNameFa
+            contentDescription = "باز کردن سایت ${config.schoolShortNameFa}"
+        }
+        findViewById<ImageView>(R.id.imgTopBarLogo)?.let {
+            RemoteConfigManager.applyCachedLogo(it, R.drawable.final50cm)
+            it.contentDescription = "لوگوی ${config.schoolShortNameFa}"
+        }
     }
 
     /**
@@ -87,7 +117,7 @@ class MainActivity : BaseActivity() {
                 startActivity(
                     Intent(
                         Intent.ACTION_VIEW,
-                        Uri.parse(SCHOOL_WEBSITE_URL)
+                        Uri.parse(RemoteConfigManager.current().websiteUrl)
                     )
                 )
             }.onFailure {
@@ -153,7 +183,7 @@ class MainActivity : BaseActivity() {
         recyclerView = findViewById(R.id.recyclerViewDashboard)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        recyclerView.adapter = DashboardAdapter(
+        dashboardAdapter = DashboardAdapter(
             buildDashboardItems()
         ) { clickedItem ->
             openDashboardItem(
@@ -161,6 +191,7 @@ class MainActivity : BaseActivity() {
                 currentUserId = currentUserId
             )
         }
+        recyclerView.adapter = dashboardAdapter
     }
 
     /**
@@ -361,6 +392,71 @@ class MainActivity : BaseActivity() {
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
                 ?: "کاربر محترم"
+
+        refreshDashboardIndicators()
+    }
+
+    private fun showCachedDashboardIndicators() {
+        if (!::dashboardAdapter.isInitialized || currentUserRole == UserRole.ADMIN) return
+        val prefs = getSharedPreferences(DASHBOARD_BADGE_PREFS_NAME, Context.MODE_PRIVATE)
+        applyDashboardIndicators(
+            announcementUnreadCount = prefs.getInt(badgeCacheKey(PREF_CACHED_ANNOUNCEMENT_UNREAD), 0),
+            reportCardUpdateCount = prefs.getInt(badgeCacheKey(PREF_CACHED_REPORT_CARD_UPDATES), 0)
+        )
+    }
+
+    private fun refreshDashboardIndicators() {
+        if (!::dashboardAdapter.isInitialized) return
+        if (currentUserRole == UserRole.ADMIN) {
+            applyDashboardIndicators(0, 0)
+            return
+        }
+
+        RetrofitClient.instance.getDashboardBadges()
+            .enqueue(object : Callback<DashboardBadgesResponse> {
+                override fun onResponse(
+                    call: Call<DashboardBadgesResponse>,
+                    response: Response<DashboardBadgesResponse>
+                ) {
+                    val result = response.body()
+                    if (!response.isSuccessful || result?.status != "success") return
+
+                    getSharedPreferences(DASHBOARD_BADGE_PREFS_NAME, Context.MODE_PRIVATE)
+                        .edit()
+                        .putInt(badgeCacheKey(PREF_CACHED_ANNOUNCEMENT_UNREAD), result.announcementUnreadCount)
+                        .putInt(badgeCacheKey(PREF_CACHED_REPORT_CARD_UPDATES), result.reportCardUpdateCount)
+                        .apply()
+
+                    applyDashboardIndicators(
+                        result.announcementUnreadCount,
+                        result.reportCardUpdateCount
+                    )
+                }
+
+                override fun onFailure(call: Call<DashboardBadgesResponse>, t: Throwable) {
+                    // در حالت آفلاین همان آخرین وضعیت موفق ذخیره‌شده نمایش داده می‌شود.
+                    showCachedDashboardIndicators()
+                }
+            })
+    }
+
+    private fun badgeCacheKey(base: String): String =
+        "${base}_${currentUserRole.name}_${currentUserId}"
+
+    private fun applyDashboardIndicators(
+        announcementUnreadCount: Int,
+        reportCardUpdateCount: Int
+    ) {
+        if (!::dashboardAdapter.isInitialized) return
+
+        dashboardAdapter.setIndicator(
+            TITLE_ANNOUNCEMENTS,
+            currentUserRole != UserRole.ADMIN && announcementUnreadCount > 0
+        )
+        dashboardAdapter.setIndicator(
+            TITLE_VIEW_REPORT,
+            currentUserRole == UserRole.STUDENT && reportCardUpdateCount > 0
+        )
     }
 
     /**
@@ -547,6 +643,9 @@ class MainActivity : BaseActivity() {
     companion object {
         private const val LOCAL_PREFS_NAME = "LocalAppPrefs"
         private const val THEME_PREFS_NAME = "ThemePrefs"
+        private const val DASHBOARD_BADGE_PREFS_NAME = "DashboardBadgePrefs"
+        private const val PREF_CACHED_ANNOUNCEMENT_UNREAD = "CACHED_ANNOUNCEMENT_UNREAD"
+        private const val PREF_CACHED_REPORT_CARD_UPDATES = "CACHED_REPORT_CARD_UPDATES"
 
         private const val EXTRA_USER_ROLE = "USER_ROLE"
 
@@ -565,11 +664,10 @@ class MainActivity : BaseActivity() {
         private const val PREF_IS_DARK_MODE =
             "IS_DARK_MODE"
 
-        private const val SCHOOL_WEBSITE_URL =
-            "https://bayan-e-bartar.ir/"
-
         private const val IRAN_TIME_ZONE =
             "Asia/Tehran"
+
+        private const val REQUEST_NOTIFICATION_PERMISSION = 830
 
         private const val LANGUAGE_FA = "fa"
         private const val LANGUAGE_EN = "en"

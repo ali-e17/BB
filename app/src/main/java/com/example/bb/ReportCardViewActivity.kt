@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.text.BidiFormatter
 import com.google.android.material.button.MaterialButton
 import retrofit2.Call
 import retrofit2.Callback
@@ -65,7 +66,42 @@ class ReportCardViewActivity : BaseActivity() {
             return
         }
 
+        applyReportBranding(RemoteConfigManager.current())
         load(reportCardId)
+    }
+
+    override fun onRemoteConfigChanged(config: AppRemoteConfig) {
+        applyReportBranding(config)
+        currentCard?.let { bind(it) }
+    }
+
+    private fun applyReportBranding(config: AppRemoteConfig) {
+        val report = config.reportCard
+        val contact = config.contact
+        val contactLine = report.contactLine.ifBlank {
+            listOf(contact.email, contact.phoneDisplay.ifBlank { contact.phone })
+                .filter { it.isNotBlank() }
+                .joinToString("  |  ")
+        }
+
+        findViewById<ImageView>(R.id.imgReportLogo)?.let {
+            RemoteConfigManager.applyCachedLogo(it, R.drawable.final50cm)
+            it.contentDescription = "لوگوی ${config.schoolShortNameFa}"
+        }
+        findViewById<TextView>(R.id.txtReportSchoolNameEn)?.text = report.schoolNameEn
+        findViewById<TextView>(R.id.txtReportSchoolName)?.text = report.schoolName
+        findViewById<TextView>(R.id.txtReportContactLine)?.text = contactLine
+        findViewById<TextView>(R.id.txtReportTitle)?.text = report.title
+        findViewById<TextView>(R.id.txtTotalScoreLabel)?.text = report.totalScoreLabel
+        findViewById<TextView>(R.id.txtStudentIdLabel)?.text = report.studentIdLabel
+        findViewById<TextView>(R.id.txtStudentNameLabel)?.text = report.studentNameLabel
+        findViewById<TextView>(R.id.txtClassCodeLabel)?.text = report.classCodeLabel
+        findViewById<TextView>(R.id.txtClassLabel)?.text = report.classLabel
+        findViewById<TextView>(R.id.txtLevelLabel)?.text = report.levelLabel
+        findViewById<TextView>(R.id.txtTermLabel)?.text = report.termLabel
+        findViewById<TextView>(R.id.txtTextBookLabel)?.text = report.textBookLabel
+        findViewById<TextView>(R.id.txtManagerSignatureLabel)?.text = report.managerSignatureLabel
+        findViewById<TextView>(R.id.txtTeacherSignatureLabel)?.text = report.teacherSignatureLabel
     }
 
     private fun load(id: String) {
@@ -109,32 +145,39 @@ class ReportCardViewActivity : BaseActivity() {
     }
 
     private fun bind(card: ReportCardDto) {
+        val reportConfig = RemoteConfigManager.current().reportCard
+        val fallback = reportConfig.fallbackMessage
         val manualStudentId = card.studentCode.ifBlank {
-            card.studentId.take(8).ifBlank { "—" }
+            card.studentId.take(8).ifBlank { fallback }
         }
         val term = listOf(card.termSeason, card.termYear)
             .filter { it.isNotBlank() }
             .joinToString(" ")
-            .ifBlank { "—" }
+            .ifBlank { fallback }
 
         findViewById<TextView>(R.id.txtStudentName).text =
-            card.studentName.ifBlank { "—" }
+            card.studentName.ifBlank { fallback }
         findViewById<TextView>(R.id.txtStudentId).text = manualStudentId
         findViewById<TextView>(R.id.txtTerm).text = term
         findViewById<TextView>(R.id.txtClassCode).text =
-            card.classCode.ifBlank { "—" }
+            card.classCode.ifBlank { fallback }
         findViewById<TextView>(R.id.txtClassName).text =
-            card.className.ifBlank { "—" }
+            card.className.ifBlank { fallback }
         findViewById<TextView>(R.id.txtClassLevel).text =
-            card.classLevel.ifBlank { "—" }
+            card.classLevel.ifBlank { fallback }
         findViewById<TextView>(R.id.txtBook).text =
-            card.bookName.ifBlank { "—" }
+            card.bookName.ifBlank { fallback }
         findViewById<TextView>(R.id.txtReportDate).text =
-            "Date: ${formatPublishedDate(card.publishedAt)}"
-        findViewById<TextView>(R.id.txtReportMessage).text =
-            card.resultMessage.trim().ifBlank {
-                defaultMessageFor(card.resultCode)
-            }
+            "${reportConfig.dateLabel}: ${formatPublishedDate(card.publishedAt)}"
+        val reportMessage = card.resultMessage.trim().ifBlank {
+            defaultMessageFor(card.resultCode)
+        }
+        findViewById<TextView>(R.id.txtReportMessage).apply {
+            layoutDirection = View.LAYOUT_DIRECTION_LTR
+            textDirection = View.TEXT_DIRECTION_LTR
+            textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+            text = BidiFormatter.getInstance(false).unicodeWrap(reportMessage)
+        }
 
         renderScoreTable(card)
         renderResultSummary(card)
@@ -152,8 +195,9 @@ class ReportCardViewActivity : BaseActivity() {
             else -> 24
         }
 
+        val reportConfig = RemoteConfigManager.current().reportCard
         addScoreRow(
-            inflater, "Subject", "Score", "Out of",
+            inflater, reportConfig.subjectLabel, reportConfig.scoreLabel, reportConfig.outOfLabel,
             Color.parseColor("#2B4E78"), Color.WHITE, Color.WHITE, Color.WHITE,
             isHeader = true,
             heightDp = rowHeightDp
@@ -162,7 +206,7 @@ class ReportCardViewActivity : BaseActivity() {
         card.scores.sortedBy { it.sortOrder }.forEachIndexed { index, item ->
             addScoreRow(
                 inflater,
-                item.title.ifBlank { "—" },
+                item.title.ifBlank { reportConfig.fallbackMessage },
                 format(item.score),
                 format(item.maxScore),
                 Color.parseColor(if (index % 2 == 0) "#FFFFFF" else "#F5F8FD"),
@@ -185,7 +229,7 @@ class ReportCardViewActivity : BaseActivity() {
         val totalOutOf = card.scores.sumOf { it.maxScore }
             .takeIf { it > 0.0 } ?: 100.0
         addScoreRow(
-            inflater, "TOTAL", format(card.totalScore), format(totalOutOf),
+            inflater, reportConfig.totalLabel, format(card.totalScore), format(totalOutOf),
             Color.parseColor("#FFF1E8"),
             Color.parseColor("#2B4E78"),
             Color.parseColor("#FF6E14"),
@@ -382,17 +426,20 @@ class ReportCardViewActivity : BaseActivity() {
         }
     }
 
-    private fun statusPresentation(code: String): StatusPresentation = when (code) {
-        "FIVE_STAR", "FOUR_STAR", "THREE_STAR", "TWO_STAR", "ONE_STAR", "PASS_NO_STAR" ->
-            StatusPresentation("PASS", Color.parseColor("#067647"), Color.parseColor("#ECFDF3"), Color.parseColor("#ABEFC6"))
-        "CONDITIONAL" ->
-            StatusPresentation("CONDITIONAL", Color.parseColor("#B54708"), Color.parseColor("#FFFAEB"), Color.parseColor("#FEDF89"))
-        "FAILED" ->
-            StatusPresentation("FAIL", Color.parseColor("#B42318"), Color.parseColor("#FEF3F2"), Color.parseColor("#FECDCA"))
-        "INCOMPLETE" ->
-            StatusPresentation("INCOMPLETE", Color.parseColor("#475467"), Color.parseColor("#F2F4F7"), Color.parseColor("#D0D5DD"))
-        else ->
-            StatusPresentation("UNKNOWN", Color.parseColor("#475467"), Color.parseColor("#F2F4F7"), Color.parseColor("#D0D5DD"))
+    private fun statusPresentation(code: String): StatusPresentation {
+        val labels = RemoteConfigManager.current().reportCard
+        return when (code) {
+            "FIVE_STAR", "FOUR_STAR", "THREE_STAR", "TWO_STAR", "ONE_STAR", "PASS_NO_STAR" ->
+                StatusPresentation(labels.passLabel, Color.parseColor("#067647"), Color.parseColor("#ECFDF3"), Color.parseColor("#ABEFC6"))
+            "CONDITIONAL" ->
+                StatusPresentation(labels.conditionalLabel, Color.parseColor("#B54708"), Color.parseColor("#FFFAEB"), Color.parseColor("#FEDF89"))
+            "FAILED" ->
+                StatusPresentation(labels.failLabel, Color.parseColor("#B42318"), Color.parseColor("#FEF3F2"), Color.parseColor("#FECDCA"))
+            "INCOMPLETE" ->
+                StatusPresentation(labels.incompleteLabel, Color.parseColor("#475467"), Color.parseColor("#F2F4F7"), Color.parseColor("#D0D5DD"))
+            else ->
+                StatusPresentation(labels.unknownLabel, Color.parseColor("#475467"), Color.parseColor("#F2F4F7"), Color.parseColor("#D0D5DD"))
+        }
     }
 
     private fun defaultMessageFor(code: String): String =

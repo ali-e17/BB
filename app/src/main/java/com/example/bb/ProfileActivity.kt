@@ -202,79 +202,56 @@ class ProfileActivity : BaseActivity() {
         })
         finish()
     }
-    private fun setupContactFooter() {
+    override fun onRemoteConfigChanged(config: AppRemoteConfig) {
+        setupContactFooter()
+    }
 
+    private fun setupContactFooter() {
+        val config = RemoteConfigManager.current().contact
+
+        val titleText = findViewById<TextView>(R.id.tvContactTitle)
         val phoneText = findViewById<TextView>(R.id.tvContactPhone)
         val eitaaText = findViewById<TextView>(R.id.tvContactEitaa)
+        val addressText = findViewById<TextView>(R.id.tvContactAddress)
 
         val phoneLayout = findViewById<LinearLayout>(R.id.layoutContactPhone)
         val eitaaLayout = findViewById<LinearLayout>(R.id.layoutContactEitaa)
         val addressLayout = findViewById<LinearLayout>(R.id.layoutContactAddress)
 
-        phoneText.text =
-            "تماس با آموزشگاه : ${toPersianDigits(ContactConfig.PHONE_NUMBER)}"
+        titleText.text = config.title
+        val phoneDisplay = toPersianDigits(config.phoneDisplay.ifBlank { config.phone })
+        // شماره داخل متن فارسی با LRM ایزوله می‌شود تا خط تیره و پیش‌شماره
+        // تحت الگوریتم BiDi جابه‌جا نشوند. فقط خود شماره LTR می‌ماند.
+        phoneText.text = "${config.phoneLabel} : \u200E${phoneDisplay}\u200E"
+        eitaaText.text = "${config.eitaaLabel} : ${toPersianDigits(config.eitaaNumber)}"
+        addressText.text = config.addressText.ifBlank { config.addressLabel }
 
-        eitaaText.text =
-            "ارتباط در ایتا : ${toPersianDigits(ContactConfig.EITAA_NUMBER)}"
+        phoneLayout.visibility = if (config.phone.isBlank()) android.view.View.GONE else android.view.View.VISIBLE
+        eitaaLayout.visibility = if (config.eitaaNumber.isBlank() && config.eitaaUrl.isBlank()) android.view.View.GONE else android.view.View.VISIBLE
+        addressLayout.visibility = if (config.addressUrl.isBlank() && config.addressText.isBlank()) android.view.View.GONE else android.view.View.VISIBLE
 
         phoneLayout.setOnClickListener {
-            val intent = Intent(
-                Intent.ACTION_DIAL,
-                Uri.parse("tel:${ContactConfig.PHONE_NUMBER}")
-            )
-            startActivity(intent)
+            val phone = RemoteConfigManager.current().contact.phone.trim()
+            if (phone.isNotBlank()) {
+                runCatching {
+                    startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")))
+                }.onFailure {
+                    AppToast.warning(this, "برنامه تماس در دسترس نیست")
+                }
+            }
         }
 
-        eitaaLayout.setOnClickListener {
-            openEitaa()
-        }
-
-        addressLayout.setOnClickListener {
-            openSchoolAddress()
-        }
+        eitaaLayout.setOnClickListener { openEitaa() }
+        addressLayout.setOnClickListener { openSchoolAddress() }
     }
 
     private fun openSchoolAddress() {
-        RetrofitClient.instance.getContactInfo()
-            .enqueue(object : Callback<ContactInfoResponse> {
-
-                override fun onResponse(
-                    call: Call<ContactInfoResponse>,
-                    response: Response<ContactInfoResponse>
-                ) {
-                    val body = response.body()
-                    val addressUrl = body?.addressUrl?.trim().orEmpty()
-
-                    if (!response.isSuccessful ||
-                        body == null ||
-                        (body.status.isNotBlank() && body.status != "success") ||
-                        addressUrl.isBlank()
-                    ) {
-                        AppToast.makeText(
-                            this@ProfileActivity.applicationContext,
-                            ApiErrorParser.userMessage(
-                                response,
-                                "دریافت نشانی آموزشگاه انجام نشد"
-                            ),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return
-                    }
-
-                    openNeshanOrBrowser(addressUrl)
-                }
-
-                override fun onFailure(
-                    call: Call<ContactInfoResponse>,
-                    t: Throwable
-                ) {
-                    AppToast.makeText(
-                        this@ProfileActivity.applicationContext,
-                        ApiErrorParser.networkMessage(t, "دریافت نشانی آموزشگاه"),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            })
+        val addressUrl = RemoteConfigManager.current().contact.addressUrl.trim()
+        if (addressUrl.isBlank()) {
+            AppToast.warning(this, "نشانی آموزشگاه ثبت نشده است")
+            return
+        }
+        openNeshanOrBrowser(addressUrl)
     }
 
     private fun openNeshanOrBrowser(url: String) {
@@ -320,29 +297,37 @@ class ProfileActivity : BaseActivity() {
             .replace('8', '۸')
             .replace('9', '۹')
     }
+
     private fun openEitaa() {
+        val contact = RemoteConfigManager.current().contact
+        val number = contact.eitaaNumber.trim()
 
-        val eitaaNumber = ContactConfig.EITAA_NUMBER
+        if (number.isNotBlank()) {
+            try {
+                val eitaaIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("eitaa://chat/$number")
+                ).apply {
+                    setPackage("ir.eitaa.messenger")
+                }
+                startActivity(eitaaIntent)
+                return
+            } catch (_: Exception) {
+                // Fall through to the server-controlled web URL.
+            }
+        }
 
-        try {
+        val fallbackUrl = contact.eitaaUrl.trim()
+        if (fallbackUrl.isBlank()) {
+            AppToast.warning(this, "لینک ایتا ثبت نشده است")
+            return
+        }
 
-            val eitaaIntent = Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("eitaa://chat/$eitaaNumber")
-            )
-
-            eitaaIntent.setPackage("ir.eitaa.messenger")
-
-            startActivity(eitaaIntent)
-
-        } catch (e: Exception) {
-
-            val browserIntent = Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("https://eitaa.com/$eitaaNumber")
-            )
-
-            startActivity(browserIntent)
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fallbackUrl)))
+        }.onFailure {
+            AppToast.warning(this, "باز کردن لینک ایتا انجام نشد")
         }
     }
+
 }

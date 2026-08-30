@@ -81,6 +81,7 @@ class AnnouncementDetailActivity : BaseActivity() {
         titleView.text = displayTitle
         applyCenteredDirection(titleView, displayTitle)
 
+        renderSenderAvatar()
         findViewById<TextView>(R.id.txtDetailSender).text = announcement.senderName
         findViewById<TextView>(R.id.txtDetailRole).text = when (announcement.senderRole) {
             AnnouncementSenderRole.ADMIN -> "مدیر"
@@ -100,8 +101,29 @@ class AnnouncementDetailActivity : BaseActivity() {
         renderAttachment()
     }
 
+
+    private fun renderSenderAvatar() {
+        val fallbackName = when (announcement.senderRole) {
+            AnnouncementSenderRole.ADMIN -> "avatar_admin_1"
+            AnnouncementSenderRole.TEACHER -> "avatar_teacher_1"
+            AnnouncementSenderRole.SYSTEM -> "avatar_no_profile"
+        }
+        val requestedName = announcement.senderAvatarName.ifBlank { fallbackName }
+        val requestedRes = resources.getIdentifier(requestedName, "drawable", packageName)
+        val fallbackRes = resources.getIdentifier(fallbackName, "drawable", packageName)
+        val noProfileRes = resources.getIdentifier("avatar_no_profile", "drawable", packageName)
+        val finalRes = when {
+            requestedRes != 0 -> requestedRes
+            fallbackRes != 0 -> fallbackRes
+            noProfileRes != 0 -> noProfileRes
+            else -> R.drawable.ic_profile
+        }
+        findViewById<ImageView>(R.id.imgDetailSenderAvatar).setImageResource(finalRes)
+    }
+
     private fun targetSummary(item: Announcement): String = when (item.scope) {
         AnnouncementScope.ALL_CLASSES -> "همه کلاس‌ها"
+        AnnouncementScope.ALL_TEACHERS -> "همه استادها"
         AnnouncementScope.DIRECT_STUDENT -> "پیام شخصی سامانه"
         AnnouncementScope.SELECTED_CLASSES -> {
             val names = item.targetClassIds.mapNotNull(AppDatabase::getClassNameById)

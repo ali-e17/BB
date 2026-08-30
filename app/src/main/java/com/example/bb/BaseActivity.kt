@@ -39,6 +39,15 @@ import java.util.Locale
  */
 open class BaseActivity : AppCompatActivity() {
 
+    private val remoteConfigListener: (AppRemoteConfig) -> Unit = { config ->
+        runOnUiThread {
+            if (!isFinishing && !isDestroyed) {
+                onRemoteConfigChanged(config)
+                applySmartDigitsToCurrentScreen()
+            }
+        }
+    }
+
     private val membershipHandler =
         Handler(Looper.getMainLooper())
 
@@ -77,16 +86,31 @@ open class BaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
     }
 
+    override fun onStart() {
+        super.onStart()
+        RemoteConfigManager.addListener(remoteConfigListener)
+        onRemoteConfigChanged(RemoteConfigManager.current())
+    }
+
     override fun onResume() {
         super.onResume()
         startMembershipWatcher()
         applySmartDigitsToCurrentScreen()
+        RemoteConfigManager.refreshIfStale()
     }
 
     override fun onPause() {
         stopMembershipWatcher()
         super.onPause()
     }
+
+    override fun onStop() {
+        RemoteConfigManager.removeListener(remoteConfigListener)
+        super.onStop()
+    }
+
+    /** Called immediately with cached config and again after a successful refresh. */
+    protected open fun onRemoteConfigChanged(config: AppRemoteConfig) = Unit
 
     override fun onDestroy() {
         stopMembershipWatcher()

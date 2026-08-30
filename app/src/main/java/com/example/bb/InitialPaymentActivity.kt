@@ -254,6 +254,16 @@ class InitialPaymentActivity : BaseActivity() {
     }
 
 
+    override fun onRemoteConfigChanged(config: AppRemoteConfig) {
+        findViewById<ImageView>(R.id.imgInitialPaymentLogo)?.let {
+            RemoteConfigManager.applyCachedLogo(it, R.drawable.final50cm)
+            it.contentDescription = "لوگوی ${config.schoolShortNameFa}"
+        }
+        if (::toolbarTitle.isInitialized) {
+            renderPaymentReason(currentPaymentReason)
+        }
+    }
+
     private fun loadStatus(
         showLoading: Boolean
     ) {
@@ -847,11 +857,11 @@ class InitialPaymentActivity : BaseActivity() {
                         "ANNUAL_RENEWAL"
                     ) {
 
-                        "برای ادامه استفاده از سامانه، عضویت سالانه خود را تمدید کنید."
+                        RemoteConfigManager.current().membership.renewalDescription
 
                     } else {
 
-                        "برای فعال‌سازی حساب، حق عضویت سالانه را پرداخت کنید."
+                        RemoteConfigManager.current().membership.firstDescription
                     }
             }
 
@@ -867,12 +877,12 @@ class InitialPaymentActivity : BaseActivity() {
                 currentPaymentReason ==
                         "ANNUAL_RENEWAL" ->
 
-                    "تمدید عضویت"
+                    RemoteConfigManager.current().membership.renewalButton
 
 
                 else ->
 
-                    "پرداخت حق عضویت"
+                    RemoteConfigManager.current().membership.firstButton
             }
     }
 
@@ -983,51 +993,22 @@ class InitialPaymentActivity : BaseActivity() {
     private fun renderPaymentReason(
         paymentReason: String
     ) {
+        val membership = RemoteConfigManager.current().membership
 
-        if (
-            paymentReason.equals(
-                "ANNUAL_RENEWAL",
-                ignoreCase = true
-            )
-        ) {
-
-            toolbarTitle.text =
-                "تمدید عضویت"
-
-            pageTitle.text =
-                "اعتبار حساب شما به پایان رسیده"
-
-            descriptionText.text =
-                "برای ادامه استفاده از سامانه، عضویت سالانه خود را تمدید کنید."
-
-            amountLabel.text =
-                "مبلغ تمدید یک‌ساله"
-
-            footerText.text =
-                "پس از پرداخت موفق، اعتبار حساب شما برای یک سال دیگر فعال می‌شود."
-
-            startButton.text =
-                "تمدید عضویت"
-
+        if (paymentReason.equals("ANNUAL_RENEWAL", ignoreCase = true)) {
+            toolbarTitle.text = membership.renewalToolbarTitle
+            pageTitle.text = membership.renewalPageTitle
+            descriptionText.text = membership.renewalDescription
+            amountLabel.text = membership.renewalAmountLabel
+            footerText.text = membership.renewalFooter
+            startButton.text = membership.renewalButton
         } else {
-
-            toolbarTitle.text =
-                "عضویت سالانه"
-
-            pageTitle.text =
-                "حق عضویت سالانه دانش‌آموز"
-
-            descriptionText.text =
-                "برای فعال‌سازی حساب دانش‌آموزی، حق عضویت سالانه را پرداخت کنید."
-
-            amountLabel.text =
-                "مبلغ عضویت یک‌ساله"
-
-            footerText.text =
-                "پس از پرداخت موفق، حساب شما برای یک سال فعال می‌شود."
-
-            startButton.text =
-                "پرداخت حق عضویت"
+            toolbarTitle.text = membership.firstToolbarTitle
+            pageTitle.text = membership.firstPageTitle
+            descriptionText.text = membership.firstDescription
+            amountLabel.text = membership.firstAmountLabel
+            footerText.text = membership.firstFooter
+            startButton.text = membership.firstButton
         }
     }
 
@@ -1301,11 +1282,11 @@ class InitialPaymentActivity : BaseActivity() {
                 "ANNUAL_RENEWAL"
             ) {
 
-                "برای ادامه استفاده از سامانه باید عضویت سالانه تمدید شود. آیا می‌خواهید از حساب خارج شوید؟"
+                RemoteConfigManager.current().membership.renewalLogoutMessage
 
             } else {
 
-                "برای ورود به برنامه باید حق عضویت سالانه پرداخت شود. آیا می‌خواهید از حساب خارج شوید؟"
+                RemoteConfigManager.current().membership.firstLogoutMessage
             }
 
 

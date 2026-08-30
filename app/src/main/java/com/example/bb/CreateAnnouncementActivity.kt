@@ -45,6 +45,7 @@ class CreateAnnouncementActivity : BaseActivity() {
 
     private lateinit var audienceToggle: MaterialButtonToggleGroup
     private lateinit var btnAudienceAll: MaterialButton
+    private lateinit var btnAudienceTeachers: MaterialButton
     private lateinit var txtAudienceMode: TextView
     private lateinit var cardClassSelection: MaterialCardView
     private lateinit var txtSelectedClassesSummary: TextView
@@ -174,6 +175,7 @@ class CreateAnnouncementActivity : BaseActivity() {
 
         audienceToggle = findViewById(R.id.audienceToggleGroup)
         btnAudienceAll = findViewById(R.id.btnAudienceAll)
+        btnAudienceTeachers = findViewById(R.id.btnAudienceTeachers)
         txtAudienceMode = findViewById(R.id.txtAudienceMode)
         cardClassSelection = findViewById(R.id.cardClassSelection)
         txtSelectedClassesSummary = findViewById(R.id.txtSelectedClassesSummary)
@@ -189,7 +191,7 @@ class CreateAnnouncementActivity : BaseActivity() {
 
     private fun setupHeader() {
         findViewById<TextView>(R.id.txtComposerAccessHint).text = when (role) {
-            UserRole.ADMIN -> "امکان ارسال به همه کلاس‌ها یا کلاس‌های انتخابی"
+            UserRole.ADMIN -> "امکان ارسال به همه کلاس‌ها، همه استادها یا کلاس‌های انتخابی"
             UserRole.TEACHER -> "امکان ارسال فقط به کلاس‌های خودتان"
             UserRole.STUDENT -> ""
         }
@@ -213,7 +215,7 @@ class CreateAnnouncementActivity : BaseActivity() {
         audienceToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
             cardClassSelection.visibility =
-                if (checkedId == R.id.btnAudienceAll) View.GONE else View.VISIBLE
+                if (checkedId == R.id.btnAudienceSelected) View.VISIBLE else View.GONE
             updateSendState()
         }
 
@@ -394,13 +396,11 @@ class CreateAnnouncementActivity : BaseActivity() {
         btnSend.setOnClickListener {
             val title = etTitle.text?.toString()?.trim().orEmpty()
             val body = etBody.text?.toString()?.trim().orEmpty()
-            val scope = if (
-                role == UserRole.ADMIN &&
-                audienceToggle.checkedButtonId == R.id.btnAudienceAll
-            ) {
-                AnnouncementScope.ALL_CLASSES
-            } else {
-                AnnouncementScope.SELECTED_CLASSES
+            val scope = when {
+                role != UserRole.ADMIN -> AnnouncementScope.SELECTED_CLASSES
+                audienceToggle.checkedButtonId == R.id.btnAudienceAll -> AnnouncementScope.ALL_CLASSES
+                audienceToggle.checkedButtonId == R.id.btnAudienceTeachers -> AnnouncementScope.ALL_TEACHERS
+                else -> AnnouncementScope.SELECTED_CLASSES
             }
 
             when {
@@ -416,7 +416,7 @@ class CreateAnnouncementActivity : BaseActivity() {
                     return@setOnClickListener
                 }
 
-                availableClasses.isEmpty() -> {
+                scope != AnnouncementScope.ALL_TEACHERS && availableClasses.isEmpty() -> {
                     AppToast.warning(
                         this,
                         if (role == UserRole.TEACHER) {
@@ -547,12 +547,13 @@ class CreateAnnouncementActivity : BaseActivity() {
 
         val titleReady = !etTitle.text.isNullOrBlank()
         val bodyReady = !etBody.text.isNullOrBlank()
-        val audienceReady =
-            availableClasses.isNotEmpty() && (
-                (role == UserRole.ADMIN &&
-                    audienceToggle.checkedButtonId == R.id.btnAudienceAll) ||
-                    selectedClassIds.isNotEmpty()
-            )
+        val audienceReady = when {
+            role == UserRole.TEACHER ->
+                availableClasses.isNotEmpty() && selectedClassIds.isNotEmpty()
+            audienceToggle.checkedButtonId == R.id.btnAudienceTeachers -> true
+            audienceToggle.checkedButtonId == R.id.btnAudienceAll -> availableClasses.isNotEmpty()
+            else -> availableClasses.isNotEmpty() && selectedClassIds.isNotEmpty()
+        }
 
         btnSend.isEnabled = true
         btnSend.alpha = if (titleReady && bodyReady && audienceReady) 1f else 0.72f

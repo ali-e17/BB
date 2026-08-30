@@ -9,7 +9,6 @@ import android.os.Looper
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import okhttp3.Interceptor
-import okhttp3.Dns
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
@@ -17,7 +16,6 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
-import java.net.InetAddress
 
 data class ContactInfoResponse(
     val status: String = "",
@@ -70,6 +68,15 @@ data class AdminResetPasswordResponse(
 )
 data class CreateAnnouncementResponse(val status: String="", val message:String="", val announcementId:String?=null, val recipientCount:Int=0)
 data class UnreadAnnouncementCountResponse(val status:String="", val count:Int=0)
+data class DashboardBadgesResponse(
+    val status: String = "",
+    val announcementUnreadCount: Int = 0,
+    val reportCardUpdateCount: Int = 0,
+    val latestAnnouncementId: String = "",
+    val latestAnnouncementTitle: String = "",
+    val latestReportCardId: String = "",
+    val latestReportCardRevision: Int = 0
+)
 data class ProfileResponse(
     val status:String="", val role:String="", val userId:String="", val username:String="",
     val phone:String="", val displayName:String="", val avatarName:String="",
@@ -214,7 +221,7 @@ interface ApiService
     @POST("restore_entity.php") fun restoreEntity(@Body request:TrashRequest):Call<ApiResponse>
     @POST("permanent_delete_entity.php") fun permanentDelete(@Body request:PermanentDeleteRequest):Call<ApiResponse>
 
-    @GET("get_announcements.php") fun getAnnouncements(@Query("page") page:Int=1,@Query("limit") limit:Int=50):Call<List<Announcement>>
+    @GET("get_announcements.php") fun getAnnouncements(@Query("box") box:String?=null,@Query("page") page:Int=1,@Query("limit") limit:Int=50):Call<List<Announcement>>
     @Multipart @POST("create_announcement.php") fun createAnnouncement(
         @Part("id") id:RequestBody,@Part("title") title:RequestBody,@Part("body") body:RequestBody,
         @Part("scope") scope:RequestBody,@Part("targetClassIds") targetClassIds:RequestBody,
@@ -222,6 +229,7 @@ interface ApiService
     ):Call<CreateAnnouncementResponse>
     @POST("mark_announcement_read.php") fun markAnnouncementRead(@Body request:MarkAnnouncementReadRequest):Call<ApiResponse>
     @GET("get_unread_announcement_count.php") fun getUnreadAnnouncementCount():Call<UnreadAnnouncementCountResponse>
+    @GET("get_dashboard_badges.php") fun getDashboardBadges():Call<DashboardBadgesResponse>
 
     @GET("get_attendance_overview.php") fun getAttendanceOverview(@Query("class_id") classId:String):Call<AttendanceOverviewResponse>
     @GET("get_attendance_session.php") fun getAttendanceSession(@Query("class_id") classId:String,@Query("session_number") sessionNumber:Int):Call<AttendanceSessionResponse>
@@ -361,29 +369,61 @@ private class SessionInterceptor(private val context:Context):Interceptor {
 }
 
 object RetrofitClient {
-    private lateinit var appContext:Context
-    fun init(context:Context){appContext=context.applicationContext}
-    fun attendanceExportUrl(classId:String)=ApiConfig.BASE_URL+"export_attendance_excel.php?class_id="+java.net.URLEncoder.encode(classId,Charsets.UTF_8.name())
-    val instance:ApiService by lazy {
-        check(::appContext.isInitialized)
-        val client = OkHttpClient.Builder()
-            .dns(object : Dns {
-                override fun lookup(hostname: String): List<InetAddress> {
-                    return if (hostname.equals(ApiConfig.API_HOST, ignoreCase = true)) {
-                        listOf(InetAddress.getByName(ApiConfig.API_IP))
-                    } else {
-                        Dns.SYSTEM.lookup(hostname)
-                    }
-                }
-            })
-            .addInterceptor(SessionInterceptor(appContext))
-            .build()
+    private lateinit var appContext: Context
 
-        Retrofit.Builder()
-            .baseUrl(ApiConfig.BASE_URL)
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create(Gson()))
-            .build()
-            .create(ApiService::class.java)
+    @Volatile
+    private var cachedService: ApiService? = null
+
+    @Volatile
+    private var cachedBaseUrl: String = ""
+
+    fun init(context: Context) {
+        appContext = context.applicationContext
     }
+
+    fun invalidate() {
+        synchronized(this) {
+            cachedService = null
+            cachedBaseUrl = ""
+        }
+    }
+
+    fun attendanceExportUrl(classId: String): String =
+        RemoteConfigManager.current().apiBaseUrl +
+            "export_attendance_excel.php?class_id=" +
+            java.net.URLEncoder.encode(classId, Charsets.UTF_8.name())
+
+    val instance: ApiService
+        get() {
+            check(::appContext.isInitialized)
+
+            val desiredBaseUrl = RemoteConfigManager.current().apiBaseUrl
+                .trim()
+                .let { if (it.endsWith('/')) it else "$it/" }
+
+            cachedService?.let { existing ->
+                if (cachedBaseUrl == desiredBaseUrl) return existing
+            }
+
+            synchronized(this) {
+                cachedService?.let { existing ->
+                    if (cachedBaseUrl == desiredBaseUrl) return existing
+                }
+
+                val client = OkHttpClient.Builder()
+                    .addInterceptor(SessionInterceptor(appContext))
+                    .build()
+
+                val created = Retrofit.Builder()
+                    .baseUrl(desiredBaseUrl)
+                    .client(client)
+                    .addConverterFactory(GsonConverterFactory.create(Gson()))
+                    .build()
+                    .create(ApiService::class.java)
+
+                cachedBaseUrl = desiredBaseUrl
+                cachedService = created
+                return created
+            }
+        }
 }

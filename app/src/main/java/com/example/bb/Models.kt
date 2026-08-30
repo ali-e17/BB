@@ -12,7 +12,7 @@ import java.util.UUID
 enum class UserRole { STUDENT, TEACHER, ADMIN }
 enum class ClassStatus { ACTIVE, COMPLETED }
 enum class AttendanceStatus { PRESENT, LATE, ABSENT }
-enum class AnnouncementScope { ALL_CLASSES, SELECTED_CLASSES, DIRECT_STUDENT }
+enum class AnnouncementScope { ALL_CLASSES, ALL_TEACHERS, SELECTED_CLASSES, DIRECT_STUDENT }
 enum class AnnouncementSenderRole { ADMIN, TEACHER, SYSTEM }
 enum class MessageType { TEXT_ONLY, ATTACHMENT }
 
@@ -106,8 +106,8 @@ data class ClassModel(
     var termSeason: String = "",
     var teacherId: String? = null,
     var teacherName: String = "",
-    var minPassingScore: Double = 80.0,      // 🌟 اضافه شد
-    var minConditionalScore: Double = 70.0    // 🌟 اضافه شد
+    var minPassingScore: Double = RemoteConfigManager.current().classDefaults.minPassingScore,
+    var minConditionalScore: Double = RemoteConfigManager.current().classDefaults.minConditionalScore
 ) : Serializable {
     val classTime: String
         get() = "$daysOfWeek | $startTime تا $endTime | $sessionCount جلسه"
@@ -143,6 +143,7 @@ data class Announcement(
     val senderName: String,
     val senderPhone: String,
     val senderRole: AnnouncementSenderRole,
+    val senderId: String = "",
     val createdAt: String,
     val scope: AnnouncementScope,
     val targetClassIds: List<String> = emptyList(),
@@ -152,7 +153,8 @@ data class Announcement(
     val attachmentUrl: String? = null,
     val attachmentMimeType: String? = null,
     val attachmentSizeBytes: Long? = null,
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+    val senderAvatarName: String = "avatar_no_profile"
 ) : Serializable {
     val date: String get() = createdAt
     val hasAttachment: Boolean
@@ -505,6 +507,15 @@ object AppDatabase
         save()
     }
 
+    fun mergeAnnouncements(serverAnnouncements: List<Announcement>) {
+        serverAnnouncements.forEach { incoming ->
+            announcements.removeAll { it.id == incoming.id }
+            announcements.add(incoming)
+        }
+        announcements.sortByDescending { it.createdAt }
+        save()
+    }
+
     fun getAnnouncementById(id: String): Announcement? = announcements.find { it.id == id }
 
     private fun announcementReaderKey(role: UserRole, identityKey: String): String =
@@ -526,6 +537,7 @@ object AppDatabase
 
     fun getAnnouncementTargetSummary(announcement: Announcement): String = when (announcement.scope) {
         AnnouncementScope.ALL_CLASSES -> "همه کلاس‌ها"
+        AnnouncementScope.ALL_TEACHERS -> "همه استادها"
         AnnouncementScope.DIRECT_STUDENT -> "پیام شخصی سیستمی"
         AnnouncementScope.SELECTED_CLASSES -> {
             val names = announcement.targetClassIds.mapNotNull { getClassNameById(it) }
@@ -545,6 +557,7 @@ object AppDatabase
                 val classIds = getTeacherClasses(teacherPhone).map { it.id }.toSet()
                 announcements.filter { announcement ->
                     normalizePhone(announcement.senderPhone) == normalizePhone(teacherPhone) ||
+                            announcement.scope == AnnouncementScope.ALL_TEACHERS ||
                             (announcement.scope == AnnouncementScope.ALL_CLASSES && classIds.isNotEmpty()) ||
                             (announcement.scope == AnnouncementScope.SELECTED_CLASSES &&
                                     announcement.targetClassIds.any { it in classIds })
@@ -555,6 +568,7 @@ object AppDatabase
                 announcements.filter { announcement ->
                     when (announcement.scope) {
                         AnnouncementScope.ALL_CLASSES -> student?.classId != null
+                        AnnouncementScope.ALL_TEACHERS -> false
                         AnnouncementScope.SELECTED_CLASSES ->
                             student?.classId != null && student.classId in announcement.targetClassIds
                         AnnouncementScope.DIRECT_STUDENT ->
@@ -765,6 +779,7 @@ object AppDatabase
                         .put("senderName", a.senderName)
                         .put("senderPhone", a.senderPhone)
                         .put("senderRole", a.senderRole.name)
+                        .put("senderAvatarName", a.senderAvatarName)
                         .put("createdAt", a.createdAt)
                         .put("scope", a.scope.name)
                         .put("targetClassIds", JSONArray(a.targetClassIds))
@@ -930,8 +945,8 @@ object AppDatabase
                 termSeason = o.optString("termSeason"),
                 teacherId = o.optNullableString("teacherId"),
                 teacherName = o.optString("teacherName"),
-                minPassingScore = o.optDouble("minPassingScore", 80.0),
-                minConditionalScore = o.optDouble("minConditionalScore", 70.0)
+                minPassingScore = o.optDouble("minPassingScore", RemoteConfigManager.current().classDefaults.minPassingScore),
+                minConditionalScore = o.optDouble("minConditionalScore", RemoteConfigManager.current().classDefaults.minConditionalScore)
             )
         }
 
@@ -948,7 +963,8 @@ object AppDatabase
                 AnnouncementScope.valueOf(o.optString("scope"))
             }.getOrElse {
                 when (legacyAudience) {
-                    "ALL_STUDENTS", "ALL_TEACHERS" -> AnnouncementScope.ALL_CLASSES
+                    "ALL_STUDENTS" -> AnnouncementScope.ALL_CLASSES
+                    "ALL_TEACHERS" -> AnnouncementScope.ALL_TEACHERS
                     "STUDENT" -> AnnouncementScope.DIRECT_STUDENT
                     else -> AnnouncementScope.SELECTED_CLASSES
                 }
@@ -992,7 +1008,8 @@ object AppDatabase
                 attachmentMimeType = o.optNullableString("attachmentMimeType"),
                 attachmentSizeBytes = if (o.has("attachmentSizeBytes") && !o.isNull("attachmentSizeBytes")) {
                     o.optLong("attachmentSizeBytes")
-                } else null
+                } else null,
+                senderAvatarName = o.optString("senderAvatarName", "avatar_no_profile")
             )
         }
         root.optJSONArray("announcementReads").forEachObject { o ->

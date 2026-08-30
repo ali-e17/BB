@@ -121,8 +121,9 @@ class AddEditClassActivity : BaseActivity() {
 
             // فقط برای «کلاس جدید» مقدار پیشنهادی اولیه می‌گذاریم.
             // کاربر آزاد است هر مقدار معتبر دیگری وارد کند.
-            etMinPassingScore.setText("80")
-            etMinConditionalScore.setText("70")
+            val defaults = RemoteConfigManager.current().classDefaults
+            etMinPassingScore.setText(formatBoundary(defaults.minPassingScore))
+            etMinConditionalScore.setText(formatBoundary(defaults.minConditionalScore))
         } else {
             tvTitle.text = "ویرایش اطلاعات کلاس"
             loadClassForEdit()
@@ -138,14 +139,19 @@ class AddEditClassActivity : BaseActivity() {
                 if (response.isSuccessful) {
                     classNameOptions.clear()
                     classNameOptions.addAll(response.body().orEmpty().filter { it.name.isNotBlank() })
+                    if (classNameOptions.isEmpty()) {
+                        classNameOptions.addAll(SchoolClassCatalog.classNames.map { ClassNameOption(name = it) })
+                    }
                     classNameOptionsLoaded = true
                     refreshClassNameDropdown()
-                    spinnerClassName.isEnabled = true
+                    spinnerClassName.isEnabled = classNameOptions.isNotEmpty() || existingClass != null
                     onFinished?.invoke()
                 } else {
                     classNameOptionsLoaded = false
+                    classNameOptions.clear()
+                    classNameOptions.addAll(SchoolClassCatalog.classNames.map { ClassNameOption(name = it) })
                     refreshClassNameDropdown()
-                    spinnerClassName.isEnabled = existingClass != null
+                    spinnerClassName.isEnabled = classNameOptions.isNotEmpty() || existingClass != null
                     AppToast.makeText(
                         this@AddEditClassActivity,
                         ApiErrorParser.userMessage(response, "دریافت فهرست نام کلاس‌ها کامل نشد"),
@@ -156,8 +162,10 @@ class AddEditClassActivity : BaseActivity() {
 
             override fun onFailure(call: Call<List<ClassNameOption>>, t: Throwable) {
                 classNameOptionsLoaded = false
+                classNameOptions.clear()
+                classNameOptions.addAll(SchoolClassCatalog.classNames.map { ClassNameOption(name = it) })
                 refreshClassNameDropdown()
-                spinnerClassName.isEnabled = existingClass != null
+                spinnerClassName.isEnabled = classNameOptions.isNotEmpty() || existingClass != null
                 AppToast.makeText(
                     this@AddEditClassActivity,
                     ApiErrorParser.networkMessage(t, "دریافت فهرست نام کلاس‌ها"),

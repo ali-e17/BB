@@ -6,13 +6,56 @@
       <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="اعلانات" android:textColor="@color/title_blue" android:textDirection="rtl" android:textSize="18sp" android:textStyle="bold" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
   </com.google.android.material.card.MaterialCardView>
-  <TextView android:id="@+id/txtAnnouncementsHint" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="22dp" android:layout_marginTop="14dp" android:layout_marginEnd="22dp" android:gravity="center" android:textAlignment="center" android:layoutDirection="rtl" android:text="جدیدترین اعلان‌ها در ابتدای فهرست قرار دارند" android:textColor="@color/sub_text" android:textDirection="rtl" android:textSize="12sp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/topBar"/>
+
+  <com.google.android.material.button.MaterialButtonToggleGroup
+      android:id="@+id/toggleAnnouncementBox"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="20dp"
+      android:layout_marginTop="14dp"
+      android:layout_marginEnd="20dp"
+      android:visibility="gone"
+      app:checkedButton="@id/btnAnnouncementInbox"
+      app:selectionRequired="true"
+      app:singleSelection="true"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/topBar">
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAnnouncementInbox"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_weight="1"
+        android:text="صندوق دریافت"
+        android:textAllCaps="false"
+        android:textDirection="rtl"
+        android:textSize="13sp"
+        app:strokeColor="@color/brand_orange"/>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAnnouncementSent"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_weight="1"
+        android:text="صندوق ارسال"
+        android:textAllCaps="false"
+        android:textDirection="rtl"
+        android:textSize="13sp"
+        app:strokeColor="@color/brand_orange"/>
+  </com.google.android.material.button.MaterialButtonToggleGroup>
+
+  <TextView android:id="@+id/txtAnnouncementsHint" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="22dp" android:layout_marginTop="12dp" android:layout_marginEnd="22dp" android:gravity="center" android:textAlignment="center" android:layoutDirection="rtl" android:text="جدیدترین اعلان‌های دریافتی در ابتدای فهرست قرار دارند" android:textColor="@color/sub_text" android:textDirection="rtl" android:textSize="12sp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/toggleAnnouncementBox"/>
+
   <com.google.android.material.progressindicator.CircularProgressIndicator android:id="@+id/progressAnnouncements" android:layout_width="42dp" android:layout_height="42dp" android:indeterminate="true" android:visibility="gone" app:indicatorColor="@color/title_blue" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/topBar"/>
+
   <androidx.recyclerview.widget.RecyclerView android:id="@+id/recyclerViewAnnouncements" android:layout_width="0dp" android:layout_height="0dp" android:clipToPadding="false" android:paddingTop="6dp" android:paddingBottom="92dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/txtAnnouncementsHint"/>
-  <LinearLayout android:id="@+id/announcementEmptyState" android:layout_width="0dp" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="32dp" android:visibility="gone" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/topBar">
+
+  <LinearLayout android:id="@+id/announcementEmptyState" android:layout_width="0dp" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="32dp" android:visibility="gone" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/txtAnnouncementsHint">
     <TextView android:layout_width="56dp" android:layout_height="56dp" android:gravity="center" android:text="✉" android:textColor="@color/title_blue" android:textSize="34sp"/>
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="اعلانی وجود ندارد" android:textColor="@color/main_text" android:textDirection="rtl" android:textSize="17sp" android:textStyle="bold"/>
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center" android:text="اعلان‌های جدید در این بخش نمایش داده می‌شوند." android:textColor="@color/sub_text" android:textDirection="rtl" android:textSize="13sp"/>
+    <TextView android:id="@+id/txtAnnouncementEmptyTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="اعلان دریافتی وجود ندارد" android:textColor="@color/main_text" android:textDirection="rtl" android:textSize="17sp" android:textStyle="bold"/>
+    <TextView android:id="@+id/txtAnnouncementEmptyMessage" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center" android:text="اعلان‌های جدیدی که برای شما ارسال شوند در این بخش نمایش داده می‌شوند." android:textColor="@color/sub_text" android:textDirection="rtl" android:textSize="13sp"/>
   </LinearLayout>
-  <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fabCreateMessage" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="24dp" android:layout_marginBottom="24dp" android:contentDescription="ایجاد اعلان" android:src="@android:drawable/ic_input_add" android:visibility="gone" app:backgroundTint="#FF6B00" app:elevation="6dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:tint="@android:color/white"/>
+
+  <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fabCreateMessage" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="24dp" android:layout_marginBottom="24dp" android:contentDescription="ایجاد اعلان" android:src="@android:drawable/ic_input_add" android:visibility="gone" app:backgroundTint="@color/brand_orange" app:elevation="6dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:tint="@color/white"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
