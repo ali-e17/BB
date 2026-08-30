@@ -187,9 +187,6 @@ class LoginActivity : BaseActivity() {
                                 apply()
                             }
 
-                            // بعد از ورود موفق، توکن FCM همین نصب به حساب فعلی متصل می‌شود.
-                            FcmTokenManager.syncCurrentToken(applicationContext)
-
                             when {
                                 body.paymentRequired -> openInitialPayment()
                                 body.mustChangePassword -> openForcedPasswordChange()
