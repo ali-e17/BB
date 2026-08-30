@@ -164,7 +164,7 @@ object AppNotificationCenter {
             notificationId,
             openAppIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or
-                    if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0
+                if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0
         )
 
         val builder = if (Build.VERSION.SDK_INT >= 26) {
