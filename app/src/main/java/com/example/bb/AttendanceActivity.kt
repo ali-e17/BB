@@ -717,14 +717,7 @@ class AttendanceActivity : BaseActivity() {
         uri: Uri
     ) {
 
-        val prefs = getSharedPreferences(
-            "LocalAppPrefs",
-            Context.MODE_PRIVATE
-        )
-
-        val token = prefs
-            .getString("API_TOKEN", "")
-            .orEmpty()
+        val token = SecureSessionStore.getToken(this)
 
         if (token.isBlank()) {
 

@@ -40,6 +40,9 @@ class AddEditStudentActivity : BaseActivity() {
         val foreignSection = findViewById<LinearLayout>(R.id.foreignIdentitySection)
         val layoutForeignCode = findViewById<TextInputLayout>(R.id.layoutForeignCode)
         val foreignCode = findViewById<EditText>(R.id.etForeignCode)
+        // KeyListener اصلی را نگه می‌داریم تا فیلد فقط در حالت کد واقعی اتباع قابل ویرایش باشد.
+        // در حالت شناسه تولیدشده، متن قابل انتخاب/کپی می‌ماند اما قابل تغییر نیست.
+        val editableForeignCodeKeyListener = foreignCode.keyListener
         val cbNoForeignCode = findViewById<MaterialCheckBox>(R.id.cbNoForeignCode)
         val foreignAutoHint = findViewById<TextView>(R.id.txtForeignAutoHint)
 
@@ -58,11 +61,41 @@ class AddEditStudentActivity : BaseActivity() {
 
             foreignSection.visibility = if (isForeign) View.VISIBLE else View.GONE
 
-            // وقتی «کد اتباع ندارد» فعال است فیلد قابل ویرایش نیست،
-            // اما مقدار تولیدشده داخل همین فیلد کاملاً قابل مشاهده می‌ماند.
+            // حالت کد واقعی اتباع:
+            //   فیلد مثل قبل قابل ویرایش است.
+            //
+            // حالت «کد اتباع ندارد»:
+            //   شناسه تولیدشده هرگز قابل ویرایش نیست، ولی خود TextView فعال می‌ماند
+            //   تا کاربر با نگه‌داشتن روی متن بتواند Selection/Copy استاندارد Android را ببیند.
             layoutForeignCode.isEnabled = isForeign
-            foreignCode.isEnabled = isForeign && !noForeignCode
+            foreignCode.isEnabled = isForeign
             foreignCode.alpha = if (isForeign) 1f else 0.55f
+
+            when {
+                isForeign && noForeignCode -> {
+                    foreignCode.keyListener = null
+                    foreignCode.setTextIsSelectable(true)
+                    foreignCode.isLongClickable = true
+                    foreignCode.isCursorVisible = false
+                }
+
+                isForeign -> {
+                    foreignCode.setTextIsSelectable(false)
+                    foreignCode.keyListener = editableForeignCodeKeyListener
+                    foreignCode.isFocusable = true
+                    foreignCode.isFocusableInTouchMode = true
+                    foreignCode.isLongClickable = true
+                    foreignCode.isCursorVisible = true
+                }
+
+                else -> {
+                    foreignCode.setTextIsSelectable(false)
+                    foreignCode.keyListener = editableForeignCodeKeyListener
+                    foreignCode.isFocusable = true
+                    foreignCode.isFocusableInTouchMode = true
+                    foreignCode.isCursorVisible = true
+                }
+            }
 
             layoutForeignCode.hint = if (noForeignCode) {
                 "شناسه اتباع تولیدشده (۱۲ رقم)"

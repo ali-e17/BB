@@ -216,8 +216,7 @@ class AnnouncementDetailActivity : BaseActivity() {
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
 
-            val token = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-                .getString("API_TOKEN", "").orEmpty()
+            val token = SecureSessionStore.getToken(this)
             if (token.isNotBlank()) {
                 request.addRequestHeader("Authorization", "Bearer $token")
             }

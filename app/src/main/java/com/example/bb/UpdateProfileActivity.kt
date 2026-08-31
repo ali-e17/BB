@@ -498,6 +498,7 @@ class UpdateProfileActivity : BaseActivity() {
     }
 
     private fun clearSessionAndOpenLogin() {
+        SecureSessionStore.clearToken(this)
         getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().clear().apply()
         AppToast.success(applicationContext, "با موفقیت از حساب کاربری خارج شدید")
         startActivity(Intent(this, LoginActivity::class.java).apply {

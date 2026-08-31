@@ -162,30 +162,76 @@ class ClassDetailsActivity : BaseActivity() {
     }
 
     private fun fetchStudents() {
-        RetrofitClient.instance.getStudents().enqueue(object : Callback<List<StudentModel>> {
+        /*
+         * کلاس فعال:
+         * همان رفتار قبلی؛ فهرست جاری دانش‌آموزان از get_students.php می‌آید.
+         *
+         * کلاس پایان‌یافته:
+         * students.class_id هنگام پایان ترم NULL می‌شود، بنابراین برای تاریخچه
+         * باید اعضا را از class_enrollments همان کلاس بخوانیم.
+         */
+        val call = if (isEditable) {
+            RetrofitClient.instance.getStudents()
+        } else {
+            RetrofitClient.instance.getClassMembers(classId)
+        }
+
+        call.enqueue(object : Callback<List<StudentModel>> {
             override fun onResponse(call: Call<List<StudentModel>>, response: Response<List<StudentModel>>) {
                 setLoading(false)
                 if (response.isSuccessful) {
                     allStudents.clear()
                     allStudents.addAll(response.body().orEmpty())
-                    AppDatabase.replaceStudents(allStudents)
+
+                    /*
+                     * فقط فهرست جاری را در Cache عمومی دانش‌آموزها جایگزین می‌کنیم.
+                     * اعضای تاریخی کلاس نباید classId فعلی دانش‌آموز را در Cache
+                     * دستگاه بازنویسی کنند.
+                     */
+                    if (isEditable) {
+                        AppDatabase.replaceStudents(allStudents)
+                    }
+
                     renderCurrentList()
                 } else {
-                    useLocalStudents(
-                        ApiErrorParser.userMessage(
-                            response,
-                            "دریافت فهرست دانش‌آموزان کلاس کامل نشد"
-                        ) + "؛ اطلاعات ذخیره‌شده دستگاه نمایش داده شدند"
-                    )
+                    if (isEditable) {
+                        useLocalStudents(
+                            ApiErrorParser.userMessage(
+                                response,
+                                "دریافت فهرست دانش‌آموزان کلاس کامل نشد"
+                            ) + "؛ اطلاعات ذخیره‌شده دستگاه نمایش داده شدند"
+                        )
+                    } else {
+                        allStudents.clear()
+                        renderCurrentList()
+                        AppToast.makeText(
+                            this@ClassDetailsActivity,
+                            ApiErrorParser.userMessage(
+                                response,
+                                "دریافت اعضای تاریخی کلاس کامل نشد"
+                            ),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
 
             override fun onFailure(call: Call<List<StudentModel>>, t: Throwable) {
                 setLoading(false)
-                useLocalStudents(
-                    ApiErrorParser.networkMessage(t, "دریافت فهرست دانش‌آموزان کلاس") +
-                        " اطلاعات ذخیره‌شده دستگاه نمایش داده شدند."
-                )
+                if (isEditable) {
+                    useLocalStudents(
+                        ApiErrorParser.networkMessage(t, "دریافت فهرست دانش‌آموزان کلاس") +
+                            " اطلاعات ذخیره‌شده دستگاه نمایش داده شدند."
+                    )
+                } else {
+                    allStudents.clear()
+                    renderCurrentList()
+                    AppToast.makeText(
+                        this@ClassDetailsActivity,
+                        ApiErrorParser.networkMessage(t, "دریافت اعضای تاریخی کلاس"),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         })
     }

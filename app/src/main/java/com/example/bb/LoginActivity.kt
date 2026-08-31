@@ -47,7 +47,7 @@ class LoginActivity : BaseActivity() {
             prefs.edit().putInt("AUTH_SCHEMA_VERSION", 3).apply()
         }
 
-        val savedToken = prefs.getString("API_TOKEN", "").orEmpty()
+        val savedToken = SecureSessionStore.getToken(this)
         val hasSession = prefs.getBoolean("IS_LOGGED_IN", false) &&
                 savedToken.isNotBlank() && !isTokenExpired(prefs.getString("API_TOKEN_EXPIRES_AT", null))
 
@@ -170,6 +170,11 @@ class LoginActivity : BaseActivity() {
                         val body = response.body()
 
                         if (response.isSuccessful && body?.status == "success") {
+                            SecureSessionStore.saveToken(
+                                this@LoginActivity,
+                                body.token.orEmpty()
+                            )
+
                             prefs.edit().apply {
                                 putBoolean("IS_LOGGED_IN", true)
                                 putString("CURRENT_USER_ROLE", body.role ?: "STUDENT")
@@ -178,7 +183,6 @@ class LoginActivity : BaseActivity() {
                                 putString("CURRENT_USER_ID", body.userId.orEmpty())
                                 putString("CURRENT_DISPLAY_NAME", body.displayName ?: "کاربر")
                                 putString("CURRENT_AVATAR_NAME", body.avatarName.orEmpty())
-                                putString("API_TOKEN", body.token.orEmpty())
                                 putString("API_TOKEN_EXPIRES_AT", body.tokenExpiresAt.orEmpty())
                                 putBoolean("MUST_CHANGE_PASSWORD", body.mustChangePassword)
                                 putString("INITIAL_ACCESS_STATUS", body.initialAccessStatus)
@@ -236,6 +240,7 @@ class LoginActivity : BaseActivity() {
     }
 
     private fun clearExpiredSession() {
+        SecureSessionStore.clearToken(this)
         getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().apply {
             remove("IS_LOGGED_IN")
             remove("API_TOKEN")

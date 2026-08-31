@@ -183,6 +183,7 @@ class ProfileActivity : BaseActivity() {
     }
 
     private fun clearSession() {
+        SecureSessionStore.clearToken(this)
         getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE).edit().apply {
             remove("IS_LOGGED_IN")
             remove("CURRENT_USER_ROLE")

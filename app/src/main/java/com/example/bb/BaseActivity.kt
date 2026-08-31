@@ -645,13 +645,7 @@ open class BaseActivity : AppCompatActivity() {
                 Context.MODE_PRIVATE
             )
 
-        val token =
-            prefs
-                .getString(
-                    "API_TOKEN",
-                    ""
-                )
-                .orEmpty()
+        val token = SecureSessionStore.getToken(this)
 
         if (token.isBlank()) {
             return false

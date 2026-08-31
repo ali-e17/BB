@@ -392,9 +392,16 @@ object RemoteConfigManager {
         return if (url.endsWith('/')) url else "$url/"
     }
 
+    /**
+     * Security rule for URLs fetched by the app itself:
+     * Remote Config, API base URL, website metadata and remote logo must use HTTPS.
+     *
+     * If an old cache or server config contains http://, it is rejected and the
+     * last safe/built-in HTTPS fallback remains in use.
+     */
     private fun sanitizeHttpUrl(value: String?): String? {
         val trimmed = value?.trim().orEmpty()
-        if (!trimmed.startsWith("https://", true) && !trimmed.startsWith("http://", true)) return null
+        if (!trimmed.startsWith("https://", true)) return null
         return trimmed
     }
 

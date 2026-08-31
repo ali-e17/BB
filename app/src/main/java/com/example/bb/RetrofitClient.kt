@@ -200,6 +200,7 @@ interface ApiService
     @POST("update_avatar.php") fun updateAvatar(@Body request:UpdateAvatarRequest):Call<ApiResponse>
 
     @GET("get_students.php") fun getStudents():Call<List<StudentModel>>
+    @GET("get_class_members.php") fun getClassMembers(@Query("class_id") classId:String):Call<List<StudentModel>>
     @POST("add_student.php") fun addStudent(@Body request:StudentSaveRequest):Call<ApiResponse>
     @POST("generate_foreign_code.php") fun generateForeignCode():Call<GenerateForeignCodeResponse>
     @POST("assign_class.php") fun assignClass(@Body request:AssignClassRequest):Call<ApiResponse>
@@ -280,11 +281,12 @@ interface ApiService
 private class SessionInterceptor(private val context:Context):Interceptor {
     private val prefs=context.getSharedPreferences("LocalAppPrefs",Context.MODE_PRIVATE)
     override fun intercept(chain:Interceptor.Chain):okhttp3.Response {
-        val request=chain.request(); val token=prefs.getString("API_TOKEN",null).orEmpty()
+        val request=chain.request(); val token=SecureSessionStore.getToken(context)
         val builder=request.newBuilder().header("Accept","application/json")
         if(token.isNotBlank()) builder.header("Authorization","Bearer $token")
         val response=chain.proceed(builder.build())
         if(response.code==401 && !request.url.encodedPath.endsWith("login.php")) {
+            SecureSessionStore.clearToken(context)
             prefs.edit().clear().apply()
             Handler(Looper.getMainLooper()).post {
                 context.startActivity(Intent(context,LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))

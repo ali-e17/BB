@@ -13,7 +13,7 @@ class AppNotificationJobService : JobService() {
         executor.execute {
             try {
                 val prefs = getSharedPreferences("LocalAppPrefs", Context.MODE_PRIVATE)
-                val token = prefs.getString("API_TOKEN", "").orEmpty()
+                val token = SecureSessionStore.getToken(this)
                 val userId = prefs.getString("CURRENT_USER_ID", "").orEmpty()
                 val role = runCatching {
                     UserRole.valueOf(
