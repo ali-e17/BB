@@ -6,17 +6,17 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <application android:usesCleartextTraffic="false" android:name=".BBApplication" android:allowBackup="true" android:dataExtractionRules="@xml/data_extraction_rules" android:fullBackupContent="@xml/backup_rules" android:label="بیان برتر" android:icon="@drawable/app_logo" android:roundIcon="@drawable/app_logo" android:supportsRtl="true" android:theme="@style/Theme.BB.Vazirmatn">
-        <activity android:name="com.example.bb.LoginActivity" android:exported="true">
+    <application android:usesCleartextTraffic="false" android:name="ir.bayanebartar.app.BBApplication" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:fullBackupContent="@xml/backup_rules" android:label="بیان برتر" android:icon="@drawable/app_logo" android:roundIcon="@drawable/app_logo" android:supportsRtl="true" android:theme="@style/Theme.BB.Vazirmatn">
+        <activity android:name="ir.bayanebartar.app.LoginActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" android:exported="false"/>
-        <activity android:name=".ProfileActivity" android:exported="false"/>
-        <activity android:name=".UpdateProfileActivity" android:exported="false"/>
-        <activity android:name=".InitialPaymentActivity" android:exported="true" android:launchMode="singleTop">
+        <activity android:name="ir.bayanebartar.app.MainActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.ProfileActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.UpdateProfileActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.InitialPaymentActivity" android:exported="true" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -24,30 +24,30 @@
                 <data android:scheme="bbapp" android:host="payment-result"/>
             </intent-filter>
         </activity>
-        <activity android:name=".AnnouncementsActivity" android:exported="false"/>
-        <activity android:name=".AnnouncementDetailActivity" android:exported="false"/>
-        <activity android:name=".CreateAnnouncementActivity" android:exported="false"/>
-        <activity android:name=".ReportCardSetupActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
-        <activity android:name=".GradeEntryActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
-        <activity android:name=".ReportCardViewActivity" android:exported="false"/>
-        <activity android:name=".StudentManagementActivity" android:exported="false"/>
-        <activity android:name=".AddEditStudentActivity" android:exported="false"/>
-        <activity android:name=".ClassManagementActivity" android:exported="false"/>
-        <activity android:name=".ClassDetailsActivity" android:exported="false"/>
-        <activity android:name=".TeacherManagementActivity" android:exported="false"/>
-        <activity android:name=".AssignClassActivity" android:exported="false"/>
-        <activity android:name=".CompletedClassesActivity" android:exported="false"/>
-        <activity android:name=".AttendanceActivity" android:exported="false"/>
-        <activity android:name=".DictionaryActivity" android:exported="false"/>
-        <activity android:name=".AddEditTeacherActivity" android:exported="false"/>
-        <activity android:name=".AddEditClassActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
-        <activity android:name=".TeacherHistoryActivity"/>
-        <activity android:name=".ForceChangePasswordActivity" android:exported="false"/>
-        <activity android:name=".ResultMessagesActivity" android:exported="false"/>
-        <activity android:name=".TermHistoryActivity" android:exported="false"/>
-        <activity android:name=".TrashBinActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.AnnouncementsActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.AnnouncementDetailActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.CreateAnnouncementActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.ReportCardSetupActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name="ir.bayanebartar.app.GradeEntryActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name="ir.bayanebartar.app.ReportCardViewActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.StudentManagementActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.AddEditStudentActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.ClassManagementActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.ClassDetailsActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.TeacherManagementActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.AssignClassActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.CompletedClassesActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.AttendanceActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.DictionaryActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.AddEditTeacherActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.AddEditClassActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name="ir.bayanebartar.app.TeacherHistoryActivity"/>
+        <activity android:name="ir.bayanebartar.app.ForceChangePasswordActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.ResultMessagesActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.TermHistoryActivity" android:exported="false"/>
+        <activity android:name="ir.bayanebartar.app.TrashBinActivity" android:exported="false"/>
         <service
-            android:name=".AppNotificationJobService"
+            android:name="ir.bayanebartar.app.AppNotificationJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false"/>
     </application>

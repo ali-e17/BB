@@ -191,8 +191,8 @@ Core SplashScreen 1.0.1
 ## ⚙️ Android Configuration
 
 ```text
-Application ID : com.example.bb
-Namespace      : com.example.bb
+Application ID : ir.bayanebartar.app
+Namespace      : ir.bayanebartar.app
 
 Min SDK        : 24
 Target SDK     : 36

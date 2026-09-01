@@ -9,7 +9,7 @@
   <ScrollView android:layout_width="0dp" android:layout_height="0dp" android:clipToPadding="false" android:fillViewport="true" android:paddingBottom="20dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toBottomOf="@id/reportToolbar">
     <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="12dp" android:paddingTop="14dp" android:paddingEnd="12dp" android:paddingBottom="24dp">
       <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="5dp" app:cardElevation="10dp">
-        <com.example.bb.A4PaperLayout android:id="@+id/reportPrintableArea" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#FFFFFF" android:layoutDirection="ltr">
+        <ir.bayanebartar.app.A4PaperLayout android:id="@+id/reportPrintableArea" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#FFFFFF" android:layoutDirection="ltr">
           <androidx.constraintlayout.widget.Guideline android:id="@+id/guideHeaderBottom" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" app:layout_constraintGuide_percent="0.145"/>
           <androidx.constraintlayout.widget.Guideline android:id="@+id/guideTitleBottom" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" app:layout_constraintGuide_percent="0.205"/>
           <androidx.constraintlayout.widget.Guideline android:id="@+id/guideBodyBottom" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" app:layout_constraintGuide_percent="0.735"/>
@@ -105,7 +105,7 @@
             </LinearLayout>
             <TextView android:id="@+id/txtReportDate" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:gravity="center" android:maxLines="1" android:text="Date: —" android:textColor="#667085" android:textSize="8sp"/>
           </LinearLayout>
-        </com.example.bb.A4PaperLayout>
+        </ir.bayanebartar.app.A4PaperLayout>
       </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
   </ScrollView>

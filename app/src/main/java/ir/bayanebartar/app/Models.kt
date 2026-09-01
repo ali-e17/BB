@@ -1,0 +1,1089 @@
+package ir.bayanebartar.app
+
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.Serializable
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
+
+enum class UserRole { STUDENT, TEACHER, ADMIN }
+enum class ClassStatus { ACTIVE, COMPLETED }
+enum class AttendanceStatus { PRESENT, LATE, ABSENT }
+enum class AnnouncementScope { ALL_CLASSES, ALL_TEACHERS, SELECTED_CLASSES, DIRECT_STUDENT }
+enum class AnnouncementSenderRole { ADMIN, TEACHER, SYSTEM }
+enum class MessageType { TEXT_ONLY, ATTACHMENT }
+
+data class AuthenticatedUser(val role: UserRole, val phone: String, val displayName: String)
+
+data class AdminModel(
+    var name: String,
+    var phone: String,
+    var nationalId: String,
+    var password: String,
+    var avatarName: String? = "avatar_no_profile" // 🌟
+)
+
+data class StudentModel(
+    val id: String = "",
+    var firstName: String,
+    var lastName: String,
+    var studentCode: String = "",
+    var phone: String,
+    var nationalId: String = "",
+    var password: String = "",
+    var classId: String? = null,
+    var registrationDate: String = AppDatabase.today(),
+    var isActive: Boolean = true,
+    var avatarName: String? = "avatar_no_profile",
+    var accountStatus: String = "ACTIVE",
+
+    // NATIONAL = ایرانی / FOREIGN = اتباع
+    var identityType: String = "NATIONAL",
+
+    // ایرانی = کد ملی / اتباع = کد یا شناسه ۱۲ رقمی اتباع
+    var identityCode: String = "",
+
+    // فقط برای دانش‌آموز اتباع پر می‌شود
+    var foreignCode: String = "",
+
+    // true یعنی شناسه ۱۲ رقمی را Backend ساخته است
+    var foreignCodeGenerated: Boolean = false,
+
+    // Username واقعی حساب کاربری
+    var username: String = ""
+) : Serializable {
+
+    val name: String
+        get() = "$firstName $lastName"
+
+    val isForeign: Boolean
+        get() = identityType.equals("FOREIGN", ignoreCase = true)
+
+    val displayIdentityCode: String
+        get() = identityCode.ifBlank {
+            if (isForeign) foreignCode else nationalId
+        }
+}
+
+data class TeacherModel(
+    val id: String = "",
+    var firstName: String,
+    var lastName: String,
+    var phone: String,
+    var nationalId: String,
+    var password: String = "",
+    var isActive: Boolean = true,
+    var classIds: String = "",
+    var avatarName: String? = "avatar_no_profile",
+    var isManagement: Boolean = false
+) : java.io.Serializable {
+
+    val name: String
+        get() = "$firstName $lastName"
+
+    val username: String
+        get() = nationalId
+}
+
+data class ClassModel(
+    val id: String = "",
+    var className: String,
+    var startTime: String,
+    var endTime: String,
+    var daysOfWeek: String,
+    var sessionCount: Int,
+    var classLevel: String = "",
+    var teacherPhone: String? = null,
+    var status: ClassStatus = ClassStatus.ACTIVE,
+    var createdAt: String = AppDatabase.today(),
+    var completedAt: String? = null,
+    var classCode: String = "",
+    var bookName: String = "",
+    var termYear: String = "",
+    var termSeason: String = "",
+    var teacherId: String? = null,
+    var teacherName: String = "",
+    var minPassingScore: Double = RemoteConfigManager.current().classDefaults.minPassingScore,
+    var minConditionalScore: Double = RemoteConfigManager.current().classDefaults.minConditionalScore
+) : Serializable {
+    val classTime: String
+        get() = "$daysOfWeek | $startTime تا $endTime | $sessionCount جلسه"
+}
+
+data class EnrollmentModel(
+    val id: String,
+    val studentId: String,
+    val classId: String,
+    val startedAt: String,
+    var endedAt: String? = null
+)
+
+data class AttendanceItem(
+    val studentId: String,
+    var status: AttendanceStatus = AttendanceStatus.PRESENT,
+    var delayMinutes: Int = 0
+)
+
+data class AttendanceSession(
+    val id: String,
+    val classId: String,
+    val date: String,
+    val teacherPhone: String,
+    val items: MutableList<AttendanceItem>,
+    val finalizedAt: String
+)
+
+data class Announcement(
+    val id: String,
+    val title: String,
+    val body: String,
+    val senderName: String,
+    val senderPhone: String,
+    val senderRole: AnnouncementSenderRole,
+    val senderId: String = "",
+    val createdAt: String,
+    val scope: AnnouncementScope,
+    val targetClassIds: List<String> = emptyList(),
+    val directStudentId: String? = null,
+    val type: MessageType = MessageType.TEXT_ONLY,
+    val attachmentName: String? = null,
+    val attachmentUrl: String? = null,
+    val attachmentMimeType: String? = null,
+    val attachmentSizeBytes: Long? = null,
+    val isRead: Boolean = false,
+    val senderAvatarName: String = "avatar_no_profile"
+) : Serializable {
+    val date: String get() = createdAt
+    val hasAttachment: Boolean
+        get() = type == MessageType.ATTACHMENT && !attachmentUrl.isNullOrBlank()
+}
+
+data class AnnouncementReadModel(
+    val announcementId: String,
+    val readerKey: String,
+    val readAt: String
+)
+
+data class ReportCardModel(
+    val id: String,
+    val classId: String,
+    val studentId: String,
+    val criteria: List<GradeComponent>,
+    val scores: Map<String, Int>,
+    val publishedAt: String,
+    val updatedAt: String = publishedAt,
+    val revision: Int = 1
+)
+
+data class ReportCardDraftModel(
+    val classId: String,
+    val criteria: List<GradeComponent>,
+    val scoresByStudent: Map<String, Map<String, Int?>>,
+    val updatedAt: String
+)
+
+data class ServerAttendanceRecord(
+    val id: String,
+    val classId: String,
+    val studentId: String,
+    val date: String,
+    val teacherPhone: String,
+    val status: String,
+    val delayMinutes: Int
+)
+
+data class SaveAttendanceRequest(
+    val classId: String,
+    val date: String,
+    val teacherPhone: String,
+    val items: List<AttendanceItem>
+)
+
+data class UpdatePasswordRequest(
+    val oldPassword: String,
+    val newPassword: String
+)
+
+object AppDatabase
+{
+    private const val PREFS_NAME = "AppDatabasePrefs"
+    private const val DATA_KEY = "app_data_v2"
+
+    private lateinit var appContext: Context
+    private var admin = AdminModel("مدیر آموزشگاه", "09120000001", "0012345678", "")
+    private val students = mutableListOf<StudentModel>()
+    private val teachers = mutableListOf<TeacherModel>()
+    private val classes = mutableListOf<ClassModel>()
+    private val enrollments = mutableListOf<EnrollmentModel>()
+    private val attendanceSessions = mutableListOf<AttendanceSession>()
+    private val announcements = mutableListOf<Announcement>()
+    private val announcementReads = mutableListOf<AnnouncementReadModel>()
+    private val reportCards = mutableListOf<ReportCardModel>()
+    private val reportCardDrafts = mutableListOf<ReportCardDraftModel>()
+
+    fun init(context: Context) {
+        appContext = context.applicationContext
+        val raw = prefs().getString(DATA_KEY, null)
+        if (raw.isNullOrBlank()) {
+            migrateLegacyData()
+            if (teachers.isEmpty()) {
+                teachers += TeacherModel(UUID.randomUUID().toString(), "استاد علی", "علوی", "09120000002", "1234567890", "1234567890")
+            }
+            save()
+        } else {
+            load(JSONObject(raw))
+        }
+    }
+
+    fun today(): String = SimpleDateFormat("yyyy/MM/dd", Locale.US).format(Date())
+    fun currentTimestamp(): String = now()
+    private fun now(): String = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.US).format(Date())
+    private fun prefs() = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    @Deprecated("احراز هویت فقط باید از سرور انجام شود")
+    fun authenticate(username: String, password: String): AuthenticatedUser? = null
+
+    fun getDisplayName(role: UserRole, identity: String): String = when (role) {
+        UserRole.ADMIN -> admin.name
+        UserRole.TEACHER -> teachers.find { it.id == identity || it.nationalId == identity }?.name ?: identity
+        UserRole.STUDENT -> students.find {
+            it.id == identity ||
+                    it.nationalId == identity ||
+                    it.foreignCode == identity ||
+                    it.username == identity
+        }?.name ?: identity
+    }
+
+    @Deprecated("تغییر رمز فقط باید از API امن انجام شود")
+    fun updatePassword(role: UserRole, identity: String, oldPassword: String, newPassword: String): Boolean = false
+
+    fun getAllStudents(): List<StudentModel> = students.toList()
+
+    fun replaceStudents(serverStudents: List<StudentModel>) {
+        students.clear()
+        students.addAll(serverStudents.distinctBy { it.id })
+        save()
+    }
+
+    fun getStudentById(id: String): StudentModel? = students.find { it.id == id }
+    fun getStudentByUsername(phone: String): StudentModel? {
+        val normalized = normalizePhone(phone)
+        return students.find { normalizePhone(it.phone) == normalized }
+    }
+    fun searchStudents(query: String): List<StudentModel> = students.filter {
+        it.name.contains(query, true) ||
+                it.studentCode.contains(query, true) ||
+                it.phone.contains(query) ||
+                it.displayIdentityCode.contains(query) ||
+                it.username.contains(query)
+    }
+    fun getStudentsInClass(classId: String): List<StudentModel> = students.filter { it.classId == classId && it.isActive }
+    fun getStudentsEverInClass(classId: String): List<StudentModel> {
+        val ids = enrollments.filter { it.classId == classId }.map { it.studentId }.toSet()
+        return students.filter { it.id in ids }
+    }
+
+    fun upsertStudent(student: StudentModel, originalPhone: String? = null): String? {
+        // شماره تماس والد می‌تواند مشترک باشد؛ شناسه هویتی و کد دانش‌آموزی باید یکتا باشند.
+        if (student.isForeign) {
+            if (student.foreignCode.isNotBlank() && students.any {
+                    it.id != student.id &&
+                            it.identityType.equals("FOREIGN", ignoreCase = true) &&
+                            it.foreignCode == student.foreignCode
+                }) {
+                return "این کد اتباع قبلاً ثبت شده است"
+            }
+        } else {
+            if (student.nationalId.isNotBlank() && students.any {
+                    it.id != student.id &&
+                            !it.identityType.equals("FOREIGN", ignoreCase = true) &&
+                            it.nationalId == student.nationalId
+                }) {
+                return "این کد ملی قبلاً ثبت شده است"
+            }
+        }
+
+        if (students.any {
+                it.studentCode == student.studentCode &&
+                        it.id != student.id &&
+                        student.studentCode.isNotBlank()
+            }) {
+            return "این کد دانش‌آموزی قبلاً ثبت شده است"
+        }
+
+        val index = students.indexOfFirst { it.id == student.id }
+        if (index >= 0) students[index] = student else students += student
+        save()
+        return null
+    }
+
+    fun setStudentActive(id: String, active: Boolean): Boolean {
+        val student = getStudentById(id) ?: return false
+        if (!active && student.classId != null) return false
+        student.isActive = active
+        save()
+        return true
+    }
+
+    fun assignClassToStudent(phone: String, classId: String?, context: Context? = null) {
+        val student = getStudentByUsername(phone) ?: return
+        if (student.classId == classId) return
+        enrollments.find { it.studentId == student.id && it.endedAt == null }?.endedAt = today()
+        student.classId = classId
+        if (classId != null) {
+            enrollments += EnrollmentModel(UUID.randomUUID().toString(), student.id, classId, today())
+        }
+        save()
+    }
+
+    fun getEnrollmentHistory(studentId: String): List<EnrollmentModel> = enrollments.filter { it.studentId == studentId }
+
+    fun getAllClasses(includeCompleted: Boolean = true): List<ClassModel> =
+        classes.filter { includeCompleted || it.status == ClassStatus.ACTIVE }.toList()
+    fun getAllCreatedClasses(): List<ClassModel> = getAllClasses()
+    fun getClassById(id: String): ClassModel? = classes.find { it.id == id }
+    fun getClassNameById(id: String?): String? = classes.find { it.id == id }?.className
+
+    fun addClass(model: ClassModel, context: Context? = null) {
+        upsertClass(model)
+    }
+
+    fun upsertClass(model: ClassModel) {
+        val index = classes.indexOfFirst { it.id == model.id }
+        if (index >= 0) classes[index] = model else classes += model
+        syncTeacherClassIds()
+        save()
+    }
+
+    fun replaceClasses(serverClasses: List<ClassModel>) {
+        classes.clear()
+        classes.addAll(serverClasses.distinctBy { it.id })
+        syncTeacherClassIds()
+        save()
+    }
+
+    fun completeClass(classId: String): Boolean {
+        val model = getClassById(classId) ?: return false
+        model.status = ClassStatus.COMPLETED
+        model.completedAt = today()
+        getStudentsInClass(classId).forEach { assignClassToStudent(it.phone, null) }
+        syncTeacherClassIds()
+        save()
+        return true
+    }
+
+    @Deprecated("کلاس تاریخی نباید حذف شود")
+    fun deleteClass(classId: String, context: Context? = null) { completeClass(classId) }
+
+    fun getAllTeachers(): List<TeacherModel> = teachers.toList()
+
+    fun replaceTeachersLocally(serverTeachers: List<TeacherModel>) {
+        teachers.clear()
+        teachers.addAll(serverTeachers.distinctBy { it.id })
+        save()
+    }
+
+    fun getTeacherByUsername(phone: String): TeacherModel? {
+        val normalized = normalizePhone(phone)
+        return teachers.find { normalizePhone(it.username) == normalized }
+    }
+
+    fun upsertTeacher(teacher: TeacherModel, originalPhone: String? = null): String? {
+        if (teachers.any { it.username == teacher.username && it.username != originalPhone }) return "این شماره تلفن قبلاً ثبت شده است"
+        if (teachers.any { it.nationalId == teacher.nationalId && it.username != originalPhone }) return "این کد ملی قبلاً ثبت شده است"
+        val index = teachers.indexOfFirst { it.username == originalPhone || it.username == teacher.username }
+        if (index >= 0) {
+            val oldPhone = teachers[index].username
+            teachers[index] = teacher
+            if (oldPhone != teacher.username) classes.filter { it.teacherPhone == oldPhone }.forEach { it.teacherPhone = teacher.username }
+        } else teachers += teacher
+        syncTeacherClassIds()
+        save()
+        return null
+    }
+
+    fun addTeacher(teacher: TeacherModel, context: Context? = null) { upsertTeacher(teacher) }
+
+    fun getAvailableClasses(): List<ClassModel> = classes.filter {
+        it.status == ClassStatus.ACTIVE && it.teacherPhone == null
+    }
+
+    fun getTeacherClasses(phone: String): List<ClassModel> {
+        val normalized = normalizePhone(phone)
+        return classes.filter {
+            normalizePhone(it.teacherPhone.orEmpty()) == normalized && it.status == ClassStatus.ACTIVE
+        }
+    }
+
+    fun getTeacherClassesById(teacherId: String): List<ClassModel> = classes.filter {
+        it.teacherId == teacherId && it.status == ClassStatus.ACTIVE
+    }
+
+    fun assignClassToTeacher(phone: String, classId: String, context: Context? = null) {
+        val model = getClassById(classId) ?: return
+        if (model.status != ClassStatus.ACTIVE || model.teacherPhone != null) return
+        model.teacherPhone = phone
+        syncTeacherClassIds()
+        save()
+    }
+
+    fun removeClassFromTeacher(phone: String, classId: String, context: Context? = null) {
+        getClassById(classId)?.takeIf { it.teacherPhone == phone }?.teacherPhone = null
+        syncTeacherClassIds()
+        save()
+    }
+
+    fun toggleTeacherArchiveStatus(phone: String, context: Context? = null): Boolean {
+        val teacher = getTeacherByUsername(phone) ?: return false
+        if (teacher.isActive && getTeacherClasses(phone).isNotEmpty()) return false
+        teacher.isActive = !teacher.isActive
+        save()
+        return true
+    }
+
+    private fun normalizePhone(value: String): String = value
+        .replace(" ", "")
+        .replace("-", "")
+        .removePrefix("+98")
+        .removePrefix("0098")
+        .removePrefix("0")
+
+    private fun syncTeacherClassIds() {
+        teachers.forEach { teacher ->
+            val normalizedPhone = normalizePhone(teacher.phone)
+            teacher.classIds = classes.filter {
+                it.status == ClassStatus.ACTIVE &&
+                        (it.teacherId == teacher.id ||
+                                (it.teacherId.isNullOrBlank() && normalizePhone(it.teacherPhone.orEmpty()) == normalizedPhone))
+            }.joinToString(",") { it.id }
+        }
+    }
+
+    fun getAttendance(classId: String, date: String): AttendanceSession? =
+        attendanceSessions.find { it.classId == classId && it.date == date }
+
+    fun getAttendanceHistory(classId: String): List<AttendanceSession> =
+        attendanceSessions.filter { it.classId == classId }.sortedByDescending { it.date }
+
+    fun finalizeAttendance(classId: String, date: String, teacherPhone: String, items: List<AttendanceItem>): Boolean {
+        if (getAttendance(classId, date) != null) return false
+        val normalized = items.map {
+            it.copy(delayMinutes = if (it.status == AttendanceStatus.LATE) it.delayMinutes.coerceAtLeast(1) else 0)
+        }.toMutableList()
+        attendanceSessions += AttendanceSession(UUID.randomUUID().toString(), classId, date, teacherPhone, normalized, now())
+        val className = getClassNameById(classId) ?: "کلاس"
+        normalized.filter { it.status != AttendanceStatus.PRESENT }.forEach { item ->
+            val student = getStudentById(item.studentId) ?: return@forEach
+            val isLate = item.status == AttendanceStatus.LATE
+            announcements += Announcement(
+                id = UUID.randomUUID().toString(),
+                title = if (isLate) "ثبت تأخیر" else "ثبت غیبت",
+                body = if (isLate) "برای ${student.name} در $className، ${item.delayMinutes} دقیقه تأخیر ثبت شد."
+                else "برای ${student.name} در $className غیبت ثبت شد.",
+                senderName = "سامانه حضور و غیاب",
+                senderPhone = teacherPhone,
+                senderRole = AnnouncementSenderRole.SYSTEM,
+                createdAt = now(),
+                scope = AnnouncementScope.DIRECT_STUDENT,
+                directStudentId = student.id
+            )
+        }
+        save()
+        return true
+    }
+
+    fun addAnnouncement(announcement: Announcement) {
+        announcements.removeAll { it.id == announcement.id }
+        announcements.add(0, announcement)
+        save()
+    }
+
+    fun replaceAnnouncements(serverAnnouncements: List<Announcement>) {
+        announcements.clear()
+        announcements.addAll(serverAnnouncements.distinctBy { it.id })
+        save()
+    }
+
+    fun mergeAnnouncements(serverAnnouncements: List<Announcement>) {
+        serverAnnouncements.forEach { incoming ->
+            announcements.removeAll { it.id == incoming.id }
+            announcements.add(incoming)
+        }
+        announcements.sortByDescending { it.createdAt }
+        save()
+    }
+
+    fun getAnnouncementById(id: String): Announcement? = announcements.find { it.id == id }
+
+    private fun announcementReaderKey(role: UserRole, identityKey: String): String =
+        "${role.name}:$identityKey"
+
+    fun isAnnouncementRead(id: String, role: UserRole, identityKey: String): Boolean {
+        val key = announcementReaderKey(role, identityKey)
+        return announcementReads.any { it.announcementId == id && it.readerKey == key }
+    }
+
+    fun markAnnouncementRead(id: String, role: UserRole, identityKey: String) {
+        if (isAnnouncementRead(id, role, identityKey)) return
+        announcementReads += AnnouncementReadModel(id, announcementReaderKey(role, identityKey), now())
+        save()
+    }
+
+    fun getUnreadAnnouncementCount(role: UserRole, identityKey: String): Int =
+        getAnnouncementsFor(role, identityKey).count { !isAnnouncementRead(it.id, role, identityKey) }
+
+    fun getAnnouncementTargetSummary(announcement: Announcement): String = when (announcement.scope) {
+        AnnouncementScope.ALL_CLASSES -> "همه کلاس‌ها"
+        AnnouncementScope.ALL_TEACHERS -> "همه استادها"
+        AnnouncementScope.DIRECT_STUDENT -> "پیام شخصی سیستمی"
+        AnnouncementScope.SELECTED_CLASSES -> {
+            val names = announcement.targetClassIds.mapNotNull { getClassNameById(it) }
+            when {
+                names.isEmpty() -> "کلاس انتخاب‌شده"
+                names.size <= 2 -> names.joinToString("، ")
+                else -> "${names.take(2).joinToString("، ")} و ${names.size - 2} کلاس دیگر"
+            }
+        }
+    }
+
+    fun getAnnouncementsFor(role: UserRole, identityKey: String): List<Announcement> {
+        val visible = when (role) {
+            UserRole.ADMIN -> announcements
+            UserRole.TEACHER -> {
+                val teacherPhone = teachers.find { it.id == identityKey }?.phone ?: identityKey
+                val classIds = getTeacherClasses(teacherPhone).map { it.id }.toSet()
+                announcements.filter { announcement ->
+                    normalizePhone(announcement.senderPhone) == normalizePhone(teacherPhone) ||
+                            announcement.scope == AnnouncementScope.ALL_TEACHERS ||
+                            (announcement.scope == AnnouncementScope.ALL_CLASSES && classIds.isNotEmpty()) ||
+                            (announcement.scope == AnnouncementScope.SELECTED_CLASSES &&
+                                    announcement.targetClassIds.any { it in classIds })
+                }
+            }
+            UserRole.STUDENT -> {
+                val student = getStudentById(identityKey) ?: getStudentByUsername(identityKey)
+                announcements.filter { announcement ->
+                    when (announcement.scope) {
+                        AnnouncementScope.ALL_CLASSES -> student?.classId != null
+                        AnnouncementScope.ALL_TEACHERS -> false
+                        AnnouncementScope.SELECTED_CLASSES ->
+                            student?.classId != null && student.classId in announcement.targetClassIds
+                        AnnouncementScope.DIRECT_STUDENT ->
+                            announcement.directStudentId == student?.id
+                    }
+                }
+            }
+        }
+        return visible.sortedByDescending { it.createdAt }
+    }
+
+    fun saveReportCardDraft(classId: String, criteria: List<GradeComponent>, grades: List<StudentGrade>) {
+        val draft = ReportCardDraftModel(
+            classId = classId,
+            criteria = criteria.map { it.copy() },
+            scoresByStudent = grades.associate { grade ->
+                grade.id to criteria.associate { criterion ->
+                    criterion.id to grade.scores[criterion.id]
+                }
+            },
+            updatedAt = now()
+        )
+        val index = reportCardDrafts.indexOfFirst { it.classId == classId }
+        if (index >= 0) reportCardDrafts[index] = draft else reportCardDrafts += draft
+        save()
+    }
+
+    fun getReportCardDraft(classId: String): ReportCardDraftModel? =
+        reportCardDrafts.find { it.classId == classId }
+
+    fun getPublishedReportCardsForClass(classId: String): List<ReportCardModel> =
+        reportCards.filter { it.classId == classId }
+
+    fun hasPublishedReportCards(classId: String): Boolean =
+        reportCards.any { it.classId == classId }
+
+    fun getSavedReportCardCriteria(classId: String): List<GradeComponent>? {
+        val draftCriteria = getReportCardDraft(classId)?.criteria
+        if (!draftCriteria.isNullOrEmpty()) return draftCriteria.map { it.copy() }
+        return reportCards.firstOrNull { it.classId == classId }?.criteria?.map { it.copy() }
+    }
+
+    fun publishReportCards(classId: String, criteria: List<GradeComponent>, grades: List<StudentGrade>) {
+        val timestamp = now()
+        grades.forEach { grade ->
+            val normalizedScores = criteria.associate { criterion ->
+                criterion.id to (grade.scores[criterion.id] ?: 0)
+            }
+            val index = reportCards.indexOfFirst {
+                it.classId == classId && it.studentId == grade.id
+            }
+
+            if (index >= 0) {
+                val previous = reportCards[index]
+                reportCards[index] = previous.copy(
+                    criteria = criteria.map { it.copy() },
+                    scores = normalizedScores,
+                    updatedAt = timestamp,
+                    revision = previous.revision + 1
+                )
+            } else {
+                reportCards += ReportCardModel(
+                    id = UUID.randomUUID().toString(),
+                    classId = classId,
+                    studentId = grade.id,
+                    criteria = criteria.map { it.copy() },
+                    scores = normalizedScores,
+                    publishedAt = timestamp,
+                    updatedAt = timestamp,
+                    revision = 1
+                )
+            }
+        }
+        reportCardDrafts.removeAll { it.classId == classId }
+        save()
+    }
+
+    fun getReportCardsForStudent(studentId: String): List<ReportCardModel> =
+        reportCards.filter { it.studentId == studentId }
+            .sortedByDescending { it.updatedAt }
+
+    private fun migrateLegacyData() {
+        val old = prefs()
+        for (i in 0 until old.getInt("student_count", 0)) {
+            val phone = old.getString("student_${i}_phone", "").orEmpty()
+            if (phone.isNotBlank()) {
+                val legacyName = old.getString("student_${i}_name", "").orEmpty()
+                val parts = legacyName.trim().split(Regex("\\s+"), limit = 2)
+                students += StudentModel(
+                    id = UUID.randomUUID().toString(),
+                    firstName = parts.firstOrNull().orEmpty(),
+                    lastName = parts.getOrNull(1).orEmpty(),
+                    studentCode = "S${i + 1}", phone = phone,
+                    identityType = "NATIONAL",
+                    identityCode = old.getString("student_${i}_nationalId", "").orEmpty(),
+                    nationalId = old.getString("student_${i}_nationalId", "").orEmpty(),
+                    username = old.getString("student_${i}_nationalId", "").orEmpty(),
+                    password = "",
+                    classId = old.getString("student_${i}_classId", null),
+                    avatarName = "avatar_no_profile"
+                )
+            }
+        }
+        for (i in 0 until old.getInt("teacher_count", 0)) {
+            val phone = old.getString("teacher_${i}_username", "").orEmpty()
+            if (phone.isNotBlank()) {
+                val legacyName = old.getString("teacher_${i}_name", "").orEmpty()
+                val parts = legacyName.trim().split(Regex("\\s+"), limit = 2)
+                teachers += TeacherModel(
+                    id = UUID.randomUUID().toString(),
+                    firstName = parts.firstOrNull().orEmpty(),
+                    lastName = parts.getOrNull(1).orEmpty(),
+                    phone = phone,
+                    nationalId = old.getString("teacher_${i}_nationalId", "").orEmpty(),
+                    password = "",
+                    classIds = old.getString("teacher_${i}_classIds", "").orEmpty(),
+                    isActive = old.getBoolean("teacher_${i}_isActive", true),
+                    avatarName = "avatar_no_profile" // مقدار دیفالت برای اساتید قدیمی
+                )
+            }
+        }
+        for (i in 0 until old.getInt("class_count", 0)) {
+            val id = old.getString("class_${i}_id", "").orEmpty()
+            if (id.isNotBlank()) {
+                val legacyTime = old.getString("class_${i}_time", "").orEmpty()
+                classes += ClassModel(id, old.getString("class_${i}_name", "").orEmpty(), legacyTime, "", "نامشخص", 0)
+            }
+        }
+        teachers.forEach { teacher ->
+            teacher.classIds.split(',').filter { it.isNotBlank() }.forEach { classId ->
+                getClassById(classId)?.teacherPhone = teacher.username
+            }
+        }
+        students.filter { it.classId != null }.forEach {
+            enrollments += EnrollmentModel(UUID.randomUUID().toString(), it.id, it.classId!!, today())
+        }
+    }
+
+    private fun save() {
+        if (!::appContext.isInitialized) return
+        val root = JSONObject()
+        root.put("admin", JSONObject().put("name", admin.name).put("phone", admin.phone).put("nationalId", admin.nationalId).put("avatarName", admin.avatarName ?: "avatar_no_profile"))
+        root.put("students", JSONArray().apply {
+            students.forEach { s ->
+                put(
+                    JSONObject()
+                        .put("id", s.id)
+                        .put("firstName", s.firstName)
+                        .put("lastName", s.lastName)
+                        .put("studentCode", s.studentCode)
+                        .put("phone", s.phone)
+                        .put("identityType", s.identityType)
+                        .put("identityCode", s.identityCode)
+                        .put("nationalId", s.nationalId)
+                        .put("foreignCode", s.foreignCode)
+                        .put("foreignCodeGenerated", s.foreignCodeGenerated)
+                        .put("username", s.username)
+                        .put("classId", s.classId)
+                        .put("registrationDate", s.registrationDate)
+                        .put("isActive", s.isActive)
+                        .put("avatarName", s.avatarName ?: "avatar_no_profile")
+                        .put("accountStatus", s.accountStatus)
+                )
+            }
+        })
+
+        // 🌟 ذخیره آواتار اساتید در جیسون لوکال
+        root.put(
+            "teachers",
+            JSONArray().apply {
+
+                teachers.forEach { t ->
+
+                    put(
+                        JSONObject()
+                            .put("id", t.id)
+                            .put("firstName", t.firstName)
+                            .put("lastName", t.lastName)
+                            .put("phone", t.phone)
+                            .put("nationalId", t.nationalId)
+                            .put("classIds", t.classIds)
+                            .put("isActive", t.isActive)
+                            .put(
+                                "avatarName",
+                                t.avatarName ?: "avatar_no_profile"
+                            )
+                            .put(
+                                "isManagement",
+                                t.isManagement
+                            )
+                    )
+                }
+            }
+        )
+
+        // 🌟 حذف کلاس لول و جایگزینی با مینیمم‌های نمرات جدید کلاس
+        root.put("classes", JSONArray().apply { classes.forEach { c -> put(JSONObject().put("id", c.id).put("className", c.className).put("classLevel", c.classLevel).put("startTime", c.startTime).put("endTime", c.endTime).put("daysOfWeek", c.daysOfWeek).put("sessionCount", c.sessionCount).put("teacherPhone", c.teacherPhone).put("status", c.status.name).put("createdAt", c.createdAt).put("completedAt", c.completedAt).put("classCode", c.classCode).put("bookName", c.bookName).put("termYear", c.termYear).put("termSeason", c.termSeason).put("teacherId", c.teacherId).put("teacherName", c.teacherName).put("minPassingScore", c.minPassingScore).put("minConditionalScore", c.minConditionalScore)) } })
+
+        root.put("enrollments", JSONArray().apply { enrollments.forEach { e -> put(JSONObject().put("id", e.id).put("studentId", e.studentId).put("classId", e.classId).put("startedAt", e.startedAt).put("endedAt", e.endedAt)) } })
+        root.put("attendance", JSONArray().apply { attendanceSessions.forEach { a -> put(JSONObject().put("id", a.id).put("classId", a.classId).put("date", a.date).put("teacherPhone", a.teacherPhone).put("finalizedAt", a.finalizedAt).put("items", JSONArray().apply { a.items.forEach { item -> put(JSONObject().put("studentId", item.studentId).put("status", item.status.name).put("delayMinutes", item.delayMinutes)) } })) } })
+        root.put("announcements", JSONArray().apply {
+            announcements.forEach { a ->
+                put(
+                    JSONObject()
+                        .put("id", a.id)
+                        .put("title", a.title)
+                        .put("body", a.body)
+                        .put("senderName", a.senderName)
+                        .put("senderPhone", a.senderPhone)
+                        .put("senderRole", a.senderRole.name)
+                        .put("senderAvatarName", a.senderAvatarName)
+                        .put("createdAt", a.createdAt)
+                        .put("scope", a.scope.name)
+                        .put("targetClassIds", JSONArray(a.targetClassIds))
+                        .put("directStudentId", a.directStudentId)
+                        .put("type", a.type.name)
+                        .put("attachmentName", a.attachmentName)
+                        .put("attachmentUrl", a.attachmentUrl)
+                        .put("attachmentMimeType", a.attachmentMimeType)
+                        .put("attachmentSizeBytes", a.attachmentSizeBytes)
+                )
+            }
+        })
+        root.put("announcementReads", JSONArray().apply {
+            announcementReads.forEach { read ->
+                put(
+                    JSONObject()
+                        .put("announcementId", read.announcementId)
+                        .put("readerKey", read.readerKey)
+                        .put("readAt", read.readAt)
+                )
+            }
+        })
+        root.put("reportCards", JSONArray().apply {
+            reportCards.forEach { r ->
+                put(
+                    JSONObject()
+                        .put("id", r.id)
+                        .put("classId", r.classId)
+                        .put("studentId", r.studentId)
+                        .put("publishedAt", r.publishedAt)
+                        .put("updatedAt", r.updatedAt)
+                        .put("revision", r.revision)
+                        .put("criteria", JSONArray().apply {
+                            r.criteria.forEach { c ->
+                                put(
+                                    JSONObject()
+                                        .put("id", c.id)
+                                        .put("name", c.name)
+                                        .put("maxScore", c.maxScore)
+                                        .put("isSelected", c.isSelected)
+                                )
+                            }
+                        })
+                        .put("scores", JSONObject(r.scores))
+                )
+            }
+        })
+        root.put("reportCardDrafts", JSONArray().apply {
+            reportCardDrafts.forEach { draft ->
+                put(
+                    JSONObject()
+                        .put("classId", draft.classId)
+                        .put("updatedAt", draft.updatedAt)
+                        .put("criteria", JSONArray().apply {
+                            draft.criteria.forEach { c ->
+                                put(
+                                    JSONObject()
+                                        .put("id", c.id)
+                                        .put("name", c.name)
+                                        .put("maxScore", c.maxScore)
+                                        .put("isSelected", c.isSelected)
+                                )
+                            }
+                        })
+                        .put("scoresByStudent", JSONObject().apply {
+                            draft.scoresByStudent.forEach { (studentId, scores) ->
+                                put(studentId, JSONObject().apply {
+                                    scores.forEach { (criterionId, score) ->
+                                        put(criterionId, score ?: JSONObject.NULL)
+                                    }
+                                })
+                            }
+                        })
+                )
+            }
+        })
+        prefs().edit().putString(DATA_KEY, root.toString()).apply()
+    }
+
+    private fun load(root: JSONObject) {
+        students.clear(); teachers.clear(); classes.clear(); enrollments.clear(); attendanceSessions.clear(); announcements.clear(); announcementReads.clear(); reportCards.clear(); reportCardDrafts.clear()
+        root.optJSONObject("admin")?.let { admin = AdminModel(it.optString("name"), it.optString("phone"), it.optString("nationalId"), "", it.optString("avatarName", "avatar_no_profile")) }
+
+        root.optJSONArray("students").forEachObject { o ->
+            val legacyName = o.optString("name")
+            val parts = legacyName.trim().split(Regex("\\s+"), limit = 2)
+            students += StudentModel(
+                id = o.optString("id"),
+                firstName = o.optString("firstName", parts.firstOrNull().orEmpty()),
+                lastName = o.optString("lastName", parts.getOrNull(1).orEmpty()),
+                studentCode = o.optString("studentCode"),
+                phone = o.optString("phone"),
+                identityType = o.optString("identityType", "NATIONAL"),
+                identityCode = o.optString(
+                    "identityCode",
+                    o.optString("nationalId")
+                ),
+                nationalId = o.optString("nationalId"),
+                foreignCode = o.optString("foreignCode"),
+                foreignCodeGenerated = o.optBoolean("foreignCodeGenerated", false),
+                username = o.optString(
+                    "username",
+                    o.optString("identityCode", o.optString("nationalId"))
+                ),
+                password = "",
+                classId = o.optNullableString("classId"),
+                registrationDate = o.optString("registrationDate", AppDatabase.today()),
+                isActive = o.optBoolean("isActive", true),
+                avatarName = o.optString("avatarName", "avatar_no_profile"),
+                accountStatus = o.optString("accountStatus", "ACTIVE")
+            )
+        }
+
+        root.optJSONArray("teachers").forEachObject { o ->
+            val legacyName = o.optString("name")
+            val parts = legacyName.trim().split(Regex("\\s+"), limit = 2)
+            teachers += TeacherModel(
+                id = o.optString("id", UUID.randomUUID().toString()),
+                firstName = o.optString(
+                    "firstName",
+                    parts.firstOrNull().orEmpty()
+                ),
+                lastName = o.optString(
+                    "lastName",
+                    parts.getOrNull(1).orEmpty()
+                ),
+                phone = o.optString(
+                    "phone",
+                    o.optString("username")
+                ),
+                nationalId = o.optString("nationalId"),
+                password = "",
+                classIds = o.optString("classIds"),
+                isActive = o.optBoolean("isActive", true),
+                avatarName = o.optString(
+                    "avatarName",
+                    "avatar_no_profile"
+                ),
+                isManagement = o.optBoolean(
+                    "isManagement",
+                    false
+                )
+            )
+        }
+
+        // بازیابی کامل اطلاعات کلاس، شامل Level و مرزهای کارنامه
+        root.optJSONArray("classes").forEachObject { o ->
+            classes += ClassModel(
+                id = o.optString("id"),
+                className = o.optString("className"),
+                classLevel = o.optString("classLevel", o.optString("className")),
+                startTime = o.optString("startTime"),
+                endTime = o.optString("endTime"),
+                daysOfWeek = o.optString("daysOfWeek"),
+                sessionCount = o.optInt("sessionCount"),
+                teacherPhone = o.optNullableString("teacherPhone"),
+                status = runCatching { ClassStatus.valueOf(o.optString("status")) }.getOrDefault(ClassStatus.ACTIVE),
+                createdAt = o.optString("createdAt"),
+                completedAt = o.optNullableString("completedAt"),
+                classCode = o.optString("classCode"),
+                bookName = o.optString("bookName"),
+                termYear = o.optString("termYear"),
+                termSeason = o.optString("termSeason"),
+                teacherId = o.optNullableString("teacherId"),
+                teacherName = o.optString("teacherName"),
+                minPassingScore = o.optDouble("minPassingScore", RemoteConfigManager.current().classDefaults.minPassingScore),
+                minConditionalScore = o.optDouble("minConditionalScore", RemoteConfigManager.current().classDefaults.minConditionalScore)
+            )
+        }
+
+        root.optJSONArray("enrollments").forEachObject { o -> enrollments += EnrollmentModel(o.optString("id"), o.optString("studentId"), o.optString("classId"), o.optString("startedAt"), o.optNullableString("endedAt")) }
+        root.optJSONArray("attendance").forEachObject { o ->
+            val items = mutableListOf<AttendanceItem>()
+            o.optJSONArray("items").forEachObject { item -> items += AttendanceItem(item.optString("studentId"), AttendanceStatus.valueOf(item.optString("status")), item.optInt("delayMinutes")) }
+            attendanceSessions += AttendanceSession(o.optString("id"), o.optString("classId"), o.optString("date"), o.optString("teacherPhone"), items, o.optString("finalizedAt"))
+        }
+        root.optJSONArray("announcements").forEachObject { o ->
+            val legacyAudience = o.optString("audienceType")
+            val legacyTarget = o.optNullableString("targetId")
+            val scope = runCatching {
+                AnnouncementScope.valueOf(o.optString("scope"))
+            }.getOrElse {
+                when (legacyAudience) {
+                    "ALL_STUDENTS" -> AnnouncementScope.ALL_CLASSES
+                    "ALL_TEACHERS" -> AnnouncementScope.ALL_TEACHERS
+                    "STUDENT" -> AnnouncementScope.DIRECT_STUDENT
+                    else -> AnnouncementScope.SELECTED_CLASSES
+                }
+            }
+            val targetClassIds = mutableListOf<String>()
+            o.optJSONArray("targetClassIds")?.let { array ->
+                for (i in 0 until array.length()) {
+                    array.optString(i).takeIf { it.isNotBlank() }?.let(targetClassIds::add)
+                }
+            }
+            if (targetClassIds.isEmpty() && legacyAudience == "CLASS" && !legacyTarget.isNullOrBlank()) {
+                targetClassIds += legacyTarget
+            }
+            val legacyType = o.optString("type", "TEXT_ONLY")
+            announcements += Announcement(
+                id = o.optString("id"),
+                title = o.optString("title"),
+                body = o.optString("body"),
+                senderName = o.optString("senderName"),
+                senderPhone = o.optString("senderPhone"),
+                senderRole = runCatching {
+                    AnnouncementSenderRole.valueOf(o.optString("senderRole"))
+                }.getOrDefault(
+                    when {
+                        o.optString("senderName").contains("سامانه") ->
+                            AnnouncementSenderRole.SYSTEM
+                        getTeacherByUsername(o.optString("senderPhone")) != null ->
+                            AnnouncementSenderRole.TEACHER
+                        else -> AnnouncementSenderRole.ADMIN
+                    }
+                ),
+                createdAt = o.optString("createdAt", o.optString("date")),
+                scope = scope,
+                targetClassIds = targetClassIds,
+                directStudentId = if (scope == AnnouncementScope.DIRECT_STUDENT) {
+                    o.optNullableString("directStudentId") ?: legacyTarget
+                } else null,
+                type = if (legacyType == "TEXT_ONLY") MessageType.TEXT_ONLY else MessageType.ATTACHMENT,
+                attachmentName = o.optNullableString("attachmentName"),
+                attachmentUrl = o.optNullableString("attachmentUrl"),
+                attachmentMimeType = o.optNullableString("attachmentMimeType"),
+                attachmentSizeBytes = if (o.has("attachmentSizeBytes") && !o.isNull("attachmentSizeBytes")) {
+                    o.optLong("attachmentSizeBytes")
+                } else null,
+                senderAvatarName = o.optString("senderAvatarName", "avatar_no_profile")
+            )
+        }
+        root.optJSONArray("announcementReads").forEachObject { o ->
+            announcementReads += AnnouncementReadModel(
+                announcementId = o.optString("announcementId"),
+                readerKey = o.optString("readerKey"),
+                readAt = o.optString("readAt")
+            )
+        }
+        root.optJSONArray("reportCards").forEachObject { o ->
+            val criteria = mutableListOf<GradeComponent>()
+            o.optJSONArray("criteria").forEachObject { c ->
+                criteria += GradeComponent(
+                    c.optString("id"),
+                    c.optString("name"),
+                    c.optInt("maxScore"),
+                    c.optBoolean("isSelected", true)
+                )
+            }
+            val scoresObject = o.optJSONObject("scores") ?: JSONObject()
+            val scores = scoresObject.keys().asSequence().associateWith { scoresObject.optInt(it) }
+            val publishedAt = o.optString("publishedAt")
+            reportCards += ReportCardModel(
+                id = o.optString("id"),
+                classId = o.optString("classId"),
+                studentId = o.optString("studentId"),
+                criteria = criteria,
+                scores = scores,
+                publishedAt = publishedAt,
+                updatedAt = o.optString("updatedAt", publishedAt),
+                revision = o.optInt("revision", 1)
+            )
+        }
+        root.optJSONArray("reportCardDrafts").forEachObject { o ->
+            val criteria = mutableListOf<GradeComponent>()
+            o.optJSONArray("criteria").forEachObject { c ->
+                criteria += GradeComponent(
+                    c.optString("id"),
+                    c.optString("name"),
+                    c.optInt("maxScore"),
+                    c.optBoolean("isSelected", true)
+                )
+            }
+
+            val scoresByStudentObject = o.optJSONObject("scoresByStudent") ?: JSONObject()
+            val scoresByStudent = scoresByStudentObject.keys().asSequence().associateWith { studentId ->
+                val scoreObject = scoresByStudentObject.optJSONObject(studentId) ?: JSONObject()
+                scoreObject.keys().asSequence().associateWith { criterionId ->
+                    if (scoreObject.isNull(criterionId)) null else scoreObject.optInt(criterionId)
+                }
+            }
+
+            reportCardDrafts += ReportCardDraftModel(
+                classId = o.optString("classId"),
+                criteria = criteria,
+                scoresByStudent = scoresByStudent,
+                updatedAt = o.optString("updatedAt")
+            )
+        }
+        syncTeacherClassIds()
+    }
+
+    private inline fun JSONArray?.forEachObject(block: (JSONObject) -> Unit) {
+        if (this == null) return
+        for (i in 0 until length()) optJSONObject(i)?.let(block)
+    }
+
+    private fun JSONObject.optNullableString(key: String): String? =
+        if (isNull(key)) null else optString(key).takeIf { it.isNotBlank() && it != "null" }
+
+
+    fun updateAdminAvatarLocally(avatarName: String) {
+        admin.avatarName = avatarName
+        save()
+    }
+    fun getAdminAvatarName(): String = admin.avatarName ?: "avatar_no_profile"
+}
